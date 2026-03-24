@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="East Pole Golf">
+  <title>East Pole Golf Pool</title>
+  <style>
+    :root {
+      --green: #2d9e4f;
+      --green-dim: #1f6e37;
+      --gold: #c9a84c;
+      --red: #ff453a;
+      --bg: #0d0f12;
+      --card: #1a1d22;
+      --card2: #22262d;
+      --text: #f0f0f5;
+      --text2: #8a8a90;
+      --text3: #4a4a52;
+      --border: #2a2d34;
+      --safe-top: env(safe-area-inset-top, 47px);
+      --safe-bot: env(safe-area-inset-bottom, 34px);
+      --header-h: 56px;
+      --nav-h: 60px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--bg);
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      color: var(--text);
+      overscroll-behavior: none;
+    }
+
+    /* ── Header ── */
+    #hdr {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      background: var(--bg);
+      padding-top: var(--safe-top);
+      border-bottom: 1px solid var(--border);
+    }
+    .hdr-inner {
+      height: var(--header-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px;
+    }
+    .hdr-left h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .hdr-left p { font-size: 12px; color: var(--text2); letter-spacing: 0.6px; text-transform: uppercase; margin-top: 1px; }
+    .hdr-pill {
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 6px 12px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.4px; color: var(--text2);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .hdr-pill .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+    .hdr-pill .live-dot.on { background: #34c759; }
+
+    /* ── View wrapper ── */
+    #views {
+      position: fixed;
+      top: calc(var(--header-h) + var(--safe-top) + 1px);
+      bottom: calc(var(--nav-h) + var(--safe-bot));
+      left: 0; right: 0; overflow: hidden;
+    }
+    .view { display: none; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .view.active { display: block; }
+
+    /* ── Bottom Nav ── */
+    #nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding-bottom: var(--safe-bot);
+      height: calc(var(--nav-h) + var(--safe-bot));
+      display: flex;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 4px; border: none; background: none;
+      cursor: pointer; color: var(--text3); font-size: 10px; font-weight: 600;
+      letter-spacing: 0.2px; padding-top: 6px;
+    }
+    .nav-btn .nav-ico { font-size: 24px; line-height: 1; }
+    .nav-btn.active { color: var(--green); }
+    .nav-btn.enter-nav { color: #fff; }
+    .nav-btn.enter-nav .nav-ico-wrap {
+      background: var(--green);
+      width: 44px; height: 44px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 2px;
+    }
+    .nav-btn.enter-nav { padding-top: 0; justify-content: flex-start; padding-top: 6px; }
+
+    /* ── Shared ── */
+    .section-pad { padding: 0 0 100px; }
+    .section-title {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text2);
+      padding: 20px 18px 10px;
+    }
+    .divider { height: 1px; background: var(--border); margin: 0; }
+
+    /* ── Payout Banner ── */
+    .payout-banner {
+      margin: 14px 14px 0;
+      background: linear-gradient(135deg, #1a1200, #2a1f00);
+      border: 1px solid #3a2e08;
+      border-radius: 16px; padding: 14px 16px;
+    }
+    .payout-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .payout-top h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gold); }
+    .payout-top span { font-size: 20px; font-weight: 800; color: var(--gold); }
+    .payout-row { display: flex; gap: 8px; }
+    .payout-card {
+      flex: 1; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 10px; padding: 10px 10px 8px; text-align: center;
+    }
+    .payout-card .pc-lbl { font-size: 11px; color: var(--gold); font-weight: 700; }
+    .payout-card .pc-amt { font-size: 18px; font-weight: 800; color: #f0d080; margin: 3px 0 2px; }
+    .payout-card .pc-who { font-size: 10px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── API Bar ── */
+    .api-bar {
+      margin: 10px 14px 0;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 14px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text2);
+    }
+
+    /* ── Standings rows ── */
+    .standing-row {
+      display: flex; align-items: center;
+      padding: 13px 18px; border-bottom: 1px solid var(--border);
+      cursor: pointer; gap: 12px;
+    }
+    .standing-row:active { background: var(--card2); }
+    .s-rank {
+      width: 32px; font-size: 16px; font-weight: 800; flex-shrink: 0;
+      text-align: center; color: var(--text2);
+    }
+    .s-info { flex: 1; min-width: 0; }
+    .s-team { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .s-email { font-size: 12px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .s-right { text-align: right; flex-shrink: 0; }
+    .s-score { font-size: 22px; font-weight: 800; }
+    .s-top4 { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .s-arrow { color: var(--text3); font-size: 18px; flex-shrink: 0; margin-left: 4px; }
+
+    /* Score colors */
+    .neg { color: var(--green); }
+    .pos { color: var(--red); }
+    .eve { color: var(--text2); }
+
+    /* Picks expander */
+    .picks-panel { display: none; background: #14171b; border-bottom: 1px solid var(--border); }
+    .picks-panel.open { display: block; }
+    .mini-pick {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 18px 9px 62px; border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .mini-pick:last-child { border-bottom: none; }
+    .mini-pick.is-top { background: rgba(45,158,79,0.07); }
+    .mini-pick-left { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .star { font-size: 11px; color: var(--green); }
+    .mini-pick-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-pick-pos { font-size: 11px; color: var(--text2); margin-left: 4px; flex-shrink: 0; }
+    .mini-pick-score { font-size: 14px; font-weight: 800; flex-shrink: 0; }
+
+    /* ── Segment control ── */
+    .seg-wrap { padding: 0 14px 10px; }
+    .seg {
+      display: flex; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 3px; overflow: hidden;
+    }
+    .seg-btn {
+      flex: 1; padding: 7px 4px; font-size: 13px; font-weight: 600;
+      border: none; background: none; border-radius: 8px; cursor: pointer;
+      color: var(--text2); font-family: inherit; transition: all 0.18s;
+    }
+    .seg-btn.active { background: var(--card2); color: var(--text); }
+
+    /* ── Leaderboard ── */
+    .lb-row {
+      display: flex; align-items: center; padding: 12px 18px;
+      border-bottom: 1px solid var(--border); gap: 10px;
+    }
+    .lb-pos { width: 38px; font-size: 13px; font-weight: 700; color: var(--text2); text-align: center; flex-shrink: 0; }
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name { font-size: 16px; font-weight: 700; }
+    .lb-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .lb-rounds { display: flex; gap: 2px; flex-shrink: 0; }
+    .lb-r { font-size: 11px; color: var(--text2); width: 24px; text-align: center; background: var(--card2); border-radius: 4px; padding: 2px 0; }
+    .lb-score { font-size: 20px; font-weight: 800; text-align: right; width: 44px; flex-shrink: 0; }
+    .in-pool-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-left: 5px; vertical-align: middle; }
+
+    /* ── Ownership ── */
+    .own-row { padding: 13px 18px; border-bottom: 1px solid var(--border); }
+    .own-row:last-child { border-bottom: none; }
+    .own-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+    .own-name { font-size: 16px; font-weight: 700; }
+    .own-right { display: flex; align-items: center; gap: 8px; }
+    .own-pct { font-size: 14px; font-weight: 800; color: var(--green); }
+    .own-score-tag { font-size: 12px; font-weight: 700; }
+    .own-bar-bg { background: var(--card2); border-radius: 6px; height: 7px; overflow: hidden; }
+    .own-bar { background: linear-gradient(90deg, var(--green-dim, #1f6e37), var(--green)); height: 100%; border-radius: 6px; }
+    .own-sub { font-size: 11px; color: var(--text2); margin-top: 5px; }
+
+    /* ── My Team ── */
+    .search-bar {
+      margin: 14px 14px 0;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 12px 16px;
+    }
+    .search-bar svg { width: 18px; height: 18px; color: var(--text3); flex-shrink: 0; }
+    .search-bar input {
+      border: none; background: none; font-size: 17px; flex: 1; outline: none;
+      color: var(--text); font-family: inherit;
+    }
+    .search-bar input::placeholder { color: var(--text3); }
+
+    .team-card {
+      margin: 14px 14px 0;
+      background: linear-gradient(145deg, #131c14, #0a1a0e);
+      border: 1px solid #1f3d24; border-radius: 16px; padding: 18px;
+    }
+    .team-card h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.4px; }
+    .team-card .tc-email { font-size: 13px; color: var(--text2); margin-top: 3px; }
+    .tc-stats { display: flex; gap: 10px; margin-top: 16px; }
+    .tc-stat {
+      flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 12px 10px;
+    }
+    .tc-val { font-size: 26px; font-weight: 800; }
+    .tc-lbl { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+    .picks-card { margin: 12px 14px 0; background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .pick-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 10px; }
+    .pick-row:last-child { border-bottom: none; }
+    .pick-n { width: 22px; font-size: 13px; color: var(--text3); font-weight: 700; flex-shrink: 0; }
+    .pick-info { flex: 1; min-width: 0; }
+    .pick-name { font-size: 16px; font-weight: 700; }
+    .pick-pos { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .pick-badge { font-size: 10px; font-weight: 700; background: var(--green); color: #fff; padding: 2px 6px; border-radius: 5px; margin-left: 6px; }
+    .pick-score { font-size: 20px; font-weight: 800; flex-shrink: 0; }
+
+    /* ── Entry Form ── */
+    .enter-hero {
+      margin: 14px 14px 0;
+      background: linear-gradient(145deg, #0a1a0e, #0d2014);
+      border: 1px solid #1f3d24; border-radius: 16px;
+      padding: 20px 18px; text-align: center;
+    }
+    .enter-hero h2 { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+    .enter-hero p { font-size: 13px; color: var(--text2); margin-top: 4px; letter-spacing: 0.3px; }
+    .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    .rule-chip {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; padding: 12px 10px; text-align: center;
+      font-size: 12px; color: var(--text2);
+    }
+    .rule-chip strong { display: block; font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 2px; }
+
+    .form-card { margin: 12px 14px 0; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+    .form-lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); margin-bottom: 7px; display: block; }
+    .form-input {
+      width: 100%; padding: 13px 14px; border: 1.5px solid var(--border); border-radius: 12px;
+      font-size: 16px; font-family: inherit; background: var(--bg); color: var(--text);
+      outline: none; -webkit-appearance: none; margin-bottom: 12px;
+    }
+    .form-input:last-child { margin-bottom: 0; }
+    .form-input:focus { border-color: var(--green); }
+
+    .picks-counter {
+      margin: 12px 14px 0;
+      text-align: center; padding: 14px;
+      background: var(--card); border: 2px solid var(--border); border-radius: 14px;
+      color: var(--text2); font-size: 14px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .picks-counter.ready { border-color: var(--green); color: var(--green); }
+    .picks-counter strong { display: block; font-size: 28px; font-weight: 900; }
+
+    .tier-section { margin: 16px 14px 0; }
+    .tier-lbl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .tier-badge { background: var(--green); color: #fff; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 7px; }
+    .tier-desc { font-size: 12px; color: var(--text2); }
+    .golfer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .g-chip {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 13px; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 12px; cursor: pointer; transition: all 0.15s;
+    }
+    .g-chip.selected { border-color: var(--green); background: rgba(45,158,79,0.1); }
+    .g-chip-name { font-size: 12px; font-weight: 700; line-height: 1.25; }
+    .g-chip-score { font-size: 11px; font-weight: 800; color: var(--green); margin-top: 2px; }
+    .g-check { color: var(--green); font-size: 16px; display: none; }
+    .g-chip.selected .g-check { display: block; }
+
+    .submit-btn {
+      margin: 16px 14px; width: calc(100% - 28px);
+      padding: 17px; background: var(--green); color: #fff;
+      font-size: 17px; font-weight: 800; border: none; border-radius: 14px;
+      cursor: pointer; font-family: inherit; letter-spacing: 0.2px;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:disabled { opacity: 0.35; }
+    .submit-btn:active:not(:disabled) { opacity: 0.8; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: calc(var(--nav-h) + var(--safe-bot) + 14px);
+      left: 50%; transform: translateX(-50%) translateY(16px);
+      background: rgba(240,240,245,0.9); color: #111;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      padding: 11px 20px; border-radius: 22px; font-size: 14px; font-weight: 600;
+      z-index: 999; opacity: 0; transition: all 0.22s; pointer-events: none; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .empty-state { text-align: center; padding: 60px 24px; color: var(--text2); font-size: 15px; }
+
+    .spin {
+      display: inline-block; width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.25); border-top-color: var(--green);
+      border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header id="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-left">
+      <h1>⛳ East Pole Pool</h1>
+      <p id="hdr-sub">2025 The Open · Royal Portrush</p>
+    </div>
+    <div class="hdr-pill" onclick="refreshData()" style="cursor:pointer">
+      <div class="live-dot" id="live-dot"></div>
+      <span id="hdr-status">Loading…</span>
+    </div>
+  </div>
+</header>
+
+<!-- Views -->
+<div id="views">
+
+  <!-- STANDINGS -->
+  <div class="view active section-pad" id="view-standings">
+    <div class="payout-banner">
+      <div class="payout-top">
+        <h3>💰 Payouts</h3>
+        <span>$1,480 pot</span>
+      </div>
+      <div class="payout-row">
+        <div class="payout-card"><div class="pc-lbl">🥇 1st</div><div class="pc-amt">$994</div><div class="pc-who">kperry1294</div></div>
+        <div class="payout-card"><div class="pc-lbl">🥈 2nd</div><div class="pc-amt">$426</div><div class="pc-who">jlmoore120</div></div>
+        <div class="payout-card"><div class="pc-lbl">🥉 3rd</div><div class="pc-amt">$60</div><div class="pc-who">SpencerBass</div></div>
+      </div>
+    </div>
+    <div class="section-title">All Entries — <span id="entry-count">0</span> total</div>
+    <div id="standings-list"></div>
+  </div>
+
+  <!-- MY TEAM -->
+  <div class="view section-pad" id="view-myteam">
+    <div class="section-title">My Team</div>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="email" id="email-search" placeholder="Enter your email…" oninput="searchTeam()" autocomplete="email" autocorrect="off" autocapitalize="none">
+    </div>
+    <div id="myteam-results"></div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="view section-pad" id="view-leaderboard">
+    <div class="section-title">Tournament Leaderboard</div>
+    <div class="seg-wrap">
+      <div class="seg">
+        <button class="seg-btn active" onclick="setLbFilter('all',this)">All Players</button>
+        <button class="seg-btn" onclick="setLbFilter('pool',this)">In Pool</button>
+        <button class="seg-btn" onclick="setLbFilter('top20',this)">Top 20</button>
+      </div>
+    </div>
+    <div id="leaderboard-list"></div>
+  </div>
+
+  <!-- OWNERSHIP -->
+  <div class="view section-pad" id="view-ownership">
+    <div class="section-title">Ownership</div>
+    <div class="seg-wrap">
+      <div class="seg">
+        <button class="seg-btn active" onclick="setOwnFilter('most',this)">Most Owned</button>
+        <button class="seg-btn" onclick="setOwnFilter('least',this)">Unique Picks</button>
+      </div>
+    </div>
+    <div id="ownership-list"></div>
+  </div>
+
+  <!-- ENTER -->
+  <div class="view section-pad" id="view-enter">
+    <div class="enter-hero">
+      <h2>🏴󠁧󠁢󠁳󠁣󠁴󠁿 Enter the Pool</h2>
+      <p>2025 THE OPEN CHAMPIONSHIP · ROYAL PORTRUSH</p>
+      <div class="rules-grid">
+        <div class="rule-chip"><strong>10</strong>picks per entry</div>
+        <div class="rule-chip"><strong>Best 4</strong>scores count</div>
+        <div class="rule-chip"><strong>$20</strong>buy-in</div>
+        <div class="rule-chip"><strong>5 max</strong>entries/person</div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <label class="form-lbl">Your Email</label>
+      <input class="form-input" type="email" id="entry-email" placeholder="you@example.com" autocapitalize="none" oninput="updatePicksCounter()">
+      <label class="form-lbl" style="margin-top:4px">Team Name</label>
+      <input class="form-input" type="text" id="entry-team" placeholder="e.g. Fairway to Heaven" style="margin-bottom:0">
+    </div>
+
+    <div class="picks-counter" id="picks-counter">
+      <strong id="picks-count">0 / 10</strong>
+      Pick 1 golfer from each tier
+    </div>
+
+    <div id="golfer-tiers"></div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitEntry()" disabled>Submit Entry →</button>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<nav id="nav">
+  <button class="nav-btn active" onclick="switchTab('standings',this)">
+    <div class="nav-ico">🏆</div>
+    Standings
+  </button>
+  <button class="nav-btn" onclick="switchTab('myteam',this)">
+    <div class="nav-ico">👤</div>
+    My Team
+  </button>
+  <button class="nav-btn enter-nav" onclick="switchTab('enter',this)">
+    <div class="nav-ico-wrap">➕</div>
+    Enter
+  </button>
+  <button class="nav-btn" onclick="switchTab('leaderboard',this)">
+    <div class="nav-ico">📊</div>
+    Board
+  </button>
+  <button class="nav-btn" onclick="switchTab('ownership',this)">
+    <div class="nav-ico">🎯</div>
+    Owned
+  </button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+let GOLFER_SCORES = {
+  "Scottie Scheffler":   { pos:"1",   score:-17, thru:"F",  r1:68,r2:64,r3:67,r4:68 },
+  "Harris English":      { pos:"2",   score:-13, thru:"F",  r1:67,r2:70,r3:68,r4:66 },
+  "Chris Gotterup":      { pos:"3",   score:-12, thru:"F",  r1:72,r2:65,r3:68,r4:67 },
+  "Wyndham Clark":       { pos:"T4",  score:-11, thru:"F",  r1:76,r2:66,r3:66,r4:65 },
+  "Matt Fitzpatrick":    { pos:"T4",  score:-11, thru:"F",  r1:67,r2:66,r3:71,r4:69 },
+  "Haotong Li":          { pos:"T4",  score:-11, thru:"F",  r1:67,r2:67,r3:69,r4:70 },
+  "Robert MacIntyre":    { pos:"T7",  score:-10, thru:"F",  r1:71,r2:66,r3:70,r4:67 },
+  "Xander Schauffele":   { pos:"T7",  score:-10, thru:"F",  r1:71,r2:69,r3:66,r4:68 },
+  "Rory McIlroy":        { pos:"T7",  score:-10, thru:"F",  r1:70,r2:69,r3:66,r4:69 },
+  "Bryson DeChambeau":   { pos:"T10", score:-9,  thru:"F",  r1:78,r2:65,r3:68,r4:64 },
+  "Corey Conners":       { pos:"T10", score:-9,  thru:"F",  r1:74,r2:69,r3:66,r4:66 },
+  "Russell Henley":      { pos:"T10", score:-9,  thru:"F",  r1:72,r2:70,r3:65,r4:68 },
+  "Brian Harman":        { pos:"T10", score:-9,  thru:"F",  r1:69,r2:65,r3:73,r4:68 },
+  "Rickie Fowler":       { pos:"T14", score:-8,  thru:"F",  r1:69,r2:72,r3:70,r4:65 },
+  "Nicolai Højgaard":    { pos:"T14", score:-8,  thru:"F",  r1:69,r2:69,r3:69,r4:69 },
+  "Jesper Svensson":     { pos:"T16", score:-7,  thru:"F",  r1:71,r2:72,r3:68,r4:66 },
+  "Hideki Matsuyama":    { pos:"T16", score:-7,  thru:"F",  r1:74,r2:69,r3:68,r4:66 },
+  "Tommy Fleetwood":     { pos:"T16", score:-7,  thru:"F",  r1:73,r2:68,r3:69,r4:67 },
+  "Justin Rose":         { pos:"T16", score:-7,  thru:"F",  r1:69,r2:71,r3:68,r4:69 },
+  "Tyrrell Hatton":      { pos:"T16", score:-7,  thru:"F",  r1:68,r2:69,r3:68,r4:72 },
+  "Rasmus Højgaard":     { pos:"T16", score:-7,  thru:"F",  r1:69,r2:68,r3:70,r4:70 },
+  "Maverick McNealy":    { pos:"T23", score:-6,  thru:"F",  r1:69,r2:74,r3:69,r4:66 },
+  "J.J. Spaun":          { pos:"T23", score:-6,  thru:"F",  r1:73,r2:69,r3:68,r4:68 },
+  "Dustin Johnson":      { pos:"T23", score:-6,  thru:"F",  r1:73,r2:69,r3:67,r4:69 },
+  "Akshay Bhatia":       { pos:"T26", score:-5,  thru:"F",  r1:72,r2:71,r3:68,r4:68 },
+  "Harry Hall":          { pos:"T26", score:-5,  thru:"F",  r1:71,r2:70,r3:69,r4:69 },
+  "Shane Lowry":         { pos:"T28", score:-4,  thru:"F",  r1:74,r2:69,r3:70,r4:67 },
+  "Daniel Berger":       { pos:"T28", score:-4,  thru:"F",  r1:72,r2:70,r3:70,r4:68 },
+  "Aaron Rai":           { pos:"T30", score:-3,  thru:"F",  r1:71,r2:72,r3:69,r4:69 },
+  "Jon Rahm":            { pos:"T30", score:-3,  thru:"F",  r1:72,r2:70,r3:70,r4:69 },
+  "Jordan Spieth":       { pos:"T32", score:-2,  thru:"F",  r1:72,r2:72,r3:70,r4:68 },
+  "Sam Burns":           { pos:"T34", score:-1,  thru:"F",  r1:74,r2:72,r3:71,r4:70 },
+  "Sungjae Im":          { pos:"T35", score:0,   thru:"F",  r1:73,r2:73,r3:71,r4:67 },
+  "Dean Burmester":      { pos:"T36", score:3,   thru:"F",  r1:74,r2:74,r3:71,r4:70 },
+  "Viktor Hovland":      { pos:"T38", score:4,   thru:"F",  r1:75,r2:73,r3:74,r4:66 },
+  "Keegan Bradley":      { pos:"MC",  score:11,  thru:"MC", r1:77,r2:76,r3:null,r4:null },
+  "Justin Thomas":       { pos:"MC",  score:11,  thru:"MC", r1:76,r2:77,r3:null,r4:null },
+  "Adam Scott":          { pos:"MC",  score:11,  thru:"MC", r1:72,r2:79,r3:null,r4:null },
+  "Tony Finau":          { pos:"MC",  score:11,  thru:"MC", r1:76,r2:75,r3:null,r4:null },
+  "Jason Day":           { pos:"MC",  score:11,  thru:"MC", r1:76,r2:75,r3:null,r4:null },
+  "Patrick Reed":        { pos:"MC",  score:11,  thru:"MC", r1:74,r2:77,r3:null,r4:null },
+  "Min Woo Lee":         { pos:"MC",  score:11,  thru:"MC", r1:75,r2:76,r3:null,r4:null },
+  "Ben Griffin":         { pos:"MC",  score:11,  thru:"MC", r1:75,r2:76,r3:null,r4:null },
+  "Cameron Smith":       { pos:"MC",  score:11,  thru:"MC", r1:72,r2:78,r3:null,r4:null },
+  "Sepp Straka":         { pos:"MC",  score:11,  thru:"MC", r1:74,r2:77,r3:null,r4:null },
+  "Brooks Koepka":       { pos:"MC",  score:11,  thru:"MC", r1:75,r2:74,r3:null,r4:null },
+  "Cameron Young":       { pos:"MC",  score:11,  thru:"MC", r1:75,r2:76,r3:null,r4:null },
+  "Taylor Pendrith":     { pos:"MC",  score:11,  thru:"MC", r1:78,r2:74,r3:null,r4:null },
+  "Nick Taylor":         { pos:"MC",  score:11,  thru:"MC", r1:76,r2:76,r3:null,r4:null },
+  "Patrick Cantlay":     { pos:"MC",  score:11,  thru:"MC", r1:76,r2:76,r3:null,r4:null },
+  "Joaquín Niemann":     { pos:"MC",  score:11,  thru:"MC", r1:77,r2:74,r3:null,r4:null },
+  "J.T. Poston":         { pos:"MC",  score:11,  thru:"MC", r1:72,r2:77,r3:null,r4:null },
+  "Tom Hoge":            { pos:"MC",  score:11,  thru:"MC", r1:81,r2:73,r3:null,r4:null },
+  "Chris Kirk":          { pos:"MC",  score:11,  thru:"MC", r1:76,r2:76,r3:null,r4:null },
+  "Lee Westwood":        { pos:"MC",  score:11,  thru:"MC", r1:77,r2:77,r3:null,r4:null },
+  "Marco Penge":         { pos:"MC",  score:11,  thru:"MC", r1:76,r2:78,r3:null,r4:null },
+};
+
+let ENTRIES = [
+  {email:"kperry1294@gmail.com",     team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Robert MacIntyre","Nicolai Højgaard","Tommy Fleetwood","Maverick McNealy","Daniel Berger","Jon Rahm","Keegan Bradley"]},
+  {email:"kperry1294@gmail.com",     team:"Entry 2",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Justin Rose","Harry Hall","Jordan Spieth","Adam Scott","Tony Finau"]},
+  {email:"jlmoore120@gmail.com",     team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Russell Henley","Corey Conners","Tommy Fleetwood","Hideki Matsuyama","Justin Rose","Jon Rahm","Adam Scott"]},
+  {email:"jlmoore120@gmail.com",     team:"Entry 2",      picks:["Scottie Scheffler","Harris English","Rory McIlroy","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Maverick McNealy","Daniel Berger","Keegan Bradley"]},
+  {email:"jlmoore120@gmail.com",     team:"Entry 3",      picks:["Scottie Scheffler","Matt Fitzpatrick","Rory McIlroy","Russell Henley","Nicolai Højgaard","Justin Rose","Harry Hall","Maverick McNealy","Jon Rahm","Jason Day"]},
+  {email:"jlmoore120@gmail.com",     team:"Entry 4",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Corey Conners","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","J.J. Spaun","Daniel Berger","Tony Finau"]},
+  {email:"jlmoore120@gmail.com",     team:"Entry 5",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Brian Harman","Hideki Matsuyama","Tommy Fleetwood","Maverick McNealy","Justin Rose","Jon Rahm","Cameron Smith"]},
+  {email:"Spencerbass@outlook.com",  team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","J.J. Spaun","Keegan Bradley"]},
+  {email:"Spencerbass@outlook.com",  team:"Entry 2",      picks:["Rory McIlroy","Matt Fitzpatrick","Brian Harman","Corey Conners","Maverick McNealy","Justin Rose","Jon Rahm","Jordan Spieth","Adam Scott","Tony Finau"]},
+  {email:"Spencerbass@outlook.com",  team:"Entry 3",      picks:["Matt Fitzpatrick","Rory McIlroy","Brian Harman","Justin Rose","Harry Hall","Daniel Berger","Aaron Rai","Jordan Spieth","Keegan Bradley","Justin Thomas"]},
+  {email:"adam.e.simons@gmail.com",  team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Jon Rahm","Adam Scott"]},
+  {email:"adam.e.simons@gmail.com",  team:"Entry 2",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Maverick McNealy","Jon Rahm","Keegan Bradley"]},
+  {email:"adam.e.simons@gmail.com",  team:"Entry 3",      picks:["Scottie Scheffler","Harris English","Rory McIlroy","Brian Harman","Corey Conners","Justin Rose","Tommy Fleetwood","J.J. Spaun","Jon Rahm","Jason Day"]},
+  {email:"jared@eastpole.coffee",    team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Brian Harman","Nicolai Højgaard","Justin Rose","Tommy Fleetwood","J.J. Spaun","Jon Rahm","Keegan Bradley"]},
+  {email:"jared@eastpole.coffee",    team:"Entry 2",      picks:["Scottie Scheffler","Matt Fitzpatrick","Rory McIlroy","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Maverick McNealy","Daniel Berger","Jon Rahm","Adam Scott"]},
+  {email:"brett.m.torrence@gmail.com",team:"Entry 1",    picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","J.J. Spaun","Justin Rose","Jon Rahm","Jason Day"]},
+  {email:"p.andrew.schmidt@gmail.com",team:"Entry 1",    picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Daniel Berger","Jon Rahm","Adam Scott"]},
+  {email:"edejarnett@gmail.com",     team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Maverick McNealy","Jon Rahm","Keegan Bradley"]},
+  {email:"tyler.conlan@yahoo.com",   team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Daniel Berger","Tony Finau"]},
+  {email:"dinbot2@gmail.com",        team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Corey Conners","Nicolai Højgaard","Justin Rose","J.J. Spaun","Keegan Bradley"]},
+  {email:"kevinsaywharff@yahoo.com", team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Corey Conners","Brian Harman","Tommy Fleetwood","Justin Rose","Jon Rahm","Cameron Young"]},
+  {email:"tdewitt815@gmail.com",     team:"Entry 1",      picks:["Scottie Scheffler","Xander Schauffele","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Jon Rahm","Keegan Bradley"]},
+  {email:"peter@goodkitchenandmarket.com",team:"Entry 1",picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Hideki Matsuyama","Justin Rose","Daniel Berger","Adam Scott"]},
+  {email:"golivesky@gmail.com",      team:"Al Force One", picks:["Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Justin Rose","Harry Hall","Daniel Berger","Shane Lowry","Taylor Pendrith"]},
+  {email:"mbarron2k8@gmail.com",     team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Tommy Fleetwood","Nicolai Højgaard","Justin Rose","Jon Rahm","Cameron Smith"]},
+  {email:"jzalud21@gmail.com",       team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","J.J. Spaun","Patrick Reed"]},
+  {email:"ajulestompkins@gmail.com", team:"Finding Marco",picks:["Jon Rahm","Tommy Fleetwood","Matt Fitzpatrick","Corey Conners","Adam Scott","Aaron Rai","Maverick McNealy","Daniel Berger","Nicolai Højgaard","Marco Penge"]},
+  {email:"ajulestompkins@gmail.com", team:"Entry 2",      picks:["Scottie Scheffler","Xander Schauffele","J.J. Spaun","Akshay Bhatia","Jordan Spieth","Sungjae Im","Brooks Koepka","Min Woo Lee","Patrick Cantlay","Patrick Reed"]},
+  {email:"ajulestompkins@gmail.com", team:"Entry 3",      picks:["Scottie Scheffler","Nicolai Højgaard","Hideki Matsuyama","Shane Lowry","Patrick Cantlay","Patrick Reed","Min Woo Lee","Tommy Fleetwood","Justin Rose","Tyrrell Hatton"]},
+  {email:"bcheugh@gmail.com",        team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Rory McIlroy","Brian Harman","Corey Conners","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Jon Rahm","Keegan Bradley"]},
+  {email:"longandrew92@gmail.com",   team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Nicolai Højgaard","Tommy Fleetwood","Maverick McNealy","Justin Rose","Jon Rahm","Justin Thomas"]},
+  {email:"jdeming3@gmail.com",       team:"Entry 1",      picks:["Matt Fitzpatrick","Rory McIlroy","Brian Harman","Nicolai Højgaard","Justin Rose","J.J. Spaun","Jon Rahm","Jordan Spieth","Adam Scott","Cameron Young"]},
+  {email:"mccarnb@gmail.com",        team:"Entry 1",      picks:["Scottie Scheffler","Rory McIlroy","Corey Conners","Brian Harman","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Jon Rahm","Jordan Spieth","Adam Scott"]},
+  {email:"jhs797@gmail.com",         team:"Entry 1",      picks:["Scottie Scheffler","Harris English","Matt Fitzpatrick","Rory McIlroy","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Daniel Berger","Jon Rahm","Jason Day"]},
+  {email:"kevin_mccrady@yahoo.com",  team:"Entry 1",      picks:["Robert MacIntyre","Brian Harman","Jon Rahm","Lee Westwood","Jordan Spieth","Sam Burns","Dean Burmester","Cameron Young","Ben Griffin","Nick Taylor"]},
+  {email:"drcharlie@wellpath.net",   team:"Entry 1",      picks:["Scottie Scheffler","Russell Henley","Corey Conners","Jon Rahm","Tony Finau","Cameron Young","Ben Griffin","Min Woo Lee","Nick Taylor","J.T. Poston"]},
+  {email:"jordankordosky13@gmail.com",team:"Kojo0701 4",  picks:["Scottie Scheffler","Russell Henley","Rickie Fowler","Daniel Berger","Jon Rahm","Sepp Straka","Patrick Reed","Ben Griffin","Jason Day","Tom Hoge"]},
+  {email:"jordankordosky13@gmail.com",team:"Kjo0701 5",   picks:["Viktor Hovland","Tyrrell Hatton","Sepp Straka","Joaquín Niemann","Patrick Reed","Cameron Smith","J.J. Spaun","Nick Taylor","Nicolai Højgaard","Chris Kirk"]},
+  {email:"bomason516@gmail.com",     team:"Entry 1",      picks:["Scottie Scheffler","Xander Schauffele","Matt Fitzpatrick","Rory McIlroy","Brian Harman","Corey Conners","Nicolai Højgaard","Tommy Fleetwood","Justin Rose","Jon Rahm"]},
+];
+
+const OWNERSHIP_DATA = [
+  {player:"Scottie Scheffler",entries:37,pct:0.4684},
+  {player:"Keegan Bradley",   entries:31,pct:0.3924},
+  {player:"Justin Rose",      entries:28,pct:0.3544},
+  {player:"Adam Scott",       entries:27,pct:0.3418},
+  {player:"Tony Finau",       entries:27,pct:0.3418},
+  {player:"Rory McIlroy",     entries:25,pct:0.3165},
+  {player:"Matt Fitzpatrick", entries:24,pct:0.3038},
+  {player:"Nicolai Højgaard", entries:20,pct:0.2532},
+  {player:"Justin Thomas",    entries:19,pct:0.2405},
+  {player:"Jason Day",        entries:19,pct:0.2405},
+  {player:"Daniel Berger",    entries:19,pct:0.2405},
+  {player:"Jon Rahm",         entries:17,pct:0.2152},
+  {player:"Cameron Young",    entries:17,pct:0.2152},
+  {player:"Sepp Straka",      entries:16,pct:0.2025},
+  {player:"Joaquín Niemann",  entries:16,pct:0.2025},
+  {player:"Cameron Smith",    entries:16,pct:0.2025},
+  {player:"Sungjae Im",       entries:16,pct:0.2025},
+  {player:"Patrick Reed",     entries:15,pct:0.1899},
+  {player:"Ben Griffin",      entries:15,pct:0.1899},
+  {player:"J.J. Spaun",       entries:15,pct:0.1899},
+  {player:"Tommy Fleetwood",  entries:14,pct:0.1772},
+  {player:"Harris English",   entries:14,pct:0.1772},
+  {player:"Brian Harman",     entries:13,pct:0.1646},
+  {player:"Maverick McNealy", entries:13,pct:0.1646},
+];
+
+const TIERS = [
+  {label:"Tier 1", desc:"Favorites",    golfers:["Scottie Scheffler","Rory McIlroy","Xander Schauffele","Jon Rahm","Wyndham Clark"]},
+  {label:"Tier 2", desc:"Contenders",   golfers:["Matt Fitzpatrick","Harris English","Robert MacIntyre","Chris Gotterup","Haotong Li"]},
+  {label:"Tier 3", desc:"Mid-Range",    golfers:["Brian Harman","Corey Conners","Russell Henley","Bryson DeChambeau","Rickie Fowler"]},
+  {label:"Tier 4", desc:"Challengers",  golfers:["Nicolai Højgaard","Hideki Matsuyama","Tommy Fleetwood","Justin Rose","Tyrrell Hatton"]},
+  {label:"Tier 5", desc:"Value",        golfers:["Maverick McNealy","J.J. Spaun","Dustin Johnson","Harry Hall","Akshay Bhatia"]},
+  {label:"Tier 6", desc:"Sleepers",     golfers:["Shane Lowry","Daniel Berger","Aaron Rai","Jordan Spieth","Viktor Hovland"]},
+  {label:"Tier 7", desc:"Wildcards",    golfers:["Keegan Bradley","Justin Thomas","Adam Scott","Tony Finau","Jason Day"]},
+  {label:"Tier 8", desc:"Field",        golfers:["Patrick Reed","Min Woo Lee","Ben Griffin","Cameron Smith","Sepp Straka"]},
+  {label:"Tier 9", desc:"Long Shots",   golfers:["Brooks Koepka","Cameron Young","Taylor Pendrith","Nick Taylor","Patrick Cantlay"]},
+  {label:"Tier 10",desc:"Dark Horses",  golfers:["Sungjae Im","Joaquín Niemann","J.T. Poston","Sam Burns","Dean Burmester"]},
+];
+
+// ─────────────────────────────────────────────
+// SCORE ENGINE
+// ─────────────────────────────────────────────
+const gs = n => GOLFER_SCORES[n] ? GOLFER_SCORES[n].score : 11;
+const fmt = s => s === 11 ? 'MC' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
+const cls = s => s < 0 ? 'neg' : s > 0 ? 'pos' : 'eve';
+
+function calcEntry(e) {
+  const scores = e.picks.map(n => ({name:n, score:gs(n)})).sort((a,b)=>a.score-b.score);
+  const top4 = scores.slice(0,4);
+  return {...e, scores, top4, total: top4.reduce((s,g)=>s+g.score,0)};
+}
+
+function getRanked() {
+  return ENTRIES.map(calcEntry).sort((a,b)=>a.total-b.total);
+}
+
+// ─────────────────────────────────────────────
+// STANDINGS
+// ─────────────────────────────────────────────
+function renderStandings() {
+  const ranked = getRanked();
+  document.getElementById('entry-count').textContent = ranked.length;
+  const el = document.getElementById('standings-list');
+  let rank=1, html='';
+  ranked.forEach((e,i) => {
+    if (i>0 && ranked[i].total!==ranked[i-1].total) rank=i+1;
+    const sc=e.total, scf=fmt(sc), scc=cls(sc);
+    const medal = rank<=3 ? ['🥇','🥈','🥉'][rank-1] : rank;
+    const top4Str = e.top4.map(g=>fmt(g.score)).join(' · ');
+    html += `
+      <div class="standing-row" onclick="togglePanel(this,${i})">
+        <div class="s-rank">${medal}</div>
+        <div class="s-info">
+          <div class="s-team">${e.team}</div>
+          <div class="s-email">${e.email}</div>
+        </div>
+        <div class="s-right">
+          <div class="s-score ${scc}">${scf}</div>
+          <div class="s-top4">${top4Str}</div>
+        </div>
+        <div class="s-arrow" id="arr-${i}">›</div>
+      </div>
+      <div class="picks-panel" id="panel-${i}">
+        ${e.scores.map((g,j)=>{
+          const isTop=j<4, gd=GOLFER_SCORES[g.name];
+          const pos=gd?gd.pos:'—';
+          return `<div class="mini-pick ${isTop?'is-top':''}">
+            <div class="mini-pick-left">
+              ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'}
+              <span class="mini-pick-name">${g.name}</span>
+              <span class="mini-pick-pos">${pos}</span>
+            </div>
+            <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function togglePanel(row, i) {
+  const panel = document.getElementById('panel-'+i);
+  const arr = document.getElementById('arr-'+i);
+  const open = panel.classList.toggle('open');
+  arr.textContent = open ? '⌄' : '›';
+}
+
+// ─────────────────────────────────────────────
+// MY TEAM
+// ─────────────────────────────────────────────
+function searchTeam() {
+  const q = document.getElementById('email-search').value.toLowerCase().trim();
+  const el = document.getElementById('myteam-results');
+  if (!q) { el.innerHTML=''; return; }
+  const matches = ENTRIES.filter(e=>e.email.toLowerCase().includes(q));
+  if (!matches.length) { el.innerHTML='<div class="empty-state">No entries found for that email.</div>'; return; }
+  const ranked = getRanked();
+  el.innerHTML = matches.map((e,mi)=>{
+    const calc = calcEntry(e);
+    const rank = ranked.findIndex(r=>r.email===e.email&&r.team===e.team)+1;
+    const sc=calc.total, scf=fmt(sc), scc=cls(sc);
+    return `
+      <div class="team-card">
+        <h2>${e.team}</h2>
+        <div class="tc-email">${e.email}</div>
+        <div class="tc-stats">
+          <div class="tc-stat"><div class="tc-val ${scc}">${scf}</div><div class="tc-lbl">Score</div></div>
+          <div class="tc-stat"><div class="tc-val">#${rank}</div><div class="tc-lbl">Pool Rank</div></div>
+          <div class="tc-stat"><div class="tc-val">${matches.length>1?mi+1+'/'+matches.length:'—'}</div><div class="tc-lbl">Entry</div></div>
+        </div>
+      </div>
+      <div class="picks-card" style="margin-bottom:16px">
+        ${calc.scores.map((g,j)=>{
+          const isTop=j<4, gd=GOLFER_SCORES[g.name];
+          const pos=gd?gd.pos:'—', thru=gd?gd.thru:'';
+          return `<div class="pick-row">
+            <div class="pick-n">${j+1}</div>
+            <div class="pick-info">
+              <div class="pick-name">${g.name}${isTop?'<span class="pick-badge">TOP 4</span>':''}</div>
+              <div class="pick-pos">${pos}${pos!=='MC'?' · Thru '+thru:' · Missed Cut'}</div>
+            </div>
+            <div class="pick-score ${cls(g.score)}">${fmt(g.score)}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// LEADERBOARD
+// ─────────────────────────────────────────────
+let lbFilter='all';
+function setLbFilter(f,btn) {
+  lbFilter=f;
+  document.querySelectorAll('#view-leaderboard .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderLeaderboard();
+}
+function renderLeaderboard() {
+  const poolNames = new Set(ENTRIES.flatMap(e=>e.picks));
+  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d})).sort((a,b)=>a.score-b.score);
+  if (lbFilter==='pool') players=players.filter(p=>poolNames.has(p.name));
+  if (lbFilter==='top20') players=players.slice(0,20);
+  document.getElementById('leaderboard-list').innerHTML = players.map(p=>{
+    const mc=p.thru==='MC', inPool=poolNames.has(p.name);
+    const sc=p.score, scf=fmt(sc), scc=cls(sc);
+    const rounds = [p.r1,p.r2,p.r3,p.r4].filter(Boolean);
+    return `<div class="lb-row">
+      <div class="lb-pos">${mc?'<span style="color:var(--red);font-size:11px">MC</span>':p.pos}</div>
+      <div class="lb-info">
+        <div class="lb-name">${p.name}${inPool?'<span class="in-pool-dot"></span>':''}</div>
+        <div class="lb-sub">${mc?'Missed Cut':'Thru '+p.thru} · ${rounds.join('-')}</div>
+      </div>
+      <div class="lb-score ${scc}">${scf}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// OWNERSHIP
+// ─────────────────────────────────────────────
+let ownFilter='most';
+function setOwnFilter(f,btn) {
+  ownFilter=f;
+  document.querySelectorAll('#view-ownership .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderOwnership();
+}
+function renderOwnership() {
+  const scoreMap={};
+  Object.entries(GOLFER_SCORES).forEach(([n,g])=>scoreMap[n]=g.score);
+  let data=[...OWNERSHIP_DATA];
+  const maxPct=data[0].pct;
+  if (ownFilter==='least') data=[...data].sort((a,b)=>a.pct-b.pct);
+  document.getElementById('ownership-list').innerHTML = data.map(d=>{
+    const sc=scoreMap[d.player];
+    const scf=sc!==undefined?fmt(sc):'—', scc=sc!==undefined?cls(sc):'eve';
+    return `<div class="own-row">
+      <div class="own-hdr">
+        <span class="own-name">${d.player}</span>
+        <div class="own-right">
+          <span class="own-score-tag ${scc}">${scf}</span>
+          <span class="own-pct">${(d.pct*100).toFixed(1)}%</span>
+        </div>
+      </div>
+      <div class="own-bar-bg"><div class="own-bar" style="width:${(d.pct/maxPct*100).toFixed(1)}%"></div></div>
+      <div class="own-sub">${d.entries} of 79 entries</div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// ENTRY FORM
+// ─────────────────────────────────────────────
+let picks=[];
+function buildTiers() {
+  document.getElementById('golfer-tiers').innerHTML = TIERS.map((t,ti)=>`
+    <div class="tier-section">
+      <div class="tier-lbl-row">
+        <span class="tier-badge">${t.label}</span>
+        <span class="tier-desc">${t.desc} — pick 1</span>
+      </div>
+      <div class="golfer-grid">
+        ${t.golfers.map(name=>{
+          const gd=GOLFER_SCORES[name], sc=gd?(gd.score<0?gd.score:gd.score>0?'+'+gd.score:'E'):'—';
+          return `<div class="g-chip" onclick="togglePick('${name}',${ti},this)" data-tier="${ti}" data-name="${name}">
+            <div><div class="g-chip-name">${name}</div><div class="g-chip-score">${sc}</div></div>
+            <div class="g-check">✓</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function togglePick(name,ti,chip) {
+  const ex=picks.findIndex(p=>p.name===name);
+  const tierEx=picks.findIndex(p=>p.tier===ti);
+  if (ex>=0) {
+    picks.splice(ex,1); chip.classList.remove('selected');
+  } else {
+    if (tierEx>=0) {
+      document.querySelectorAll(`[data-name="${picks[tierEx].name}"]`).forEach(c=>c.classList.remove('selected'));
+      picks.splice(tierEx,1);
+    }
+    picks.push({name,tier:ti}); chip.classList.add('selected');
+  }
+  updatePicksCounter();
+}
+
+function updatePicksCounter() {
+  const n=picks.length, email=document.getElementById('entry-email').value;
+  const counter=document.getElementById('picks-counter');
+  document.getElementById('picks-count').textContent=`${n} / 10`;
+  counter.classList.toggle('ready',n===10);
+  document.getElementById('submit-btn').disabled = n!==10||!email;
+}
+
+function submitEntry() {
+  const email=document.getElementById('entry-email').value.trim();
+  const team=document.getElementById('entry-team').value.trim()||'My Entry';
+  if (!email) { showToast('Enter your email first'); return; }
+  if (picks.length!==10) { showToast('Pick exactly 10 golfers'); return; }
+  const existing=ENTRIES.filter(e=>e.email.toLowerCase()===email.toLowerCase());
+  if (existing.length>=5) { showToast('Max 5 entries per person'); return; }
+  ENTRIES.push({email,team,picks:picks.map(p=>p.name)});
+  showToast('✓ Entry submitted!');
+  picks=[]; buildTiers(); updatePicksCounter();
+  document.getElementById('entry-email').value='';
+  document.getElementById('entry-team').value='';
+  renderStandings();
+}
+
+// ─────────────────────────────────────────────
+// ESPN API
+// ─────────────────────────────────────────────
+async function fetchESPN() {
+  try {
+    const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga');
+    if (!res.ok) throw new Error();
+    const data=await res.json();
+    const comps=data.events?.[0]?.competitions?.[0]?.competitors||[];
+    if (!comps.length) throw new Error();
+    document.getElementById('hdr-sub').textContent=(data.events[0].name||'The Open')+' · Live';
+    comps.forEach(c=>{
+      const name=c.athlete?.displayName; if(!name) return;
+      const raw=c.status?.displayValue||c.score||'0';
+      const score=raw==='E'?0:parseInt(raw.replace('+',''))||0;
+      const mc=c.status?.type?.name?.includes('CUT')||false;
+      const lines=c.linescores||[];
+      GOLFER_SCORES[name]={
+        pos:c.status?.position?.displayName||'—',
+        score:mc?11:score, thru:mc?'MC':c.status?.thru||'F',
+        r1:lines[0]?.value||null, r2:lines[1]?.value||null,
+        r3:lines[2]?.value||null, r4:lines[3]?.value||null
+      };
+    });
+    setApiStatus('live', `Live · ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`);
+    renderAll();
+  } catch {
+    setApiStatus('cached', 'Archived · 2025 Open');
+    renderAll();
+  }
+}
+
+function setApiStatus(state, text) {
+  const dot=document.getElementById('live-dot');
+  dot.className='live-dot'+(state==='live'?' on':'');
+  document.getElementById('hdr-status').textContent=text;
+}
+
+function refreshData() {
+  setApiStatus('','Refreshing…');
+  fetchESPN();
+}
+
+// ─────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────
+function switchTab(name,btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+let toastT;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); }
+
+// INIT
+buildTiers(); renderAll(); fetchESPN();
+</script>
+</body>
+</html>
