@@ -1,238 +1,786 @@
-/**
- * EAST POLE ⛳ Golf Pool — Houston Open Form Creator
- * Texas Children's Houston Open | March 26–29, 2026 | Memorial Park, Houston TX
- *
- * Run createHoustonOpenPool() to:
- *  1. Create the Google Form with all 12 questions
- *  2. Link a Google Sheet to capture responses
- *  3. Add the Apps Script JSON endpoint (doGet) to the sheet
- *  4. Log both URLs to the console
- */
-
-// ─── TIER DATA ────────────────────────────────────────────────────────────────
-// Golfers ordered by betting odds (tighter tiers = bigger pool swings)
-
-var TIERS = [
-  {
-    label: "Tier 1 — The Favorite",
-    description: "Top-ranked favorites to win (best odds)",
-    golfers: [
-      "Scottie Scheffler",
-      "Rory McIlroy",
-    ]
-  },
-  {
-    label: "Tier 2 — Contenders",
-    description: "Strong contenders with elite recent form",
-    golfers: [
-      "Xander Schauffele",
-      "Collin Morikawa",
-      "Min Woo Lee (Defending Champion)",
-    ]
-  },
-  {
-    label: "Tier 3 — Challengers",
-    description: "In-form players capable of going low",
-    golfers: [
-      "Chris Gotterup",
-      "Jake Knapp",
-      "Cameron Young",
-      "Wyndham Clark",
-      "Sungjae Im",
-    ]
-  },
-  {
-    label: "Tier 4 — Live Longshots",
-    description: "Big names with course/form upside",
-    golfers: [
-      "Sam Burns",
-      "Brooks Koepka",
-      "Rickie Fowler",
-      "Nicolai Højgaard",
-      "Maverick McNealy",
-    ]
-  },
-  {
-    label: "Tier 5 — Value Picks",
-    description: "Solid players at attractive prices",
-    golfers: [
-      "Si Woo Kim",
-      "Harris English",
-      "Tony Finau",
-      "Jason Day",
-      "Shane Lowry",
-    ]
-  },
-  {
-    label: "Tier 6 — Field Players",
-    description: "Experienced tour players flying under the radar",
-    golfers: [
-      "Adam Scott",
-      "Ben Griffin",
-      "Harry Hall",
-      "Aaron Rai",
-      "Will Zalatoris",
-    ]
-  },
-  {
-    label: "Tier 7 — Sleepers",
-    description: "Emerging players with sneaky upside",
-    golfers: [
-      "Sahith Theegala",
-      "Karl Vilips",
-      "Gordon Sargent",
-      "Luke Clanton",
-      "Ryan Gerard",
-    ]
-  },
-  {
-    label: "Tier 8 — Tournament Players",
-    description: "Grinders who can catch lightning in a bottle",
-    golfers: [
-      "Ryan Fox",
-      "Tom Kim",
-      "Billy Horschel",
-      "Austin Eckroat",
-      "Stephan Jaeger",
-    ]
-  },
-  {
-    label: "Tier 9 — Dark Horses",
-    description: "Long shots with course or hot-streak potential",
-    golfers: [
-      "Pierceson Coody",
-      "Nico Echavarria",
-      "Gary Woodland",
-      "Cameron Davis",
-      "Davis Thompson",
-    ]
-  },
-  {
-    label: "Tier 10 — The Chaos Pick",
-    description: "High-risk, high-reward — the wildcard of the pool",
-    golfers: [
-      "Justin Rose",
-      "Beau Hossler",
-      "Ben Taylor",
-      "Max Greyserman",
-      "Frankie Capan III",
-    ]
-  }
-];
-
-// ─── MAIN FUNCTION ────────────────────────────────────────────────────────────
-
-function createHoustonOpenPool() {
-  // 1. Create the form
-  var form = FormApp.create("⛳ East Pole Golf Pool — Houston Open 2026");
-  form.setDescription(
-    "Texas Children's Houston Open | March 26–29, 2026 | Memorial Park, Houston TX\n\n" +
-    "Pick ONE golfer from each of the 10 tiers. Your best 4 scores count toward your total. " +
-    "Lowest combined score wins. Submissions close Thursday morning before the first round.\n\n" +
-    "Entry fee: $20 · Payouts: 1st (50%), 2nd (30%), 3rd (20%)"
-  );
-  form.setCollectEmail(true);
-  form.setLimitOneResponsePerUser(false);
-  form.setAllowResponseEdits(false);
-  form.setConfirmationMessage(
-    "🏌️ You're in! Good luck at Memorial Park this week.\n" +
-    "Standings will update live once the tournament starts."
-  );
-
-  // 2. Team Name (short text)
-  var teamQ = form.addTextItem();
-  teamQ.setTitle("Team Name");
-  teamQ.setHelpText("What do you want your team called on the leaderboard? (e.g. 'Scheffler's Angels')");
-  teamQ.setRequired(true);
-
-  // 3. Tier dropdowns (1–10)
-  for (var i = 0; i < TIERS.length; i++) {
-    var tier = TIERS[i];
-    var tierNum = i + 1;
-    var item = form.addListItem();
-    item.setTitle(tier.label);
-    item.setHelpText(tier.description + " — pick exactly one.");
-    item.setRequired(true);
-
-    var choices = tier.golfers.map(function(name) {
-      return item.createChoice(name);
-    });
-    item.setChoices(choices);
-  }
-
-  // 4. Create a linked Google Sheet
-  var ss = SpreadsheetApp.create("⛳ Houston Open Pool 2026 — Responses");
-  form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
-
-  // 5. Add the JSON endpoint script as a note in the sheet
-  var sheet = ss.getSheets()[0];
-  sheet.getRange("A1").setNote(
-    "Apps Script JSON endpoint:\n\n" +
-    "Deploy a doGet() function from Extensions → Apps Script.\n" +
-    "Paste the doGet code from the golf pool HTML app setup guide."
-  );
-
-  // 6. Format the response sheet headers (after form links it)
-  Utilities.sleep(2000); // give Forms a moment to link the sheet
-
-  // 7. Publish the form
-  var formUrl = form.getPublishedUrl();
-  var editUrl = form.getEditUrl();
-  var sheetUrl = ss.getUrl();
-
-  // 8. Log results
-  Logger.log("=== HOUSTON OPEN POOL CREATED ===");
-  Logger.log("📋 Form (share this link): " + formUrl);
-  Logger.log("✏️  Form edit URL: " + editUrl);
-  Logger.log("📊 Response sheet: " + sheetUrl);
-  Logger.log("Sheet ID (for Apps Script): " + ss.getId());
-
-  // Show a UI alert with the URLs
-  var ui = SpreadsheetApp.getUi ? SpreadsheetApp.getUi() : null;
-
-  return {
-    formUrl: formUrl,
-    editUrl: editUrl,
-    sheetUrl: sheetUrl,
-    sheetId: ss.getId()
-  };
-}
-
-// ─── JSON ENDPOINT ────────────────────────────────────────────────────────────
-// This function reads from your response sheet and returns JSON for the HTML app
-// Deploy this as a Web App with "Anyone" access
-
-function doGet(e) {
-  // Use the specific response sheet ID
-  var SHEET_ID = "1PB55403CCAdHNZcrlvE6fq-xyvQ7i3Sebqe_KFAAhDs";
-  var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheets()[0];
-  var data = sheet.getDataRange().getValues();
-  var entries = [];
-
-  // Column mapping:
-  // Col 0: Timestamp, Col 1: Email, Col 2: Team Name, Col 3–12: Tier 1–10
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    if (!row[2]) continue; // skip empty rows
-    var picks = [];
-    for (var t = 3; t <= 12; t++) {
-      var pick = String(row[t] || "").replace(" (Defending Champion)", "").trim();
-      if (pick) picks.push(pick);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="East Pole Golf">
+  <title>East Pole Golf Pool</title>
+  <style>
+    :root {
+      --green: #52c272;
+      --green-dim: #3a9955;
+      --green-cap: #4db96a;
+      --gold: #c9a84c;
+      --red: #ff453a;
+      --bg: #081410;
+      --card: #0f2016;
+      --card2: #162b1c;
+      --text: #e8f2ea;
+      --text2: #7aaa84;
+      --text3: #3d6b46;
+      --border: #1c3824;
+      --safe-top: env(safe-area-inset-top, 47px);
+      --safe-bot: env(safe-area-inset-bottom, 34px);
+      --header-h: 56px;
+      --nav-h: 60px;
     }
-    entries.push({
-      name: row[2],          // Team Name
-      email: row[1],         // Email
-      picks: picks,          // Array of 10 golfer names
-      timestamp: String(row[0])
-    });
-  }
-
-  var output = ContentService.createTextOutput(
-    JSON.stringify({ entries: entries, updated: new Date().toISOString() })
-  );
-  output.setMimeType(ContentService.MimeType.JSON);
-
-  // Allow the HTML app to fetch from any origin
-  return output;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--bg);
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', sans-serif;
+      color: var(--text);
+      overscroll-behavior: none;
+    }
+    #hdr {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      background: #143828;
+      padding-top: var(--safe-top);
+      border-bottom: 2px solid #1e4f30;
+    }
+    .hdr-inner {
+      height: var(--header-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px;
+    }
+    .hdr-left h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
+    .hdr-left p { font-size: 11px; color: rgba(255,255,255,0.55); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 2px; }
+    .hdr-pill {
+      background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px; padding: 6px 12px;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.4px; color: rgba(255,255,255,0.85);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .hdr-pill .live-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.3); flex-shrink: 0; }
+    .hdr-pill .live-dot.on { background: #34c759; }
+    #views {
+      position: fixed;
+      top: calc(var(--header-h) + var(--safe-top) + 1px);
+      bottom: calc(var(--nav-h) + var(--safe-bot));
+      left: 0; right: 0; overflow: hidden;
+    }
+    .view { display: none; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .view.active { display: block; }
+    #nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: #143828;
+      border-top: 2px solid #1e4f30;
+      padding-bottom: var(--safe-bot);
+      height: calc(var(--nav-h) + var(--safe-bot));
+      display: flex;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 4px; border: none; background: none;
+      cursor: pointer; color: rgba(255,255,255,0.35); font-size: 10px; font-weight: 600;
+      letter-spacing: 0.2px; padding-top: 6px;
+    }
+    .nav-btn .nav-ico { font-size: 24px; line-height: 1; }
+    .nav-btn.active { color: var(--green); }
+    .section-pad { padding: 0 0 100px; }
+    .section-title {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text2);
+      padding: 20px 18px 10px;
+    }
+    .divider { height: 1px; background: var(--border); margin: 0; }
+    .payout-card {
+      flex: 1; background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 10px; padding: 10px 8px 8px; text-align: center;
+    }
+    .payout-card .pc-lbl { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; }
+    .payout-card .pc-amt { font-size: 20px; font-weight: 900; color: #f5c518; margin: 4px 0 3px; }
+    .payout-card .pc-who { font-size: 10px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .api-bar {
+      margin: 10px 14px 0;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 14px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text2);
+    }
+    .standing-row {
+      display: flex; align-items: center;
+      padding: 11px 16px; border-bottom: 1px solid #0d1f12;
+      cursor: pointer; gap: 0;
+    }
+    .standing-row:nth-child(odd)  { background: #091410; }
+    .standing-row:nth-child(even) { background: #0b1812; }
+    .standing-row:active { background: #162b1c; }
+    .s-rank {
+      width: 44px; font-size: 16px; font-weight: 800; flex-shrink: 0;
+      text-align: left; color: #4a8054;
+    }
+    .s-info { flex: 1; min-width: 0; }
+    .s-team { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+    .s-email { font-size: 11px; color: #4a8054; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .s-score { font-size: 21px; font-weight: 900; width: 56px; text-align: right; flex-shrink: 0; }
+    .s-top4 { font-size: 10px; color: #5a8a64; text-align: right; width: 60px; flex-shrink: 0; padding-right: 4px; }
+    .s-arrow { color: #3a6a44; font-size: 16px; flex-shrink: 0; margin-left: 6px; }
+    .neg { color: var(--green); }
+    .pos { color: var(--red); }
+    .eve { color: #6a9070; }
+    .picks-panel { display: none; border-bottom: 1px solid #0d1f12; }
+    .picks-panel.open { display: block; }
+    .mini-pick {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 16px 8px 60px; border-bottom: 1px solid #0d1f12;
+      font-size: 14px;
+    }
+    .mini-pick:nth-child(odd)  { background: #080f0a; }
+    .mini-pick:nth-child(even) { background: #09130b; }
+    .mini-pick:last-child { border-bottom: none; }
+    .mini-pick.is-top { background: rgba(245,197,24,0.05) !important; border-left: 2px solid rgba(245,197,24,0.3); }
+    .mini-pick-left { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .star { font-size: 10px; color: #f5c518; }
+    .mini-pick-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e0eee2; }
+    .mini-pick-pos { font-size: 10px; color: #4a8054; margin-left: 4px; flex-shrink: 0; }
+    .mini-pick-score { font-size: 14px; font-weight: 800; flex-shrink: 0; }
+    .seg-wrap { padding: 0 14px 10px; }
+    .seg {
+      display: flex; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 3px; overflow: hidden;
+    }
+    .seg-btn {
+      flex: 1; padding: 7px 4px; font-size: 13px; font-weight: 600;
+      border: none; background: none; border-radius: 8px; cursor: pointer;
+      color: var(--text2); font-family: inherit; transition: all 0.18s;
+    }
+    .seg-btn.active { background: rgba(82,194,114,0.18); color: var(--green); }
+    .tv-header {
+      background: linear-gradient(180deg, #1a4d2e 0%, #0e2a18 100%);
+      padding: 14px 18px 12px; text-align: center;
+      border-bottom: 2px solid #c9a84c;
+    }
+    .tv-title { font-size: 13px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: #c9a84c; }
+    .tv-sub { font-size: 10px; color: rgba(201,168,76,0.6); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+    .tv-col-hdr {
+      display: flex; align-items: center; padding: 5px 16px;
+      background: #091510; border-bottom: 1px solid #162b1c;
+      font-size: 9px; font-weight: 800; color: #3a7a44; letter-spacing: 0.8px; text-transform: uppercase;
+    }
+    .tv-row {
+      display: flex; align-items: center; padding: 10px 16px;
+      border-bottom: 1px solid #0d1f12;
+    }
+    .tv-row:nth-child(odd)  { background: #091410; }
+    .tv-row:nth-child(even) { background: #0b1812; }
+    .tv-row.tv-mc { opacity: 0.5; }
+    .tv-pos { width: 38px; font-size: 12px; font-weight: 700; color: #4a8054; flex-shrink: 0; }
+    .tv-flag { width: 26px; font-size: 17px; line-height: 1; flex-shrink: 0; }
+    .tv-name { flex: 1; font-size: 15px; font-weight: 700; color: #ffffff; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tv-pool-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-left: 5px; vertical-align: middle; }
+    .tv-score { width: 54px; font-size: 21px; font-weight: 900; text-align: right; flex-shrink: 0; }
+    .tv-score.neg { color: #f5c518; }
+    .tv-score.pos { color: #ff453a; }
+    .tv-score.eve { color: #a0b0a4; }
+    .tv-score.mc  { color: #ff453a; font-size: 13px; font-weight: 800; }
+    .tv-round { width: 34px; font-size: 13px; color: #6a9070; text-align: right; flex-shrink: 0; }
+    .tv-thru  { width: 28px; font-size: 10px; color: #4a8054; text-align: right; flex-shrink: 0; }
+    .own-row { padding: 12px 16px; border-bottom: 1px solid #0d1f12; }
+    .own-row:nth-child(odd)  { background: #091410; }
+    .own-row:nth-child(even) { background: #0b1812; }
+    .own-row:last-child { border-bottom: none; }
+    .own-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .own-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .own-right { display: flex; align-items: center; gap: 10px; }
+    .own-pct { font-size: 14px; font-weight: 900; color: var(--green); }
+    .own-score-tag { font-size: 13px; font-weight: 800; }
+    .own-bar-bg { background: #0d1f12; border-radius: 5px; height: 5px; overflow: hidden; }
+    .own-bar { background: linear-gradient(90deg, #2a7a3a, var(--green)); height: 100%; border-radius: 5px; }
+    .own-sub { font-size: 10px; color: #4a8054; margin-top: 4px; }
+    .search-bar {
+      margin: 14px 14px 0;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 12px 16px;
+    }
+    .search-bar svg { width: 18px; height: 18px; color: var(--text3); flex-shrink: 0; }
+    .search-bar input {
+      border: none; background: none; font-size: 17px; flex: 1; outline: none;
+      color: var(--text); font-family: inherit;
+    }
+    .search-bar input::placeholder { color: var(--text3); }
+    .team-card {
+      margin: 14px 14px 0;
+      background: linear-gradient(145deg, #0f2016, #0c1a10);
+      border: 1px solid #1e3d28; border-radius: 16px; padding: 18px;
+    }
+    .team-card h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.4px; }
+    .team-card .tc-email { font-size: 13px; color: var(--text2); margin-top: 3px; }
+    .tc-stats { display: flex; gap: 10px; margin-top: 16px; }
+    .tc-stat {
+      flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; padding: 12px 10px;
+    }
+    .tc-val { font-size: 26px; font-weight: 800; }
+    .tc-lbl { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .picks-card { margin: 10px 12px 0; overflow: hidden; border-radius: 12px; border: 1px solid #1c3824; }
+    .pick-row { display: flex; align-items: center; padding: 11px 14px; border-bottom: 1px solid #0d1f12; gap: 10px; }
+    .pick-row:nth-child(odd)  { background: #091410; }
+    .pick-row:nth-child(even) { background: #0b1812; }
+    .pick-row:last-child { border-bottom: none; }
+    .pick-n { width: 22px; font-size: 12px; color: #4a8054; font-weight: 700; flex-shrink: 0; }
+    .pick-info { flex: 1; min-width: 0; }
+    .pick-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .pick-pos { font-size: 11px; color: #4a8054; margin-top: 2px; }
+    .pick-badge { font-size: 10px; font-weight: 700; background: var(--green); color: #081410; padding: 2px 6px; border-radius: 5px; margin-left: 6px; }
+    .pick-score { font-size: 20px; font-weight: 900; flex-shrink: 0; }
+    #splash {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999;
+      background-image: url('https://photo-assets.masters.com/images/pics/tablet/m_mag_lane_wide.jpg');
+      background-size: cover; background-position: center; background-repeat: no-repeat;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: opacity 0.5s ease;
+    }
+    #splash::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.5) 100%);
+      z-index: 1;
+    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+    .splash-content {
+      text-align: center; animation: splashFade 0.8s ease 0.2s both;
+      position: relative; z-index: 2;
+    }
+    .splash-header {
+      background: linear-gradient(90deg, rgba(20, 56, 40, 0.9), rgba(14, 42, 24, 0.9));
+      border-bottom: 3px solid #c9a84c;
+      padding: 20px 40px;
+      margin-bottom: 40px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+    .splash-title {
+      font-size: 48px; font-weight: 900; letter-spacing: 3px;
+      color: #c9a84c; text-transform: uppercase; margin: 0;
+    }
+    .splash-branding {
+      margin: 40px 0;
+      animation: fadeInUp 0.8s ease-out 0.5s both;
+    }
+    .brand-text {
+      font-size: 32px; font-weight: 900; letter-spacing: 2px;
+      color: #c9a84c; text-transform: uppercase; margin-bottom: 12px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+    }
+    .brand-subtext {
+      font-size: 16px; font-weight: 700; letter-spacing: 1px;
+      color: rgba(255,255,255,0.9); text-transform: uppercase;
+      text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+    }
+    .splash-brand { display: none; }
+    .splash-cta {
+      font-size: 16px; color: rgba(255,255,255,0.6); animation: bounce 2s infinite;
+    }
+    .logo-capsule {
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(8px);
+      border-radius: 40px;
+      padding: 16px 24px;
+      margin: 20px 0;
+      animation: fadeInUp 0.8s ease-out 0.35s both;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .splash-masters-logo {
+      max-width: 200px; height: auto;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+    }
+    @keyframes splashFade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInScale { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+    @keyframes fadeInPulse { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    #toast {
+      position: fixed; bottom: calc(var(--nav-h) + var(--safe-bot) + 14px);
+      left: 50%; transform: translateX(-50%) translateY(16px);
+      background: rgba(82,194,114,0.92); color: #081410;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      padding: 11px 20px; border-radius: 22px; font-size: 14px; font-weight: 700;
+      z-index: 999; opacity: 0; transition: all 0.22s; pointer-events: none; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .empty-state { text-align: center; padding: 60px 24px; color: var(--text2); font-size: 15px; }
+    .spin {
+      display: inline-block; width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.25); border-top-color: var(--green);
+      border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .is-my-team { background: rgba(82,194,114,0.15) !important; border-left: 3px solid var(--green) !important; }
+    .is-my-pick { color: var(--gold) !important; font-weight: 800; }
+    .hdr-team-badge { font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing: 0.4px; margin-top: 2px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hdr-switch { font-size: 11px; color: var(--text3); cursor: pointer; margin-top: 4px; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="splash" onclick="dismissSplash()">
+    <div class="splash-content">
+      <div class="splash-header">
+        <h1 class="splash-title">Houston Open</h1>
+      </div>
+      <div class="logo-capsule">
+        <img src="https://photo-assets.masters.com/images/pics/misc/Masters_Lockup1A_RGB.png" alt="Masters Logo" class="splash-masters-logo">
+      </div>
+      <div class="splash-branding">
+        <div class="brand-text">EAST POLE COFFEE</div>
+        <div class="brand-subtext">Houston Open Golf Pool</div>
+      </div>
+      <div class="splash-cta">Tap to continue</div>
+    </div>
+  </div>
+<header id="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-left">
+      <h1>⛳ East Pole Pool</h1>
+      <p id="hdr-sub">Houston Open 2026 · March 26-29</p>
+      <div id="hdr-team-locked" style="display:none">
+        <div style="font-size:11px;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px">Your Team</div>
+        <div id="hdr-locked-email" style="font-size:14px;color:#c9a84c;font-weight:700;cursor:pointer" onclick="showTeamInput()"></div>
+      </div>
+      <div id="hdr-team-input" style="display:none">
+        <div style="font-size:11px;color:var(--text2);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">Select Your Team</div>
+        <div style="display:flex;gap:6px">
+          <input type="email" id="hdr-email-input" placeholder="your@email.com" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;outline:none">
+          <button onclick="lockTeamEmail()" style="padding:8px 12px;background:var(--green);color:#fff;font-weight:700;border:none;border-radius:8px;cursor:pointer;font-size:12px">Lock</button>
+        </div>
+      </div>
+    </div>
+    <div class="hdr-pill" onclick="refreshData()" style="cursor:pointer">
+      <div class="live-dot" id="live-dot"></div>
+      <span id="hdr-status">Loading…</span>
+    </div>
+  </div>
+</header>
+<div id="views">
+  <div class="view" id="view-standings" style="padding-bottom:100px">
+    <div class="tv-header">
+      <div class="tv-title">Pool Standings</div>
+      <div class="tv-sub">Houston Open 2026 · <span id="entry-count">0</span> Entries</div>
+    </div>
+    <div class="tv-col-hdr" style="margin-top:10px">
+      <div style="width:44px">Rank</div>
+      <div style="flex:1">Entry</div>
+      <div style="width:56px;text-align:right">Score</div>
+      <div style="width:60px;text-align:right;padding-right:4px">Top 4</div>
+    </div>
+    <div id="standings-list"></div>
+  </div>
+  <div class="view" id="view-myteam" style="padding-bottom:100px">
+    <div class="tv-header">
+      <div class="tv-title">My Team</div>
+      <div class="tv-sub">Search by email to view your picks</div>
+    </div>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="email" id="email-search" placeholder="Enter your email…" oninput="searchTeam()" autocomplete="email" autocorrect="off" autocapitalize="none">
+    </div>
+    <div id="myteam-results"></div>
+  </div>
+  <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
+    <div class="tv-header">
+      <div class="tv-title">Houston Open</div>
+      <div class="tv-sub">Tournament Leaderboard · March 26-29, 2026</div>
+    </div>
+    <div class="seg-wrap" style="padding:10px 14px 6px">
+      <div class="seg">
+        <button class="seg-btn active" onclick="setLbFilter('all',this)">All Players</button>
+        <button class="seg-btn" onclick="setLbFilter('pool',this)">In Pool</button>
+        <button class="seg-btn" onclick="setLbFilter('top20',this)">Top 20</button>
+      </div>
+    </div>
+    <div id="leaderboard-list"></div>
+  </div>
+  <div class="view" id="view-ownership" style="padding-bottom:100px">
+    <div class="tv-header">
+      <div class="tv-title">Ownership</div>
+      <div class="tv-sub" id="ownership-sub">Pick popularity · No entries yet</div>
+    </div>
+    <div class="seg-wrap" style="padding:10px 14px 6px">
+      <div class="seg">
+        <button class="seg-btn active" onclick="setOwnFilter('most',this)">Most Owned</button>
+        <button class="seg-btn" onclick="setOwnFilter('least',this)">Unique Picks</button>
+      </div>
+    </div>
+    <div id="ownership-list"></div>
+  </div>
+</div>
+<nav id="nav">
+  <button class="nav-btn active" onclick="switchTab('leaderboard',this)">
+    <div class="nav-ico">📊</div>
+    Board
+  </button>
+  <button class="nav-btn" onclick="switchTab('standings',this)">
+    <div class="nav-ico">🏆</div>
+    Standings
+  </button>
+  <button class="nav-btn" onclick="switchTab('myteam',this)">
+    <div class="nav-ico">👤</div>
+    My Team
+  </button>
+  <button class="nav-btn" onclick="switchTab('ownership',this)">
+    <div class="nav-ico">🎯</div>
+    Owned
+  </button>
+</nav>
+<div id="toast"></div>
+<script>
+let GOLFER_SCORES = {};
+let ENTRIES = [];
+let currentTeamEmail = null;
+let allTeamEmails = [];
+const OWNERSHIP_DATA = [];
+const FLAGS = {
+  "Zach Bauchou":"🇺🇸","Cole Hammer":"🇺🇸","Denny McCarthy":"🇺🇸",
+  "Chad Ramey":"🇺🇸","Davis Riley":"🇺🇸","Jhonattan Vegas":"🇻🇪",
+  "Kurt Kitayama":"🇺🇸","Adam Schenk":"🇺🇸","J.T. Poston":"🇺🇸",
+  "Eric Cole":"🇺🇸","Matt Wallace":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Aaron Wise":"🇺🇸",
+  "Matthieu Pavon":"🇫🇷","Aaron Rai":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Sahith Theegala":"🇺🇸",
+  "Jimmy Stanger":"🇺🇸","Casey Russell":"🇺🇸","Max Greyserman":"🇺🇸",
+  "Wyndham Clark":"🇺🇸","Nicolai Højgaard":"🇩🇰","Rasmus Højgaard":"🇩🇰",
+  "Sungjae Im":"🇰🇷","Max McGreevy":"🇺🇸","Rico Hoey":"🇵🇭",
+  "Hank Lebioda":"🇺🇸","Garrick Higgo":"🇿🇦","Christo Lamprecht":"🇿🇦",
+  "Doug Ghim":"🇺🇸","Dan Brown":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Bronson Burgoon":"🇺🇸",
+  "Billy Horschel":"🇺🇸","Jason Day":"🇦🇺","Charley Hoffman":"🇺🇸",
+  "Tony Finau":"🇺🇸","Brice Garnett":"🇺🇸","Matt Kuchar":"🇺🇸",
+  "Chris Kirk":"🇺🇸","Paul Waring":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Gary Woodland":"🇺🇸",
+  "Rafael Campos":"🇵🇷","Rickie Fowler":"🇺🇸","Ben Griffin":"🇺🇸",
+  "Ludvig Åberg":"🇸🇪","Kevin Yu":"🇹🇼","Austin Eckroat":"🇺🇸",
+  "Adam Scott":"🇦🇺","S.Y. Noh":"🇰🇷","Hayden Springer":"🇺🇸",
+  "Thomas Detry":"🇧🇪","Parker Coody":"🇺🇸","Justin Lower":"🇺🇸",
+  "Ben Silverman":"🇨🇦","Lee Hodges":"🇺🇸","Adam Hadwin":"🇨🇦",
+  "Alejandro Tosti":"🇦🇷","Wesley Bryan":"🇺🇸","Henrik Norlander":"🇸🇪",
+  "Carson Young":"🇺🇸","Joel Dahmen":"🇺🇸","J.J. Spaun":"🇺🇸",
+  "Ryo Hisatsune":"🇯🇵","Justin Rose":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Patrick Fishburn":"🇺🇸",
+  "Taylor Moore":"🇺🇸","Lee Westwood":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","C.T. Pan":"🇹🇼",
+  "Kevin Streelman":"🇺🇸","Nick Watney":"🇺🇸","Daniel Berger":"🇺🇸",
+  "Ben Martin":"🇺🇸","Patton Kizzire":"🇺🇸","Webb Simpson":"🇺🇸",
+  "Adam Long":"🇺🇸","Sang-Moon Bae":"🇰🇷","Michael Kim":"🇺🇸",
+  "Matti Schmid":"🇩🇪","Si Woo Kim":"🇰🇷","Alex Noren":"🇸🇪",
+  "Nate Lashley":"🇺🇸","Kevin Tway":"🇺🇸","Ryan Fox":"🇳🇿",
+  "Pierceson Coody":"🇺🇸","Rasmus Neergaard-Petersen":"🇩🇰",
+  "Joe Highsmith":"🇺🇸","Michael Brennan":"🇺🇸","Jackson Suber":"🇺🇸",
+  "Kensei Hirata":"🇯🇵","A.J. Ewart":"🇨🇦","Adrien Dumont de Chassart":"🇧🇪",
+  "Ryan Gerard":"🇺🇸","William Mouw":"🇺🇸","Aldrich Potgieter":"🇿🇦",
+  "Davis Chatfield":"🇺🇸","Gordon Sargent":"🇺🇸","Thorbjørn Olesen":"🇩🇰",
+  "Sudarshan Yellamaraju":"🇨🇦","Karl Vilips":"🇦🇺","David Ford":"🇺🇸",
+  "Neal Shipley":"🇺🇸","Luke Clanton":"🇺🇸","Johnny Keefer":"🇺🇸",
+  "Mason Howell":"🇺🇸","Harris English":"🇺🇸","Andrew Putnam":"🇺🇸",
+  "Peter Malnati":"🇺🇸","Emiliano Grillo":"🇦🇷","Séamus Power":"🇮🇪",
+  "Beau Hossler":"🇺🇸","Tom Hoge":"🇺🇸","David Lipsky":"🇺🇸",
+  "Lucas Glover":"🇺🇸","Brooks Koepka":"🇺🇸","Patrick Rodgers":"🇺🇸",
+  "Mackenzie Hughes":"🇨🇦","Stephan Jaeger":"🇩🇪","Adrien Saddier":"🇫🇷",
+  "Sam Ryder":"🇺🇸","K.H. Lee":"🇰🇷","Marcelo Rozo":"🇨🇴",
+  "Zecheng Dou":"🇨🇳","Keith Mitchell":"🇺🇸","Adam Svensson":"🇨🇦",
+  "Mark Hubbard":"🇺🇸","Haotong Li":"🇨🇳","Christiaan Bezuidenhout":"🇿🇦",
+  "Erik van Rooyen":"🇿🇦","Alex Smalley":"🇺🇸","Jordan Smith":"🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+  "Brian Campbell":"🇺🇸","Trey Mullinax":"🇺🇸","Taylor Pendrith":"🇨🇦",
+  "Jake Knapp":"🇺🇸","Will Zalatoris":"🇺🇸","Sam Burns":"🇺🇸",
+};
+const TIERS = [];
+const gs = n => GOLFER_SCORES[n] ? GOLFER_SCORES[n].score : 11;
+const fmt = s => s === 11 ? 'MC' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
+const cls = s => s < 0 ? 'neg' : s > 0 ? 'pos' : 'eve';
+function calcEntry(e) {
+  const scores = e.picks.map(n => ({name:n, score:gs(n)})).sort((a,b)=>a.score-b.score);
+  const top4 = scores.slice(0,4);
+  return {...e, scores, top4, total: top4.reduce((s,g)=>s+g.score,0)};
 }
+function getRanked() {
+  return ENTRIES.map(calcEntry).sort((a,b)=>a.total-b.total);
+}
+function updateHeaderTeam() {
+  if (!currentTeamEmail) return;
+  const userTeams = ENTRIES.filter(e => e.email === currentTeamEmail);
+  if (!userTeams.length) return;
+}
+function renderStandings() {
+  const ranked = getRanked();
+  document.getElementById('entry-count').textContent = ranked.length;
+  updateHeaderTeam();
+  const el = document.getElementById('standings-list');
+  let rank=1, html='';
+  ranked.forEach((e,i) => {
+    if (i>0 && ranked[i].total!==ranked[i-1].total) rank=i+1;
+    const sc=e.total, scf=fmt(sc), scc=cls(sc);
+    const medal = rank<=3 ? ['🥇','🥈','🥉'][rank-1] : rank;
+    const top4Str = e.top4.map(g=>fmt(g.score)).join(' ');
+    const isMyTeam = e.email === currentTeamEmail ? 'is-my-team' : '';
+    html += `
+      <div class="standing-row ${isMyTeam}" onclick="togglePanel(this,${i})">
+        <div class="s-rank">${medal}</div>
+        <div class="s-info">
+          <div class="s-team">${e.team}</div>
+          <div class="s-email">${e.email}</div>
+        </div>
+        <div class="s-top4">${top4Str}</div>
+        <div class="s-score ${scc}">${scf}</div>
+        <div class="s-arrow" id="arr-${i}">›</div>
+      </div>
+      <div class="picks-panel" id="panel-${i}">
+        ${e.scores.map((g,j)=>{
+          const isTop=j<4, gd=GOLFER_SCORES[g.name];
+          const pos=gd?gd.pos:'—';
+          return `<div class="mini-pick ${isTop?'is-top':''}">
+            <div class="mini-pick-left">
+              ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'}
+              <span class="mini-pick-name">${g.name}</span>
+              <span class="mini-pick-pos">${pos}</span>
+            </div>
+            <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+  });
+  el.innerHTML = html;
+}
+function togglePanel(row, i) {
+  const panel = document.getElementById('panel-'+i);
+  const arr = document.getElementById('arr-'+i);
+  const open = panel.classList.toggle('open');
+  arr.textContent = open ? '⌄' : '›';
+}
+function searchTeam() {
+  const q = document.getElementById('email-search').value.toLowerCase().trim();
+  const el = document.getElementById('myteam-results');
+  if (!q) { el.innerHTML=''; return; }
+  const matches = ENTRIES.filter(e=>e.email.toLowerCase().includes(q));
+  if (!matches.length) { el.innerHTML='<div class="empty-state">No entries found for that email.</div>'; return; }
+  const ranked = getRanked();
+  el.innerHTML = matches.map((e,mi)=>{
+    const calc = calcEntry(e);
+    const rank = ranked.findIndex(r=>r.email===e.email&&r.team===e.team)+1;
+    const sc=calc.total, scf=fmt(sc), scc=cls(sc);
+    return `
+      <div class="team-card">
+        <h2>${e.team}</h2>
+        <div class="tc-email">${e.email}</div>
+        <div class="tc-stats">
+          <div class="tc-stat"><div class="tc-val ${scc}">${scf}</div><div class="tc-lbl">Score</div></div>
+          <div class="tc-stat"><div class="tc-val">#${rank}</div><div class="tc-lbl">Pool Rank</div></div>
+          <div class="tc-stat"><div class="tc-val">${matches.length>1?mi+1+'/'+matches.length:'—'}</div><div class="tc-lbl">Entry</div></div>
+        </div>
+      </div>
+      <div class="picks-card" style="margin-bottom:16px">
+        ${calc.scores.map((g,j)=>{
+          const isTop=j<4, gd=GOLFER_SCORES[g.name];
+          const pos=gd?gd.pos:'—', thru=gd?gd.thru:'';
+          return `<div class="pick-row">
+            <div class="pick-n">${j+1}</div>
+            <div class="pick-info">
+              <div class="pick-name">${g.name}${isTop?'<span class="pick-badge">TOP 4</span>':''}</div>
+              <div class="pick-pos">${pos}${pos!=='MC'?' · Thru '+thru:' · Missed Cut'}</div>
+            </div>
+            <div class="pick-score ${cls(g.score)}">${fmt(g.score)}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }).join('');
+}
+let lbFilter='all';
+function setLbFilter(f,btn) {
+  lbFilter=f;
+  document.querySelectorAll('#view-leaderboard .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderLeaderboard();
+}
+function renderLeaderboard() {
+  const poolNames = new Set(ENTRIES.flatMap(e=>e.picks));
+  const myPicks = currentTeamEmail ? new Set(ENTRIES.filter(e=>e.email===currentTeamEmail).flatMap(e=>e.picks)) : new Set();
+  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d})).sort((a,b)=>a.score-b.score);
+  if (lbFilter==='pool') players=players.filter(p=>poolNames.has(p.name));
+  if (lbFilter==='top20') players=players.slice(0,20);
+  const colHdr = `<div class="tv-col-hdr">
+    <div style="width:38px">Pos</div>
+    <div style="width:26px"></div>
+    <div style="flex:1">Player</div>
+    <div style="width:54px;text-align:right">Score</div>
+    <div style="width:34px;text-align:right">Rnd</div>
+    <div style="width:28px;text-align:right">Thru</div>
+  </div>`;
+  document.getElementById('leaderboard-list').innerHTML = colHdr + players.map(p=>{
+    const mc=p.thru==='MC', inPool=poolNames.has(p.name), isMyPick=myPicks.has(p.name);
+    const sc=p.score, scf=fmt(sc);
+    const scClass = mc?'mc':sc<0?'neg':sc>0?'pos':'eve';
+    const flag = FLAGS[p.name]||'🏳️';
+    const lastRound = [p.r4,p.r3,p.r2,p.r1].find(r=>r!=null)||'—';
+    // Format tee time for pre-tournament display
+    let teeStr = '';
+    if (p.teeTime && p.teeTime.includes('T')) {
+      try { teeStr = new Date(p.teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); } catch(e){}
+    } else if (p.teeTime) { teeStr = p.teeTime; }
+    const isPreT = p.thru === '—';
+    return `<div class="tv-row${mc?' tv-mc':''}${isMyPick?' is-my-team':''}">
+      <div class="tv-pos">${mc?'MC':p.pos}</div>
+      <div class="tv-flag">${flag}</div>
+      <div class="tv-name ${isMyPick?'is-my-pick':''}">${p.name}${inPool?'<span class="tv-pool-dot"></span>':''}</div>
+      <div class="tv-score ${scClass}">${isPreT?'E':mc?'MC':scf}</div>
+      <div class="tv-round">${isPreT?(teeStr||'—'):lastRound}</div>
+      <div class="tv-thru">${mc?'':(isPreT?'':p.thru)}</div>
+    </div>`;
+  }).join('');
+}
+let ownFilter='most';
+function setOwnFilter(f,btn) {
+  ownFilter=f;
+  document.querySelectorAll('#view-ownership .seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderOwnership();
+}
+function renderOwnership() {
+  const scoreMap={};
+  Object.entries(GOLFER_SCORES).forEach(([n,g])=>scoreMap[n]=g.score);
+  let data=[...OWNERSHIP_DATA];
+  const maxPct=data[0].pct;
+  if (ownFilter==='least') data=[...data].sort((a,b)=>a.pct-b.pct);
+  document.getElementById('ownership-list').innerHTML = data.map(d=>{
+    const sc=scoreMap[d.player];
+    const scf=sc!==undefined?fmt(sc):'—', scc=sc!==undefined?cls(sc):'eve';
+    return `<div class="own-row">
+      <div class="own-hdr">
+        <span class="own-name">${d.player}</span>
+        <div class="own-right">
+          <span class="own-score-tag ${scc}">${scf}</span>
+          <span class="own-pct">${(d.pct*100).toFixed(1)}%</span>
+        </div>
+      </div>
+      <div class="own-bar-bg"><div class="own-bar" style="width:${(d.pct/maxPct*100).toFixed(1)}%"></div></div>
+      <div class="own-sub">${d.entries} of ${ENTRIES.length} entries</div>
+    </div>`;
+  }).join('');
+}
+async function fetchGoogleFormData() {
+  try {
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbysW8QEhXaiJbSD8Z7D0xbwsQX42StjxXbagfBHbcgim3eLZEOxOCyeZ5ZPJU5ioBb2/exec";
+    const res = await fetch(SHEET_URL);
+    if (!res.ok) throw new Error('Failed to fetch form data');
+    const data = await res.json();
+    if (data.entries && Array.isArray(data.entries)) {
+      ENTRIES = data.entries;
+      console.log('✅ Loaded', ENTRIES.length, 'entries from Google Form');
+    }
+  } catch (err) {
+    console.log('ℹ️  Using seeded form data (offline mode)');
+  }
+}
+async function fetchESPN() {
+  try {
+    const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga');
+    if (!res.ok) throw new Error();
+    const data=await res.json();
+    const comps=data.events?.[0]?.competitions?.[0]?.competitors||[];
+    if (!comps.length) throw new Error();
+    const evStatus=data.events?.[0]?.status?.type?.name||'';
+    const isPreTournament=evStatus==='STATUS_SCHEDULED';
+    document.getElementById('hdr-sub').textContent=(data.events[0].name||'Houston Open')+(isPreTournament?' · Pre-Tournament':' · Live');
+    comps.forEach(c=>{
+      const name=c.athlete?.displayName; if(!name) return;
+      const state=c.status?.type?.name||'';
+      const scheduled=state==='STATUS_SCHEDULED';
+      const raw=c.status?.displayValue||c.score||'0';
+      const score=scheduled?0:(raw==='E'?0:parseInt(raw.replace('+',''))||0);
+      const mc=state.includes('CUT')||false;
+      const lines=c.linescores||[];
+      const teeTime=scheduled?raw:'';
+      GOLFER_SCORES[name]={
+        pos:scheduled?'—':(c.status?.position?.displayName||'—'),
+        score:mc?11:score, thru:mc?'MC':(scheduled?'—':(c.status?.thru||'F')),
+        teeTime:teeTime,
+        r1:lines[0]?.value||null, r2:lines[1]?.value||null,
+        r3:lines[2]?.value||null, r4:lines[3]?.value||null
+      };
+    });
+    setApiStatus('live', `Live · ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`);
+    console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers');
+    renderAll();
+  } catch(e) {
+    console.log('❌ ESPN API error:', e.message);
+    // Fallback: seed leaderboard from FLAGS so the field still renders
+    if (Object.keys(GOLFER_SCORES).length === 0) {
+      Object.keys(FLAGS).forEach(name => {
+        GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', r1:null, r2:null, r3:null, r4:null };
+      });
+      console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)');
+    }
+    setApiStatus('cached', 'Offline · Pre-Tournament');
+    renderAll();
+  }
+}
+function setApiStatus(state, text) {
+  const dot=document.getElementById('live-dot');
+  dot.className='live-dot'+(state==='live'?' on':'');
+  document.getElementById('hdr-status').textContent=text;
+}
+function refreshData() {
+  setApiStatus('','Refreshing…');
+  fetchESPN();
+}
+function switchTab(name,btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+let toastT;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2400);
+}
+function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); }
+function dismissSplash() {
+  const splash = document.getElementById('splash');
+  splash.classList.add('hidden');
+  setTimeout(() => splash.style.pointerEvents = 'none', 500);
+}
+function showTeamInput() {
+  document.getElementById('hdr-team-locked').style.display = 'none';
+  document.getElementById('hdr-team-input').style.display = 'block';
+  document.getElementById('hdr-email-input').focus();
+}
+function lockTeamEmail() {
+  const email = document.getElementById('hdr-email-input').value.toLowerCase().trim();
+  if (!email) return;
+  const exists = ENTRIES.some(e => e.email.toLowerCase() === email.toLowerCase());
+  if (!exists) {
+    alert('No entries found for this email');
+    return;
+  }
+  currentTeamEmail = email;
+  updateHeaderDisplay();
+  renderAll();
+}
+function updateHeaderDisplay() {
+  if (currentTeamEmail) {
+    document.getElementById('hdr-team-input').style.display = 'none';
+    document.getElementById('hdr-team-locked').style.display = 'block';
+    document.getElementById('hdr-locked-email').textContent = currentTeamEmail;
+  } else {
+    document.getElementById('hdr-team-locked').style.display = 'none';
+    document.getElementById('hdr-team-input').style.display = 'block';
+  }
+}
+async function initApp() {
+  // Run both fetches in parallel with a 5s timeout so neither blocks the other
+  const withTimeout = (promise, ms) => Promise.race([promise, new Promise(r => setTimeout(r, ms))]);
+  await Promise.all([
+    withTimeout(fetchGoogleFormData(), 5000),
+    withTimeout(fetchESPN(), 5000)
+  ]);
+  allTeamEmails = [...new Set(ENTRIES.map(e => e.email))].sort();
+  // Ensure fallback if ESPN didn't load
+  if (Object.keys(GOLFER_SCORES).length === 0) {
+    Object.keys(FLAGS).forEach(name => {
+      GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', r1:null, r2:null, r3:null, r4:null };
+    });
+    setApiStatus('cached', 'Offline · Pre-Tournament');
+  }
+  renderAll();
+}
+initApp();
+</script>
+</body>
+</html>
