@@ -193,11 +193,22 @@
     .tv-row {
       display: flex; align-items: center; padding: 8px 14px;
       border-bottom: 1px solid rgba(26,51,38,0.4);
+      border-left: 2px solid transparent;
     }
     .tv-row:nth-child(odd)  { background: var(--bg); }
     .tv-row:nth-child(even) { background: rgba(12,30,20,0.5); }
-    .tv-row.tv-mc { opacity: 0.35; }
+    .tv-row.tv-prev-winner { background: rgba(212,168,67,0.06) !important; border-left: 2px solid var(--gold); }
+    .prev-winner-badge {
+      display: inline-flex; align-items: center;
+      background: var(--gold); color: #0a1a10;
+      font-size: 7.5px; font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase;
+      padding: 2px 5px; border-radius: 3px; margin-left: 5px;
+      vertical-align: middle; white-space: nowrap; flex-shrink: 0;
+    }
+    .tv-row.tv-mc { opacity: 0.5; background: rgba(80,10,10,0.25) !important; border-left: 2px solid rgba(180,40,40,0.5); }
     .tv-pos { width: 32px; font-size: 13px; font-weight: 800; color: var(--text2); flex-shrink: 0; }
+    .tv-row.tv-mc .tv-pos { color: #c0392b; font-size: 10px; font-weight: 900; letter-spacing: 0.5px; }
+    .tv-row.tv-mc .tv-name { color: rgba(255,255,255,0.5); }
     .tv-player { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 0; }
     .tv-name {
       font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.3px;
@@ -463,10 +474,11 @@
     }
 
     /* ── TEAM PILLS (leaderboard) ── */
+    .tv-pill-slot { width: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-start; }
     .team-pill {
       display: inline-flex; align-items: center; justify-content: center;
       width: 16px; height: 13px; border-radius: 3px;
-      font-size: 8px; font-weight: 900; margin-left: 3px;
+      font-size: 8px; font-weight: 900; margin: 0;
       flex-shrink: 0; vertical-align: middle; line-height: 1;
     }
     .pill-a { background: #5BC8F5; color: #052030; }
@@ -833,6 +845,7 @@ function resolvePlayerName(name) { return NAME_ALIASES[name] || name; }
 const FLAG_TO_CODE = {'🇺🇸':'USA','🇦🇺':'AUS','🇰🇷':'KOR','🇨🇦':'CAN','🇿🇦':'RSA','🇩🇰':'DEN','🇸🇪':'SWE','🇫🇷':'FRA','🇯🇵':'JPN','🇮🇪':'IRL','🇧🇪':'BEL','🇦🇷':'ARG','🇹🇼':'TPE','🇻🇪':'VEN','🇵🇭':'PHI','🇵🇷':'PUR','🇩🇪':'GER','🇳🇿':'NZL','🇨🇴':'COL','🇨🇳':'CHN','🇳🇴':'NOR','🏴󠁧󠁢󠁥󠁮󠁧󠁿':'ENG','🏳️':'—'};
 function getCountryCode(name) { return FLAG_TO_CODE[FLAGS[name]] || ''; }
 const COURSE_PAR = 72;
+const PREV_WINNER = 'Min Woo Lee';
 const gs = n => GOLFER_SCORES[n] ? GOLFER_SCORES[n].score : 11;
 const fmt = s => s === 11 ? 'MC' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
 const cls = s => s < 0 ? 'neg' : s > 0 ? 'pos' : 'eve';
@@ -956,13 +969,21 @@ function renderLeaderboard() {
   const myPicksMap = getMyPicksMap();
   const teamAPicks = currentUserTeams[0] ? new Set(currentUserTeams[0].picks) : new Set();
   const teamBPicks = currentUserTeams[1] ? new Set(currentUserTeams[1].picks) : new Set();
-  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d})).sort((a,b)=>a.score-b.score);
+  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d})).sort((a,b)=>{
+    return a.score-b.score;
+  });
   if (lbFilter==='pool')  players=players.filter(p=>poolNames.has(p.name));
   if (lbFilter==='teamA') players=players.filter(p=>teamAPicks.has(p.name));
   if (lbFilter==='teamB') players=players.filter(p=>teamBPicks.has(p.name));
 
   // Detect current round number
   const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
+  const currentRoundCheck = samplePlayer ? (samplePlayer.r4!=null?4:samplePlayer.r3!=null?3:samplePlayer.r2!=null?2:samplePlayer.r1!=null?1:0) : 0;
+  // Pre-tournament only: pin defending champion to top
+  if (currentRoundCheck === 0) {
+    const winnerIdx = players.findIndex(p=>p.name===PREV_WINNER);
+    if (winnerIdx > 0) { const [w] = players.splice(winnerIdx,1); players.unshift(w); }
+  }
   const currentRound = samplePlayer ? (samplePlayer.r4!=null?4:samplePlayer.r3!=null?3:samplePlayer.r2!=null?2:samplePlayer.r1!=null?1:0) : 0;
   const roundLabels = ['','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
   const isPreT = currentRound === 0;
@@ -973,6 +994,7 @@ function renderLeaderboard() {
 
   const colHdr = `<div class="tv-col-hdr">
     <div style="width:32px"></div>
+    <div style="width:20px"></div>
     <div style="flex:1">Player</div>
     <div class="tv-tot-col-hdr">Tot</div>
     ${isPreT ? '<div style="width:68px;text-align:right">Tee Time</div>' :
@@ -984,6 +1006,7 @@ function renderLeaderboard() {
     const sc=p.score, scf=fmt(sc);
     const scClass = mc?'mc':sc<0?'neg':sc>0?'pos':'eve';
     const cc = getCountryCode(p.name);
+    const flag = FLAGS[p.name] || '';
 
     // Current round stroke score & today's +/-
     const curRndScore = [p.r4,p.r3,p.r2,p.r1].find(r=>r!=null);
@@ -1001,12 +1024,14 @@ function renderLeaderboard() {
     const myTeamIdxs = myPicksMap[p.name] || [];
     const pills = myTeamIdxs.map(i=>`<span class="team-pill ${PILL_CLASSES[i]||''}">${pillLabel(i)}</span>`).join('');
     const isMyPick = myTeamIdxs.length > 0;
-    return `<div class="tv-row${mc?' tv-mc':''}${isMyPick?' is-my-team':''}">
+    const isPrevWinner = p.name === PREV_WINNER;
+    return `<div class="tv-row${mc?' tv-mc':''}${isMyPick?' is-my-team':''}${isPrevWinner?' tv-prev-winner':''}">
       <div class="tv-pos">${mc?'MC':p.pos}</div>
+      <div class="tv-pill-slot">${pills}</div>
       <div class="tv-player">
         <span class="tv-name ${isMyPick?'is-my-pick':''}">${p.name}</span>
-        <span class="tv-country">${cc}</span>
-        ${pills}
+        <span class="tv-country">${flag}${cc?' '+cc:''}</span>
+        ${isPrevWinner?'<span class="prev-winner-badge">Previous Winner</span>':''}
         ${inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':''}
       </div>
       <div class="tv-topar ${scClass}">${preT?'E':mc?'MC':scf}</div>
@@ -1195,15 +1220,18 @@ async function initApp() {
   if (returning) console.log('👤 Returning user:', currentUserEmail);
   updateLbSeg();
 
-  // Fetch live ESPN scores
-  await fetchESPN().catch(() => {});
-  // Ensure fallback if ESPN didn't load
-  if (Object.keys(GOLFER_SCORES).length === 0) {
-    Object.keys(FLAGS).forEach(name => {
-      GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', r1:null, r2:null, r3:null, r4:null };
-    });
+  // Always seed from FLAGS first so leaderboard is never blank
+  Object.keys(FLAGS).forEach(name => {
+    if (!GOLFER_SCORES[name]) {
+      GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', r1:null, r2:null, r3:null, r4:null };
+    }
+  });
+  renderAll(); // render immediately with seeded data
+
+  // Fetch live ESPN scores and overlay
+  await fetchESPN().catch(() => {
     setApiStatus('cached', 'Offline · Pre-Tournament');
-  }
+  });
   renderAll();
   startAutoRefresh();
 }
