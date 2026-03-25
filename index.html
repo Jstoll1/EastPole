@@ -159,6 +159,7 @@
     .seg-team-b { color: #FF7F7F; }
     .seg-team-a.active { background: rgba(91,200,245,0.15); color: #5BC8F5; }
     .seg-team-b.active { background: rgba(255,127,127,0.15); color: #FF7F7F; }
+    .lb-sticky-hdr { position: sticky; top: 0; z-index: 50; background: var(--bg); }
     .tv-header {
       background: linear-gradient(180deg, #1a4d2e 0%, #0e2a18 100%);
       padding: 0; text-align: center; overflow: hidden;
@@ -347,12 +348,40 @@
     .hdr-switch { font-size: 11px; color: var(--text3); cursor: pointer; margin-top: 4px; text-decoration: underline; }
 
     /* ── HEADER RIGHT COLUMN ── */
-    .hdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-    #hdr-team-display { display: none; text-align: right; }
-    .hdr-team-row { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
-    .hdr-active-team { font-size: 11px; font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; letter-spacing: 0.2px; }
-    .hdr-swap-btn { background: none; border: none; color: var(--text2); font-size: 12px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; }
-    .hdr-change-link { font-size: 10px; color: var(--text3); cursor: pointer; letter-spacing: 0.3px; }
+    .hdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+    #hdr-team-display { display: none; }
+    .hdr-team-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(212,168,67,0.4);
+      border-radius: 20px; padding: 5px 10px;
+    }
+    .hdr-active-team { font-size: 11px; font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; letter-spacing: 0.2px; }
+    .hdr-dropdown-caret { font-size: 9px; color: rgba(212,168,67,0.6); flex-shrink: 0; line-height: 1; transition: transform 0.2s; }
+    .hdr-dropdown-caret.open { transform: rotate(180deg); }
+    #team-dropdown {
+      display: none; position: absolute; right: 16px;
+      top: calc(var(--safe-top) + var(--header-h) + 8px);
+      z-index: 400; min-width: 180px;
+      background: #0e2318; border: 1px solid var(--gold);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+    #team-dropdown.open { display: block; }
+    .td-item {
+      width: 100%; padding: 11px 14px; display: flex; align-items: center; gap: 10px;
+      background: none; border: none; border-bottom: 1px solid var(--border);
+      color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit;
+      cursor: pointer; text-align: left;
+    }
+    .td-item:last-of-type { border-bottom: none; }
+    .td-item.active { background: var(--gold-bg); color: var(--gold); }
+    .td-item:active { background: rgba(212,168,67,0.1); }
+    .td-change-btn {
+      width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.3);
+      border: none; border-top: 1px solid var(--border);
+      color: var(--text3); font-size: 11px; font-weight: 600; font-family: inherit;
+      cursor: pointer; text-align: center; letter-spacing: 0.4px;
+    }
     #hdr-join-btn { background: transparent; border: 1px solid rgba(212,168,67,0.4); border-radius: 20px; color: var(--gold); font-size: 10px; font-weight: 700; padding: 4px 10px; cursor: pointer; font-family: inherit; letter-spacing: 0.4px; white-space: nowrap; }
 
     /* ── ONBOARDING OVERLAY ── */
@@ -380,7 +409,8 @@
     }
     .ob-search-input::placeholder { color: var(--text3); }
     .ob-list { flex: 1; overflow-y: auto; padding: 0 16px 12px; }
-    .ob-name-block { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+    .ob-name-block { background: var(--card); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.2s ease; }
+    .ob-name-block.selected { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold-dim); }
     .ob-name-btn {
       width: 100%; padding: 16px 18px; display: flex; align-items: center;
       justify-content: space-between; background: none; border: none;
@@ -474,12 +504,15 @@
         <div class="live-dot" id="live-dot"></div>
         <span id="hdr-status">Loading…</span>
       </div>
-      <div id="hdr-team-display">
-        <div class="hdr-team-row">
+      <div id="hdr-team-display" onclick="toggleTeamDropdown()" style="cursor:pointer;position:relative">
+        <div class="hdr-team-pill">
           <span class="hdr-active-team" id="hdr-active-team"></span>
-          <button class="hdr-swap-btn" id="hdr-swap-btn" onclick="swapTeam()" style="display:none" title="Switch team">⇄</button>
+          <span class="hdr-dropdown-caret" id="hdr-dd-caret">▾</span>
         </div>
-        <span class="hdr-change-link" onclick="showOnboarding()">Change team</span>
+      </div>
+      <div id="team-dropdown">
+        <div id="team-dropdown-list"></div>
+        <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change person…</button>
       </div>
       <button id="hdr-join-btn" onclick="showOnboarding()" style="display:none">Select Team</button>
     </div>
@@ -503,35 +536,22 @@
     </div>
     <div id="standings-list"></div>
   </div>
-  <div class="view" id="view-myteam" style="padding-bottom:100px">
-    <div class="tv-header">
-      <div class="tv-header-top">
-        <div class="tv-title">My Team</div>
-      </div>
-      <div class="tv-header-bot">
-        <div class="tv-sub">Search by email to view your picks</div>
-      </div>
-    </div>
-    <div class="search-bar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="email" id="email-search" placeholder="Enter your email…" oninput="searchTeam()" autocomplete="email" autocorrect="off" autocapitalize="none">
-    </div>
-    <div id="myteam-results"></div>
-  </div>
   <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
-    <div class="tv-header">
-      <div class="tv-header-top">
-        <div class="tv-title" id="lb-round-title">Houston Open</div>
+    <div class="lb-sticky-hdr">
+      <div class="tv-header">
+        <div class="tv-header-top">
+          <div class="tv-title" id="lb-round-title">Houston Open</div>
+        </div>
+        <div class="tv-header-bot">
+          <div class="tv-sub">Tournament Leaderboard · March 26-29, 2026</div>
+        </div>
       </div>
-      <div class="tv-header-bot">
-        <div class="tv-sub">Tournament Leaderboard · March 26-29, 2026</div>
-      </div>
-    </div>
-    <div class="seg-wrap" style="padding:10px 14px 6px">
-      <div class="seg">
-        <button class="seg-btn active" onclick="setLbFilter('all',this)">All Players</button>
-        <button class="seg-btn" onclick="setLbFilter('pool',this)">In Pool</button>
-        <button class="seg-btn" onclick="setLbFilter('top20',this)">Top 20</button>
+      <div class="seg-wrap" style="padding:10px 14px 6px">
+        <div class="seg">
+          <button class="seg-btn active" onclick="setLbFilter('all',this)">All Players</button>
+          <button class="seg-btn" onclick="setLbFilter('pool',this)">In Pool</button>
+          <button class="seg-btn" onclick="setLbFilter('top20',this)">Top 20</button>
+        </div>
       </div>
     </div>
     <div id="leaderboard-list"></div>
@@ -562,10 +582,6 @@
   <button class="nav-btn" onclick="switchTab('standings',this)">
     <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C6 4 6 7 6 7"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 18 7 18 7"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
     Standings
-  </button>
-  <button class="nav-btn" onclick="switchTab('myteam',this)">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
-    My Team
   </button>
   <button class="nav-btn" onclick="switchTab('ownership',this)">
     <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="4 3"/></svg>
@@ -610,13 +626,6 @@ function setUser(email, teamIdx = 0, save = true) {
   updateLbSeg();
   renderAll();
 }
-function swapTeam() {
-  if (currentUserTeams.length < 2) return;
-  activeTeamIdx = (activeTeamIdx + 1) % currentUserTeams.length;
-  saveUser();
-  updateHeaderDisplay();
-  renderAll();
-}
 function getMyPicksMap() {
   // Returns { playerName: [teamIdx, ...] } for current user
   if (!currentUserEmail) return {};
@@ -655,7 +664,7 @@ function buildObList(filter = '') {
         <span style="font-size:14px;color:var(--text)">${t}</span>
       </div>`).join('');
     return `
-      <div class="ob-name-block" id="ob-block-${p.email.replace(/[@.]/g,'_')}">
+      <div class="ob-name-block${isSelected?' selected':''}" id="ob-block-${p.email.replace(/[@.]/g,'_')}">
         <button class="ob-name-btn ${isSelected?'open':''}" onclick="obSelectName('${p.email}')">
           <span>${p.name}</span>
           <span class="ob-name-right">
@@ -738,7 +747,8 @@ const ENTRIES = [
   { team: "Loves2splooge69_A", name: "Tyler D", email: "tdewitt815@gmail.com", picks: ["Chris Gotterup", "Ben Griffin", "Sungjae Im", "Max Greyserman", "Nicolas Echavarria", "Tom Kim"] },
   { team: "Loves2splooge69_B", name: "Tyler D", email: "tdewitt815@gmail.com", picks: ["Scottie Scheffler", "Shane Lowry", "Alex Smalley", "Tony Finau", "J.T. Poston", "Seonghyeon Kim"] },
   { team: "Monkey fist pump", name: "Tyler Conlan", email: "tycon0612@gmail.com", picks: ["Brooks Koepka", "Marco Penge", "Sahith Theegala", "Jordan L. Smith", "Hao-Tong Li", "Tom Kim"] },
-  { team: "Monkey fist pump 2", name: "Tyler Conlan", email: "tycon0612@gmail.com", picks: ["Chris Gotterup", "Adam Scott", "Sungjae Im", "Will Zalatoris", "Nicolas Echavarria", "Gary Woodland"] }
+  { team: "Monkey fist pump 2", name: "Tyler Conlan", email: "tycon0612@gmail.com", picks: ["Chris Gotterup", "Adam Scott", "Sungjae Im", "Will Zalatoris", "Nicolas Echavarria", "Gary Woodland"] },
+  { team: "Shark's Gonna Shark", name: "Jake", email: "jhs797@gmail.com", picks: ["Jake Knapp", "Shane Lowry", "Patrick Rodgers", "Aaron Rai", "Hao-Tong Li", "David Lipsky"] }
 ];
 const FLAGS = {
   "Zach Bauchou":"🇺🇸","Cole Hammer":"🇺🇸","Denny McCarthy":"🇺🇸",
@@ -1111,17 +1121,52 @@ function updateHeaderDisplay() {
   const teamDisplay = document.getElementById('hdr-team-display');
   const joinBtn     = document.getElementById('hdr-join-btn');
   const nameEl      = document.getElementById('hdr-active-team');
-  const swapBtn     = document.getElementById('hdr-swap-btn');
+  const caret       = document.getElementById('hdr-dd-caret');
   if (currentUserEmail && currentUserTeams.length) {
     const activeTeam = currentUserTeams[activeTeamIdx] || currentUserTeams[0];
     nameEl.textContent = activeTeam.team;
-    swapBtn.style.display    = currentUserTeams.length > 1 ? 'inline' : 'none';
+    // Show caret only if multiple teams
+    if (caret) caret.style.display = currentUserTeams.length > 1 ? 'inline' : 'none';
     teamDisplay.style.display = 'block';
     joinBtn.style.display     = 'none';
   } else {
     teamDisplay.style.display = 'none';
     joinBtn.style.display     = 'block';
+    closeTeamDropdown();
   }
+}
+let _teamDdOpen = false;
+function toggleTeamDropdown() {
+  if (!currentUserTeams.length) return;
+  if (currentUserTeams.length === 1) { showOnboarding(); return; }
+  _teamDdOpen ? closeTeamDropdown() : openTeamDropdown();
+}
+function openTeamDropdown() {
+  _teamDdOpen = true;
+  const list = document.getElementById('team-dropdown-list');
+  list.innerHTML = currentUserTeams.map((t, i) => `
+    <button class="td-item${i === activeTeamIdx ? ' active' : ''}" onclick="event.stopPropagation();selectTeamEntry(${i})">
+      <span class="team-pill ${PILL_CLASSES[i] || ''}" style="width:18px;height:14px;font-size:8px">${pillLabel(i)}</span>
+      <span>${t.team}</span>
+    </button>`).join('');
+  document.getElementById('team-dropdown').classList.add('open');
+  const caret = document.getElementById('hdr-dd-caret');
+  if (caret) caret.classList.add('open');
+}
+function closeTeamDropdown() {
+  _teamDdOpen = false;
+  document.getElementById('team-dropdown').classList.remove('open');
+  const caret = document.getElementById('hdr-dd-caret');
+  if (caret) caret.classList.remove('open');
+}
+function selectTeamEntry(idx) {
+  activeTeamIdx = idx;
+  saveUser();
+  updateHeaderDisplay();
+  updateLbSeg();
+  renderAll();
+  closeTeamDropdown();
+  showToast('✓ ' + currentUserTeams[idx].team);
 }
 async function initApp() {
   // Resolve any form/sheet name variants → ESPN display names
@@ -1148,6 +1193,13 @@ async function initApp() {
   startAutoRefresh();
 }
 initApp();
+
+// Close team dropdown on outside tap
+document.addEventListener('click', function(e) {
+  if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) {
+    closeTeamDropdown();
+  }
+});
 </script>
 </body>
 </html>
