@@ -48,13 +48,14 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 16px;
     }
-    .hdr-left h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; color: #fff; text-transform: uppercase; }
-    .hdr-left p { font-size: 10px; color: var(--gold-dim); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 3px; font-weight: 600; }
+    .hdr-left { flex: 1; min-width: 0; }
+    .hdr-left h1 { font-size: 15px; font-weight: 900; letter-spacing: 0.4px; color: #fff; text-transform: uppercase; white-space: nowrap; }
+    .hdr-left p { font-size: 9px; color: var(--gold-dim); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 2px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .hdr-pill {
       background: rgba(0,0,0,0.3); border: 1px solid rgba(212,168,67,0.25);
-      border-radius: 20px; padding: 5px 11px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.3px; color: rgba(255,255,255,0.8);
-      display: flex; align-items: center; gap: 6px;
+      border-radius: 20px; padding: 5px 9px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2px; color: rgba(255,255,255,0.8);
+      display: flex; align-items: center; gap: 5px; white-space: nowrap;
     }
     .hdr-pill .live-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.25); flex-shrink: 0; }
     .hdr-pill .live-dot.on { background: #34c759; animation: livePulse 2s ease-in-out infinite; }
@@ -178,6 +179,12 @@
       background: rgba(6,18,12,0.95); border-bottom: 1px solid var(--border);
       font-size: 8px; font-weight: 800; color: var(--text3); letter-spacing: 1px; text-transform: uppercase;
     }
+    .tv-tot-col-hdr {
+      width: 42px; text-align: right;
+      background: rgba(110,22,22,0.6); border-left: 1.5px solid rgba(160,40,40,0.55);
+      margin: -4px 0; padding: 4px 8px 4px 4px;
+      color: rgba(255,255,255,0.65) !important;
+    }
     .tv-col-hdr .today-hdr {
       background: var(--gold); color: #0a1a10; padding: 2px 6px; border-radius: 2px;
       font-size: 7px; font-weight: 900; letter-spacing: 1.2px;
@@ -197,11 +204,15 @@
     }
     .tv-country { font-size: 9px; font-weight: 600; color: var(--text3); margin-left: 5px; letter-spacing: 0.5px; flex-shrink: 0; }
     .tv-pool-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin-left: 4px; vertical-align: middle; flex-shrink: 0; }
-    .tv-topar { width: 42px; font-size: 16px; font-weight: 900; text-align: right; flex-shrink: 0; }
+    .tv-topar {
+      width: 42px; font-size: 16px; font-weight: 900; text-align: right; flex-shrink: 0;
+      background: rgba(110,22,22,0.5); border-left: 1.5px solid rgba(160,40,40,0.55);
+      margin: -8px 0; padding: 8px 8px 8px 4px;
+    }
     .tv-topar.neg { color: var(--gold); }
-    .tv-topar.pos { color: var(--red); }
-    .tv-topar.eve { color: var(--text2); }
-    .tv-topar.mc  { color: var(--red); font-size: 11px; font-weight: 800; }
+    .tv-topar.pos { color: #ff6b6b; }
+    .tv-topar.eve { color: rgba(255,255,255,0.7); }
+    .tv-topar.mc  { color: #ff6b6b; font-size: 11px; font-weight: 800; }
     .tv-rnd-score { width: 32px; font-size: 13px; font-weight: 700; color: var(--text2); text-align: right; flex-shrink: 0; }
     .tv-today { width: 36px; font-size: 13px; font-weight: 700; text-align: right; flex-shrink: 0; }
     .tv-today.neg { color: var(--gold); }
@@ -275,49 +286,49 @@
       position: relative; z-index: 2;
     }
     .splash-header {
-      background: linear-gradient(90deg, rgba(20, 56, 40, 0.9), rgba(14, 42, 24, 0.9));
-      border-bottom: 3px solid #c9a84c;
-      padding: 20px 40px;
-      margin-bottom: 40px;
+      background: linear-gradient(90deg, rgba(20, 56, 40, 0.88), rgba(14, 42, 24, 0.88));
+      border-bottom: 2px solid #c9a84c;
+      padding: 7px 28px;
+      margin-bottom: 16px;
       border-radius: 8px;
       backdrop-filter: blur(10px);
     }
     .splash-title {
-      font-size: 48px; font-weight: 900; letter-spacing: 3px;
-      color: #c9a84c; text-transform: uppercase; margin: 0;
+      font-size: 20px; font-weight: 900; letter-spacing: 4px;
+      color: #c9a84c; text-transform: uppercase; margin: 0; white-space: nowrap;
     }
     .splash-branding {
-      margin: 40px 0;
+      margin: 14px 0 12px;
       animation: fadeInUp 0.8s ease-out 0.5s both;
     }
     .brand-text {
-      font-size: 32px; font-weight: 900; letter-spacing: 2px;
-      color: #c9a84c; text-transform: uppercase; margin-bottom: 12px;
+      font-size: 20px; font-weight: 900; letter-spacing: 2px;
+      color: #c9a84c; text-transform: uppercase; margin-bottom: 5px;
       text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
     }
     .brand-subtext {
-      font-size: 16px; font-weight: 700; letter-spacing: 1px;
-      color: rgba(255,255,255,0.9); text-transform: uppercase;
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      color: rgba(255,255,255,0.85); text-transform: uppercase;
       text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
     }
     .splash-brand { display: none; }
     .splash-cta {
-      font-size: 16px; color: rgba(255,255,255,0.6); animation: bounce 2s infinite;
+      font-size: 14px; color: rgba(255,255,255,0.55); animation: bounce 2s infinite; margin-top: 4px;
     }
     .logo-capsule {
-      background: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(8px);
-      border-radius: 40px;
-      padding: 16px 24px;
-      margin: 20px 0;
+      border-radius: 24px;
+      padding: 10px 18px;
+      margin: 0;
       animation: fadeInUp 0.8s ease-out 0.35s both;
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .splash-masters-logo {
-      max-width: 200px; height: auto;
+      max-width: 110px; height: auto;
       filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
     }
     @keyframes splashFade { from { opacity: 0; } to { opacity: 1; } }
@@ -348,15 +359,15 @@
     .hdr-switch { font-size: 11px; color: var(--text3); cursor: pointer; margin-top: 4px; text-decoration: underline; }
 
     /* ── HEADER RIGHT COLUMN ── */
-    .hdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+    .hdr-right { display: flex; flex-direction: row; align-items: center; gap: 7px; flex-shrink: 0; }
     #hdr-team-display { display: none; }
     .hdr-team-pill {
       display: flex; align-items: center; gap: 5px;
       background: rgba(0,0,0,0.3); border: 1px solid rgba(212,168,67,0.4);
       border-radius: 20px; padding: 5px 10px;
     }
-    .hdr-active-team { font-size: 11px; font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; letter-spacing: 0.2px; }
-    .hdr-dropdown-caret { font-size: 9px; color: rgba(212,168,67,0.6); flex-shrink: 0; line-height: 1; transition: transform 0.2s; }
+    .hdr-active-team { font-size: 10px; font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; letter-spacing: 0.2px; }
+    .hdr-dropdown-caret { font-size: 8px; color: rgba(212,168,67,0.6); flex-shrink: 0; line-height: 1; transition: transform 0.2s; }
     .hdr-dropdown-caret.open { transform: rotate(180deg); }
     #team-dropdown {
       display: none; position: absolute; right: 16px;
@@ -962,7 +973,7 @@ function renderLeaderboard() {
   const colHdr = `<div class="tv-col-hdr">
     <div style="width:32px"></div>
     <div style="flex:1">Player</div>
-    <div style="width:42px;text-align:right">Tot</div>
+    <div class="tv-tot-col-hdr">Tot</div>
     ${isPreT ? '<div style="width:68px;text-align:right">Tee Time</div>' :
     '<div style="width:32px;text-align:right">Rnd</div><div style="width:36px;text-align:right"><span class="today-hdr">TODAY</span></div>'}
   </div>`;
@@ -1051,7 +1062,10 @@ async function fetchESPN() {
     if (!comps.length) throw new Error();
     const evStatus=data.events?.[0]?.status?.type?.name||'';
     const isPreTournament=evStatus==='STATUS_SCHEDULED';
-    document.getElementById('hdr-sub').textContent=(data.events[0].name||'Houston Open')+(isPreTournament?' · Pre-Tournament':' · Live');
+    const fullName = data.events[0].name || 'Houston Open';
+    // Strip sponsor prefix (e.g. "Texas Children's Houston Open" → "Houston Open")
+    const shortName = fullName.replace(/^.*?(\w[\w\s]*Open\b.*)/i, '$1').trim() || fullName;
+    document.getElementById('hdr-sub').textContent = shortName + (isPreTournament ? ' · Pre-Tournament' : ' · Live');
     comps.forEach(c=>{
       const name=c.athlete?.displayName; if(!name) return;
       const state=c.status?.type?.name||'';
