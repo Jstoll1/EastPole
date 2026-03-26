@@ -2049,36 +2049,59 @@ to  {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* ─── Head-to-Head ─── */
-.h2h-selectors {
+/* ─── Head-to-Head (Compare Mode) ─── */
+.cmp-toggle {
   display: flex;
-  gap: 10px;
-  padding: 14px 14px 0;
   align-items: center;
-}
-.h2h-sel {
-  flex: 1;
-  background: var(--card);
+  gap: 6px;
+  background: none;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  min-height: 44px;
-  -webkit-appearance: menulist;
-  appearance: menulist;
-  position: relative;
-  z-index: 10;
-}
-.h2h-sel:focus { border-color: var(--gold-dim); outline: none; }
-.h2h-vs {
-  font-size: 11px;
-  font-weight: 900;
+  border-radius: 20px;
+  padding: 5px 12px;
   color: var(--text3);
-  letter-spacing: 2px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.cmp-toggle.active {
+  background: rgba(212,168,67,0.12);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.cmp-toggle svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.cmp-hint {
+  text-align: center;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  background: rgba(212,168,67,0.06);
+  border-bottom: 1px solid var(--border);
+}
+.standing-row.cmp-mode { cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.standing-row.cmp-selected {
+  background: rgba(212,168,67,0.08) !important;
+  border-left: 3px solid var(--gold);
+}
+.standing-row.cmp-selected .s-rank { color: var(--gold); }
+.cmp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  margin-left: 6px;
   flex-shrink: 0;
 }
 .h2h-prob-wrap {
@@ -2257,18 +2280,29 @@ to  {
   min-width: 32px;
   text-align: right;
 }
-.h2h-empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text3);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.6;
+.h2h-panel-wrap {
+  animation: h2hSlideIn 0.3s ease;
 }
-.h2h-empty-icon {
-  font-size: 32px;
-  margin-bottom: 12px;
-  opacity: 0.5;
+@keyframes h2hSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.h2h-close-bar {
+  display: flex;
+  justify-content: center;
+  padding: 10px 14px 0;
+}
+.h2h-close-btn {
+  background: rgba(217,83,79,0.12);
+  border: 1px solid rgba(217,83,79,0.3);
+  border-radius: 20px;
+  padding: 6px 16px;
+  color: var(--red);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
 }
 </style>
 <script data-goatcounter="https://calcutta.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
@@ -2344,10 +2378,16 @@ to  {
 <div class="tv-header-top">
 <div class="tv-title">Pool Standings</div>
 </div>
-<div class="tv-header-bot">
+<div class="tv-header-bot" style="display:flex;align-items:center;justify-content:space-between">
 <div class="tv-sub">Houston Open 2026 · <span id="entry-count">0</span> Entries</div>
+<button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()">
+<svg viewBox="0 0 24 24"><path d="M16 3h5v5M8 3H3v5M21 3l-7 7M3 3l7 7"/></svg>
+Compare
+</button>
 </div>
 </div>
+<div id="h2h-inline-panel"></div>
+<div id="cmp-hint" style="display:none" class="cmp-hint">Tap two teams to compare</div>
 <div class="tv-col-hdr" style="margin-top:10px">
 <div style="width:44px">Rank</div>
 <div style="flex:1">Entry</div>
@@ -2430,22 +2470,6 @@ to  {
 <div id="payouts-list"></div>
 <div id="payouts-bubble" style="margin:16px 14px 0;"></div>
 </div>
-<div class="view" id="view-h2h" style="padding-bottom:100px">
-<div class="tv-header">
-<div class="tv-header-top">
-<div class="tv-title">Head-to-Head</div>
-</div>
-<div class="tv-header-bot">
-<div class="tv-sub" id="h2h-sub">Compare two entries side by side</div>
-</div>
-</div>
-<div class="h2h-selectors">
-<select class="h2h-sel" id="h2h-team-a" onchange="renderH2H()"></select>
-<span class="h2h-vs">VS</span>
-<select class="h2h-sel" id="h2h-team-b" onchange="renderH2H()"></select>
-</div>
-<div id="h2h-content"></div>
-</div>
 </div>
 <nav id="nav">
 <button class="nav-btn active" onclick="switchTab('leaderboard',this)">
@@ -2472,10 +2496,6 @@ to  {
 <svg viewBox="0 0 24 24">
 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
 </svg> Payouts </button>
-<button class="nav-btn" onclick="switchTab('h2h',this)">
-<svg viewBox="0 0 24 24">
-<path d="M16 3h5v5M8 3H3v5M21 3l-7 7M3 3l7 7M16 21h5v-5M8 21H3v-5M21 21l-7-7M3 21l7-7"/>
-</svg> H2H </button>
 </nav>
 <div id="toast">
 </div>
@@ -2614,7 +2634,15 @@ const sc = e.total, scf = fmt(sc), scc = cls(sc);
 const top4Str = e.top4.map(g => fmt(g.score)).join(' ');
 const isMyTeam = e.email === currentTeamEmail ? 'is-my-team' : '';
 const isTied = (i < ranked.length-1 && ranked[i].total === ranked[i+1].total) || (i > 0 && ranked[i].total === ranked[i-1].total);
-const tbTag = (isTied && e.tb != null) ? `<span class="s-tb">TB:${e.tb}</span>` : ''; html += ` <div class="standing-row ${isMyTeam}" onclick="togglePanel(this,${i})"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-top4">${top4Str}</div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">›</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
+const tbTag = (isTied && e.tb != null) ? `<span class="s-tb">TB:${e.tb}</span>` : '';
+const entryIdx = ENTRIES.findIndex(x => x.team === e.team && x.email === e.email);
+const isCmpSelected = compareMode && cmpSelections.includes(entryIdx);
+const cmpNum = isCmpSelected ? (cmpSelections.indexOf(entryIdx) + 1) : 0;
+const cmpCls = compareMode ? ' cmp-mode' : '';
+const cmpSelCls = isCmpSelected ? ' cmp-selected' : '';
+const cmpBadge = isCmpSelected ? `<span class="cmp-badge">${cmpNum}</span>` : '';
+const rowClick = compareMode ? `cmpSelectTeam(${entryIdx})` : `togglePanel(this,${i})`;
+html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-top4">${top4Str}</div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
 const gd = GOLFER_SCORES[g.name];
 const pos = gd ? gd.pos : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
@@ -2996,28 +3024,26 @@ function scorecardClass(strokes, par) {
 
 let _openScorecardIdx = null;
 
-function showPickerPopup(playerName, evt) {
+function showPickerPopup(owners, evt) {
   evt.stopPropagation();
-  const existing = document.getElementById('picker-popup');
+  var existing = document.getElementById('picker-popup');
   if (existing) existing.remove();
-  const resolved = resolvePlayerName(playerName);
-  const owners = ENTRIES.filter(e => e.picks.some(p => resolvePlayerName(p) === resolved));
-  if (!owners.length) return;
-  const popup = document.createElement('div');
+  if (!owners || !owners.length) return;
+  var popup = document.createElement('div');
   popup.id = 'picker-popup';
   popup.style.cssText = 'position:fixed;z-index:9999;background:var(--card);border:1px solid var(--gold);border-radius:10px;padding:12px 16px;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:260px;min-width:200px;';
-  const rect = evt.target.getBoundingClientRect();
+  var rect = evt.target.getBoundingClientRect();
   popup.style.top = (rect.bottom + 6) + 'px';
   popup.style.right = Math.max(12, window.innerWidth - rect.right) + 'px';
-  let html = '<div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;text-transform:uppercase;">Picked by</div>';
-  owners.forEach(e => {
+  var html = '<div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;text-transform:uppercase;">Picked by</div>';
+  owners.forEach(function(e) {
     html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;gap:12px;border-bottom:1px solid var(--border);">'
       + '<span style="font-size:12px;font-weight:600;color:var(--text)">' + e.name + '</span>'
       + '<span style="font-size:10px;color:var(--text2);text-align:right;white-space:nowrap">' + e.team + '</span></div>';
   });
   popup.innerHTML = html;
   document.body.appendChild(popup);
-  const dismiss = function(ev) { if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('click', dismiss, true); } };
+  var dismiss = function(ev) { if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('click', dismiss, true); } };
   setTimeout(function() { document.addEventListener('click', dismiss, true); }, 0);
 }
 
@@ -3047,14 +3073,15 @@ async function toggleScorecard(idx, playerName) {
   const ownEntry = OWNERSHIP_DATA.find(o => o.player === playerName);
   const ownPct = ownEntry ? Math.round(ownEntry.pct * 100) : 0;
   const ownPctStr = ownPct + '% of entries';
+  const ownOwners = ENTRIES.filter(function(e) { return e.picks.indexOf(playerName) !== -1; });
 
   function buildOwnBadge() {
-    if (ownPct > 0) return '<span class="own-badge-btn" style="font-size:10px;color:var(--gold);font-weight:600;margin-left:auto;white-space:nowrap;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;padding:4px 6px">' + ownPctStr + '</span>';
+    if (ownOwners.length > 0) return '<span class="own-badge-btn" style="font-size:10px;color:var(--gold);font-weight:600;margin-left:auto;white-space:nowrap;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;padding:4px 6px">' + ownPctStr + '</span>';
     return '<span style="font-size:10px;color:var(--text3);font-weight:600;margin-left:auto;white-space:nowrap">' + ownPctStr + '</span>';
   }
   function bindOwnBadge(container) {
     var btn = container.querySelector('.own-badge-btn');
-    if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); showPickerPopup(playerName, e); });
+    if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); showPickerPopup(ownOwners, e); });
   }
 
   // Fallback: round-level summary if no hole-by-hole data
@@ -3169,22 +3196,59 @@ function showToast(msg) {
   toastT=setTimeout(()=>t.classList.remove('show'),2400);
 }
 
-// ─── Head-to-Head ───
-function populateH2HSelectors() {
-  const selA = document.getElementById('h2h-team-a');
-  const selB = document.getElementById('h2h-team-b');
-  if (!selA || !selB) return;
-  const prevA = selA.value;
-  const prevB = selB.value;
-  const opts = ENTRIES.map((e, i) => '<option value="' + i + '">' + e.team + '</option>').join('');
-  selA.innerHTML = '<option value="">Choose team…</option>' + opts;
-  selB.innerHTML = '<option value="">Choose team…</option>' + opts;
-  if (prevA !== '') selA.value = prevA;
-  if (prevB !== '') selB.value = prevB;
-  // Auto-select: default team A to user's team if set
-  if (!prevA && currentUserEmail) {
-    const myIdx = ENTRIES.findIndex(e => e.email === currentUserEmail);
-    if (myIdx >= 0) selA.value = myIdx;
+// ─── Head-to-Head (Compare Mode) ───
+let compareMode = false;
+let cmpSelections = []; // indices into ENTRIES
+
+function toggleCompareMode() {
+  compareMode = !compareMode;
+  cmpSelections = [];
+  document.getElementById('cmp-toggle').classList.toggle('active', compareMode);
+  document.getElementById('cmp-hint').style.display = compareMode ? 'block' : 'none';
+  document.getElementById('h2h-inline-panel').innerHTML = '';
+  renderStandings();
+}
+
+function exitCompareMode() {
+  compareMode = false;
+  cmpSelections = [];
+  document.getElementById('cmp-toggle').classList.remove('active');
+  document.getElementById('cmp-hint').style.display = 'none';
+  document.getElementById('h2h-inline-panel').innerHTML = '';
+  renderStandings();
+}
+
+function cmpSelectTeam(entryIdx) {
+  if (!compareMode) return;
+  const pos = cmpSelections.indexOf(entryIdx);
+  if (pos >= 0) {
+    // Deselect
+    cmpSelections.splice(pos, 1);
+    document.getElementById('h2h-inline-panel').innerHTML = '';
+    document.getElementById('cmp-hint').style.display = 'block';
+    document.getElementById('cmp-hint').textContent = cmpSelections.length === 0 ? 'Tap two teams to compare' : 'Tap one more team';
+    renderStandings();
+    return;
+  }
+  if (cmpSelections.length >= 2) {
+    // Replace second selection
+    cmpSelections[1] = entryIdx;
+  } else {
+    cmpSelections.push(entryIdx);
+  }
+  renderStandings();
+  if (cmpSelections.length === 2) {
+    document.getElementById('cmp-hint').style.display = 'none';
+    renderH2HInline();
+    // Scroll panel into view
+    setTimeout(function() {
+      var panel = document.getElementById('h2h-inline-panel');
+      if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  } else {
+    document.getElementById('cmp-hint').style.display = 'block';
+    document.getElementById('cmp-hint').textContent = 'Tap one more team';
+    document.getElementById('h2h-inline-panel').innerHTML = '';
   }
 }
 
@@ -3200,39 +3264,25 @@ function getHolesRemaining(playerName) {
 function calcWinProbability(entryA, entryB) {
   const cA = calcEntry(entryA);
   const cB = calcEntry(entryB);
-  const diff = cA.total - cB.total; // negative = A is winning
+  const diff = cA.total - cB.total;
 
-  // Count total holes remaining across each team's top-4 contributing golfers
   const holesA = cA.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
   const holesB = cB.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
   const totalHolesRemaining = holesA + holesB;
 
-  // If tournament is over for both teams, it's deterministic
   if (totalHolesRemaining === 0) {
     if (diff < 0) return { pctA: 100, pctB: 0 };
     if (diff > 0) return { pctA: 0, pctB: 100 };
     return { pctA: 50, pctB: 50 };
   }
 
-  // Standard deviation per hole is roughly 1.2 strokes in golf.
-  // For the *difference* in best-4-of-6 team scores, we scale by
-  // sqrt of composite remaining holes. This is a simplified model
-  // but tracks reasonably with real tournament volatility.
   const sigma = 1.15 * Math.sqrt(totalHolesRemaining / 4);
-
-  // Normal CDF approximation (Abramowitz & Stegun)
-  // We want P(A wins) = P(finalDiff < 0) where finalDiff starts at `diff`
-  // and has noise ~ N(0, sigma^2).
-  // P(A wins) = Phi(-diff / sigma)
   const z = -diff / sigma;
   const pA = normalCDF(z) * 100;
-  const pB = 100 - pA;
-
-  return { pctA: Math.round(pA), pctB: Math.round(pB) };
+  return { pctA: Math.round(pA), pctB: Math.round(100 - pA) };
 }
 
 function normalCDF(x) {
-  // Approximation of the standard normal CDF
   const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
   const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
   const sign = x < 0 ? -1 : 1;
@@ -3243,53 +3293,28 @@ function normalCDF(x) {
 }
 
 function getBarGradient(pctA) {
-  // Left team: green when winning, fades to yellow, then red
-  // Right team: same logic flipped
-  // We build a single bar from left to right:
-  //   pctA side = green→yellow gradient
-  //   pctB side = yellow→red gradient
   if (pctA >= 99) return 'linear-gradient(90deg, #2d9d5e 0%, #52b788 100%)';
   if (pctA <= 1) return 'linear-gradient(90deg, #d9534f 0%, #c9302c 100%)';
   return 'linear-gradient(90deg, #2d9d5e 0%, #52b788 35%, #e8c547 50%, #e07840 75%, #d9534f 100%)';
 }
 
-function renderH2H() {
-  const selA = document.getElementById('h2h-team-a');
-  const selB = document.getElementById('h2h-team-b');
-  const container = document.getElementById('h2h-content');
-  if (!selA || !selB || !container) return;
+function renderH2HInline() {
+  const container = document.getElementById('h2h-inline-panel');
+  if (!container || cmpSelections.length < 2) { if (container) container.innerHTML = ''; return; }
 
-  const idxA = selA.value;
-  const idxB = selB.value;
-
-  if (idxA === '' || idxB === '') {
-    container.innerHTML = '<div class="h2h-empty"><div class="h2h-empty-icon">⚔️</div>Select two teams above to compare them head-to-head</div>';
-    return;
-  }
-
-  if (idxA === idxB) {
-    container.innerHTML = '<div class="h2h-empty"><div class="h2h-empty-icon">🤔</div>Pick two different teams to compare</div>';
-    return;
-  }
-
-  const entryA = ENTRIES[parseInt(idxA)];
-  const entryB = ENTRIES[parseInt(idxB)];
+  const entryA = ENTRIES[cmpSelections[0]];
+  const entryB = ENTRIES[cmpSelections[1]];
   const cA = calcEntry(entryA);
   const cB = calcEntry(entryB);
   const prob = calcWinProbability(entryA, entryB);
-
-  // Determine who's leading
-  const aLeading = prob.pctA >= prob.pctB;
   const pctLeft = prob.pctA;
   const pctRight = prob.pctB;
-
-  // Build probability bar
-  // Fill width = left team's percentage
-  // Gradient: green on left (team A strong), transitions to red on right (team B strong)
-  const fillWidth = Math.max(pctLeft, 2); // min 2% so it's visible
+  const fillWidth = Math.max(pctLeft, 2);
   const barBg = getBarGradient(pctLeft);
 
-  let html = '<div class="h2h-prob-wrap">';
+  let html = '<div class="h2h-panel-wrap">';
+  html += '<div class="h2h-close-bar"><button class="h2h-close-btn" onclick="exitCompareMode()">✕ Exit Compare</button></div>';
+  html += '<div class="h2h-prob-wrap">';
   html += '<div class="h2h-prob-labels">';
   html += '<div class="h2h-prob-name left">' + cA.team + '</div>';
   html += '<div class="h2h-prob-name right">' + cB.team + '</div>';
@@ -3299,13 +3324,10 @@ function renderH2H() {
   html += '<div class="h2h-prob-pct right' + (pctRight < pctLeft ? ' losing' : '') + '">' + pctRight + '%</div>';
   html += '</div>';
   html += '<div class="h2h-bar-track">';
-  html += '<div class="h2h-bar-fill" style="width:' + fillWidth + '%;background:' + barBg + '">';
-  html += '</div>';
+  html += '<div class="h2h-bar-fill" style="width:' + fillWidth + '%;background:' + barBg + '"></div>';
   if (pctLeft > 8) html += '<span class="h2h-bar-label left">WIN</span>';
   if (pctRight > 8) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
-
-  // Score summary under the bar
   html += '<div class="h2h-score-summary">';
   html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmt(cA.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
   if (cA.total === cB.total) {
@@ -3316,12 +3338,10 @@ function renderH2H() {
   }
   html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmt(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
   html += '</div></div>';
-
-  // Team A golfers
   html += '<div class="h2h-matchups">';
   html += buildTeamBlock(cA);
   html += buildTeamBlock(cB);
-  html += '</div>';
+  html += '</div></div>';
 
   container.innerHTML = html;
 }
@@ -3354,7 +3374,7 @@ function buildTeamBlock(calc) {
   return html;
 }
 
-function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); renderPayouts(); populateH2HSelectors(); renderH2H(); }
+function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); renderPayouts(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); }
 
 const POOL_CONFIG = { buyIn: 25, entries: 6, payouts: [ { place: '1st', pct: 0.60 }, { place: '2nd', pct: 0.27 }, { place: '3rd', pct: 0.13 } ] };
 POOL_CONFIG.pot = POOL_CONFIG.buyIn * POOL_CONFIG.entries;
