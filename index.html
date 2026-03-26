@@ -1705,6 +1705,7 @@ to  {
   white-space: nowrap;
 }
 </style>
+<script data-goatcounter="https://calcutta.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div id="splash" onclick="enterApp()">
@@ -2059,7 +2060,20 @@ function renderLeaderboard() {
     return parseInt(p.thru) || 0;
   };
   var dir = lbSortAsc ? 1 : -1;
-  if (lbSort === 'score') players.sort(function(a,b) { return (a.score - b.score) * dir; });
+  var parseTeeTime = function(p) {
+    if (!p.teeTime || !p.teeTime.includes('T')) return 0;
+    try { return new Date(p.teeTime).getTime(); } catch(e) { return 0; }
+  };
+  if (lbSort === 'score') players.sort(function(a,b) {
+    var aScheduled = a.thru === '—';
+    var bScheduled = b.thru === '—';
+    if (aScheduled && bScheduled) return (parseTeeTime(a) - parseTeeTime(b)) * dir;
+    if (aScheduled) return 1;
+    if (bScheduled) return -1;
+    var diff = a.score - b.score;
+    if (diff !== 0) return diff * dir;
+    return parseTeeTime(a) - parseTeeTime(b);
+  });
   else if (lbSort === 'today') players.sort(function(a,b) { return (parseTodayVal(a) - parseTodayVal(b)) * dir; });
   else if (lbSort === 'thru') players.sort(function(a,b) { return (parseThruVal(b) - parseThruVal(a)) * dir; });
   else if (lbSort === 'tot') players.sort(function(a,b) { return ((a.tot||9999) - (b.tot||9999)) * dir; });
