@@ -528,43 +528,35 @@ html, body  {
 .tv-col-hdr  {
   display: flex;
   align-items: center;
-  padding: 4px 14px;
+  padding: 6px 8px;
   background: rgba(6,18,12,0.95);
   border-bottom: 1px solid var(--border);
   font-size: 8px;
   font-weight: 800;
   color: var(--text3);
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
-.tv-tot-col-hdr  {
-  width: 48px;
-  text-align: center;
-  background: rgba(110,22,22,0.6);
-  border-left: 1.5px solid rgba(160,40,40,0.55);
-  margin: -4px 0;
-  padding: 4px 0;
-  color: rgba(255,255,255,0.65) !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tv-col-hdr .today-hdr  {
-  background: var(--gold);
-  color: #0a1a10;
-  padding: 2px 6px;
-  border-radius: 2px;
-  font-size: 7px;
-  font-weight: 900;
-  letter-spacing: 1.2px;
-}
+.tv-h-pos { width: 32px; flex-shrink: 0; }
+.tv-h-pill { width: 18px; flex-shrink: 0; }
+.tv-h-player { flex: 1; min-width: 0; }
+.tv-h-score { width: 40px; text-align: right; flex-shrink: 0; }
+.tv-h-today { width: 40px; text-align: right; flex-shrink: 0; color: var(--gold); }
+.tv-h-thru { width: 48px; text-align: right; flex-shrink: 0; }
+.tv-h-rnd { width: 26px; text-align: right; flex-shrink: 0; color: var(--text3); }
+.tv-h-tot { width: 30px; text-align: right; flex-shrink: 0; }
+.tv-h-sort { cursor: pointer; -webkit-user-select: none; user-select: none; }
+.tv-h-sort:active { opacity: 0.6; }
+.tv-h-active { color: var(--gold) !important; }
 
 .tv-row  {
   display: flex;
   align-items: center;
-  padding: 8px 14px;
+  padding: 7px 8px;
   border-bottom: 1px solid rgba(26,51,38,0.4);
   border-left: 2px solid transparent;
 }
@@ -663,74 +655,54 @@ html, body  {
   flex-shrink: 0;
 }
 
-.tv-topar  {
-  width: 48px;
-  font-size: 16px;
-  font-weight: 900;
-  text-align: center;
-  flex-shrink: 0;
-  background: rgba(110,22,22,0.5);
-  border-left: 1.5px solid rgba(160,40,40,0.55);
-  margin: -8px 0;
-  padding: 8px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tv-topar.neg  {
-  color: var(--gold);
-}
-
-.tv-topar.pos  {
-  color: #ff6b6b;
-}
-
-.tv-topar.eve  {
-  color: rgba(255,255,255,0.7);
-}
-
-.tv-topar.mc  {
-  color: #ff6b6b;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.tv-rnd-score  {
-  width: 32px;
+.tv-score  {
+  width: 40px;
   font-size: 13px;
-  font-weight: 700;
-  color: var(--text2);
+  font-weight: 800;
   text-align: right;
   flex-shrink: 0;
 }
+.tv-score.neg { color: var(--gold); }
+.tv-score.pos { color: #ff6b6b; }
+.tv-score.eve { color: rgba(255,255,255,0.7); }
+.tv-score.mc { color: #ff6b6b; font-size: 10px; }
 
 .tv-today  {
-  width: 36px;
-  font-size: 13px;
+  width: 40px;
+  font-size: 12px;
   font-weight: 700;
   text-align: right;
   flex-shrink: 0;
 }
+.tv-today.neg { color: var(--gold); }
+.tv-today.pos { color: var(--red); }
+.tv-today.eve { color: var(--text2); }
 
-.tv-today.neg  {
-  color: var(--gold);
-}
-
-.tv-today.pos  {
-  color: var(--red);
-}
-
-.tv-today.eve  {
+.tv-thru  {
+  width: 48px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
   color: var(--text2);
 }
 
-.tv-tee  {
-  width: 68px !important;
-  font-size: 11px;
-  color: var(--text3);
+.tv-rnd  {
+  width: 26px;
+  font-size: 10px;
   font-weight: 600;
   text-align: right;
+  flex-shrink: 0;
+  color: var(--text3);
+}
+
+.tv-tot  {
+  width: 30px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
+  color: var(--text2);
 }
 
 .own-row  {
@@ -2036,6 +2008,14 @@ const sc=calc.total, scf=fmt(sc), scc=cls(sc); return ` <div class="team-card"> 
 const pos=gd?gd.pos:'—', thru=gd?gd.thru:''; return `<div class="pick-row"> <div class="pick-n">${j+1}</div> <div class="pick-info"> <div class="pick-name">${g.name}${isTop?'<span class="pick-badge">TOP 4</span>':''}</div> <div class="pick-pos">${pos}${pos!=='MC'?' · Thru '+thru:' · Missed Cut'}</div> </div> <div class="pick-score ${cls(g.score)}">${fmt(g.score)}</div> </div>`; }).join('')} </div>`; }).join('');}
 
 let lbFilter='all';
+let lbSort='score';
+let lbSortAsc=true;
+
+function setLbSort(col) {
+  if (lbSort === col) { lbSortAsc = !lbSortAsc; }
+  else { lbSort = col; lbSortAsc = true; }
+  renderLeaderboard();
+}
 
 function setLbFilter(f,btn) {
   lbFilter=f;
@@ -2061,40 +2041,105 @@ function renderLeaderboard() {
   const poolNames = new Set(ENTRIES.flatMap(e=>e.picks));
   const myPicksMap = getMyPicksMap();
   const myAllPicks = getActiveTeamPicks();
-  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d
-})).sort((a,b)=>a.score-b.score); if (lbFilter==='pool') players=players.filter(p=>poolNames.has(p.name)); if (lbFilter==='myPicks') players=players.filter(p=>myAllPicks.has(p.name));
-const countEl = document.getElementById('lb-count'); if (countEl) { if (lbFilter==='pool') countEl.textContent = `${players.length} pool picks`; else if (lbFilter==='myPicks') countEl.textContent = `${players.length} of your picks`; else countEl.textContent = `${players.filter(p=>p.thru!=='MC').length} active · ${players.filter(p=>p.thru==='MC').length} MC`; }
-
-const legendEl = document.getElementById('lb-legend'); if (legendEl) { if (currentUserTeams.length > 1 && activeTeamIdx === -1) { legendEl.innerHTML = currentUserTeams.map((t, i) => `<div class="lb-legend-item"> <span class="team-pill ${PILL_CLASSES[i]||''}" style="width:16px;height:13px;font-size:8px;border-radius:4px">${pillLabel(i)}</span> <span>${t.team}</span> </div>`).join(''); } else if (currentUserTeams.length > 1 && activeTeamIdx >= 0) { const t = currentUserTeams[activeTeamIdx]; legendEl.innerHTML = `<div class="lb-legend-item"> <span class="team-pill ${PILL_CLASSES[activeTeamIdx]||''}" style="width:16px;height:13px;font-size:8px;border-radius:4px">${pillLabel(activeTeamIdx)}</span> <span>${t.team}</span> </div>`; } else { legendEl.innerHTML = ''; } }
-
-const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
-const currentRound = samplePlayer ? (samplePlayer.r4!=null?4:samplePlayer.r3!=null?3:samplePlayer.r2!=null?2:samplePlayer.r1!=null?1:0) : 0;
-const isPreT = currentRound === 0; if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
-
-const roundLabels = ['','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
-const tvTitle = document.getElementById('lb-round-title'); if (tvTitle) tvTitle.textContent = isPreT ? 'Houston Open' : roundLabels[currentRound] || 'Houston Open';
-const colHdr = `<div class="tv-col-hdr"> <div style="width:32px"></div> <div style="width:20px"></div> <div style="flex:1">Player</div> <div class="tv-tot-col-hdr">Tot</div> ${isPreT ? '<div style="width:68px;text-align:right">Tee Time</div>' : '<div style="width:32px;text-align:right">Rnd</div><div style="width:36px;text-align:right"><span class="today-hdr">TODAY</span></div>'} </div>`;
-let rows = '';
-let cutInserted = false; players.forEach(p => { const mc = p.thru==='MC', inPool = poolNames.has(p.name); if (!cutInserted && mc && currentRound >= 2) { rows += `<div class="cut-line-row"><div class="cut-line-label">── Cut Line ──</div></div>`; cutInserted = true; }
-
-const sc = p.score, scf = fmt(sc);
-const scClass = mc?'mc':sc<0?'neg':sc>0?'pos':'eve';
-const cc = getCountryCode(p.name);
-const flag = FLAGS[p.name] || '';
-const preT = p.thru === '—';
-const curRndScore = [p.r4,p.r3,p.r2,p.r1].find(r=>r!=null);
-const todayRel = curRndScore!=null ? curRndScore - COURSE_PAR : ((!preT && !mc && sc !== 11) ? sc : null);
-const todayStr = todayRel!=null ? (todayRel<0?String(todayRel):todayRel>0?'+'+todayRel:'E') : '';
-const todayCls = todayRel!=null ? (todayRel<0?'neg':todayRel>0?'pos':'eve') : '';
-let teeStr = ''; if (p.teeTime && p.teeTime.includes('T')) { try { teeStr = new Date(p.teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); } catch(e){} } else if (p.teeTime) { teeStr = p.teeTime; }
-const prevP = PREV_POSITIONS[p.name];
-const currP = parsePos(p.pos);
-let moveHtml = ''; if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? `<div class="pos-move up">▲${d}</div>` : `<div class="pos-move dn">▼${Math.abs(d)}</div>`; }
-
-const myTeamIdxs = myPicksMap[p.name] || [];
-const pills = myTeamIdxs.map(i=>`<span class="team-pill ${PILL_CLASSES[i]||''}">${pillLabel(i)}</span>`).join('');
-const isMyPick = myTeamIdxs.length > 0;
-const isPrevWinner = isPreT && p.name === PREV_WINNER; rows += `<div class="tv-row${mc?' tv-mc':''}${isMyPick?' is-my-team':''}${isPrevWinner?' tv-prev-winner':''}"> <div class="tv-pos" style="display:flex;flex-direction:column;align-items:flex-start;justify-content:center"> <span>${mc?'MC':p.pos}</span> ${moveHtml} </div> <div class="tv-pill-slot">${pills}</div> <div class="tv-player"> <span class="tv-name ${isMyPick?'is-my-pick':''}">${p.name}</span> <span class="tv-country">${flag}${cc?' '+cc:''}</span> ${isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':''} ${inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':''} </div> <div class="tv-topar ${scClass}">${preT?'E':mc?'MC':scf}</div> ${preT ? `<div class="tv-today tv-tee">${teeStr||'—'}</div>` : `<div class="tv-rnd-score">${curRndScore||'—'}</div><div class="tv-today ${todayCls}">${mc?'':todayStr}</div>`} </div>`; }); document.getElementById('leaderboard-list').innerHTML = colHdr + rows;}
+  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d}));
+  var parseTodayVal = function(p) {
+    var d = p.todayDisplay || '—';
+    if (d === '—') return 999;
+    if (d === 'E') return 0;
+    return parseInt(d.replace('+','')) || 0;
+  };
+  var parseThruVal = function(p) {
+    if (p.thru === '—') return -1;
+    if (p.thru === 'MC') return 99;
+    return parseInt(p.thru) || 0;
+  };
+  var dir = lbSortAsc ? 1 : -1;
+  if (lbSort === 'score') players.sort(function(a,b) { return (a.score - b.score) * dir; });
+  else if (lbSort === 'today') players.sort(function(a,b) { return (parseTodayVal(a) - parseTodayVal(b)) * dir; });
+  else if (lbSort === 'thru') players.sort(function(a,b) { return (parseThruVal(b) - parseThruVal(a)) * dir; });
+  else if (lbSort === 'tot') players.sort(function(a,b) { return ((a.tot||9999) - (b.tot||9999)) * dir; });
+  if (lbFilter==='pool') players=players.filter(p=>poolNames.has(p.name));
+  if (lbFilter==='myPicks') players=players.filter(p=>myAllPicks.has(p.name));
+  const countEl = document.getElementById('lb-count');
+  if (countEl) {
+    if (lbFilter==='pool') countEl.textContent = players.length + ' pool picks';
+    else if (lbFilter==='myPicks') countEl.textContent = players.length + ' of your picks';
+    else countEl.textContent = players.filter(p=>p.thru!=='MC').length + ' active · ' + players.filter(p=>p.thru==='MC').length + ' MC';
+  }
+  const legendEl = document.getElementById('lb-legend');
+  if (legendEl) {
+    if (currentUserTeams.length > 1 && activeTeamIdx === -1) {
+      legendEl.innerHTML = currentUserTeams.map((t, i) => '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[i]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(i) + '</span><span>' + t.team + '</span></div>').join('');
+    } else if (currentUserTeams.length > 1 && activeTeamIdx >= 0) {
+      const t = currentUserTeams[activeTeamIdx];
+      legendEl.innerHTML = '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[activeTeamIdx]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(activeTeamIdx) + '</span><span>' + t.team + '</span></div>';
+    } else { legendEl.innerHTML = ''; }
+  }
+  const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
+  const completedRoundCount = samplePlayer ? [samplePlayer.r1,samplePlayer.r2,samplePlayer.r3,samplePlayer.r4].filter(r=>r!=null).length : 0;
+  const currentRound = samplePlayer ? completedRoundCount + 1 : 0;
+  const isPreT = currentRound === 0;
+  if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
+  const roundLabels = ['','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
+  const tvTitle = document.getElementById('lb-round-title');
+  if (tvTitle) tvTitle.textContent = isPreT ? 'Houston Open' : (roundLabels[currentRound] || 'Houston Open');
+  var sortArrow = function(col) { return lbSort===col ? (lbSortAsc ? ' ▲' : ' ▼') : ''; };
+  var sortCls = function(col) { return lbSort===col ? ' tv-h-active' : ''; };
+  const colHdr = '<div class="tv-col-hdr"><div class="tv-h-pos">POS</div><div class="tv-h-pill"></div><div class="tv-h-player">PLAYER</div>'
+    + '<div class="tv-h-score tv-h-sort' + sortCls('score') + '" onclick="setLbSort(\'score\')">SCORE' + sortArrow('score') + '</div>'
+    + '<div class="tv-h-today tv-h-sort' + sortCls('today') + '" onclick="setLbSort(\'today\')">TODAY' + sortArrow('today') + '</div>'
+    + '<div class="tv-h-thru tv-h-sort' + sortCls('thru') + '" onclick="setLbSort(\'thru\')">THRU' + sortArrow('thru') + '</div>'
+    + '<div class="tv-h-rnd">R1</div><div class="tv-h-rnd">R2</div><div class="tv-h-rnd">R3</div><div class="tv-h-rnd">R4</div>'
+    + '<div class="tv-h-tot tv-h-sort' + sortCls('tot') + '" onclick="setLbSort(\'tot\')">TOT' + sortArrow('tot') + '</div></div>';
+  let rows = '';
+  let cutInserted = false;
+  players.forEach(p => {
+    const mc = p.thru==='MC', inPool = poolNames.has(p.name);
+    if (!cutInserted && mc && currentRound >= 2) { rows += '<div class="cut-line-row"><div class="cut-line-label">── Cut Line ──</div></div>'; cutInserted = true; }
+    const sc = p.score, scf = fmt(sc);
+    const scClass = mc ? 'mc' : sc < 0 ? 'neg' : sc > 0 ? 'pos' : 'eve';
+    const flag = FLAGS[p.name] || '';
+    const cc = getCountryCode(p.name);
+    const preT = p.thru === '—';
+    let teeStr = '';
+    if (p.teeTime && p.teeTime.includes('T')) { try { teeStr = new Date(p.teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); } catch(e){} }
+    else if (p.teeTime) { teeStr = p.teeTime; }
+    const thruDisp = preT ? teeStr || '—' : p.thru + (p.startHole === 10 && p.thru !== 'MC' && !preT ? '*' : '');
+    const todayDisp = preT ? '—' : (p.todayDisplay || '—');
+    const todayVal = todayDisp === 'E' || todayDisp === '—' ? 0 : parseInt(todayDisp.replace('+','')) || 0;
+    const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
+    const r1Disp = p.r1 ? p.r1 : '--';
+    const r2Disp = p.r2 ? p.r2 : '--';
+    const r3Disp = p.r3 ? p.r3 : '--';
+    const r4Disp = p.r4 ? p.r4 : '--';
+    const totDisp = p.tot || '--';
+    const prevP = PREV_POSITIONS[p.name];
+    const currP = parsePos(p.pos);
+    let moveHtml = '';
+    if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? '<div class="pos-move up">▲' + d + '</div>' : '<div class="pos-move dn">▼' + Math.abs(d) + '</div>'; }
+    const myTeamIdxs = myPicksMap[p.name] || [];
+    const pills = myTeamIdxs.map(i => '<span class="team-pill ' + (PILL_CLASSES[i]||'') + '">' + pillLabel(i) + '</span>').join('');
+    const isMyPick = myTeamIdxs.length > 0;
+    const isPrevWinner = isPreT && p.name === PREV_WINNER;
+    rows += '<div class="tv-row' + (mc?' tv-mc':'') + (isMyPick?' is-my-team':'') + (isPrevWinner?' tv-prev-winner':'') + '">'
+      + '<div class="tv-pos">' + (mc?'MC':p.pos) + moveHtml + '</div>'
+      + '<div class="tv-pill-slot">' + pills + '</div>'
+      + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
+      + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
+      + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
+      + '</div>'
+      + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?'MC':scf) + '</div>'
+      + '<div class="tv-today ' + todayCls + '">' + todayDisp + '</div>'
+      + '<div class="tv-thru">' + thruDisp + '</div>'
+      + '<div class="tv-rnd">' + r1Disp + '</div>'
+      + '<div class="tv-rnd">' + r2Disp + '</div>'
+      + '<div class="tv-rnd">' + r3Disp + '</div>'
+      + '<div class="tv-rnd">' + r4Disp + '</div>'
+      + '<div class="tv-tot">' + totDisp + '</div>'
+      + '</div>';
+  });
+  document.getElementById('leaderboard-list').innerHTML = colHdr + rows;
+}
 
 let ownFilter='most';
 
@@ -2167,13 +2212,18 @@ const freshScores = {}; comps.forEach(c=>{ const name=c.athlete?.displayName; if
 const state=c.status?.type?.name||'';
 const scheduled=state==='STATUS_SCHEDULED';
 const mc=state.includes('CUT')||false;
-const scoreDisp=c.score?.displayValue||'0';
-const score=scheduled?0:(scoreDisp==='E'||scoreDisp==='-'?0:parseInt(scoreDisp.replace('+',''))||0);
+const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
+const score=scheduled?0:(mc?11:(scoreToPar?scoreToPar.value:0));
 const lines=c.linescores||[];
 const teeTime=c.status?.teeTime||'';
 const thruRaw=c.status?.thru;
-const thru=mc?'MC':(scheduled?'—':(thruRaw>0?String(thruRaw):(c.status?.displayValue||'F'))); const rv = i => { const v = lines[i]?.value; return (v && v > 50) ? v : null; };
-freshScores[name]={ pos:scheduled?'—':(c.status?.position?.displayName||'—'), score:mc?11:score, thru:thru, teeTime:teeTime, r1:rv(0), r2:rv(1), r3:rv(2), r4:rv(3) }; }); GOLFER_SCORES = freshScores; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { console.log('❌ ESPN API error:', e.message); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline'); renderAll(); }}
+const thru=mc?'MC':(scheduled?'—':(thruRaw>0?String(thruRaw):(c.status?.displayValue||'F')));
+const startHole=c.status?.startHole||1;
+const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
+const tot=lines.reduce((s,l)=>(l.value?s+l.value:s),0)||null;
+const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
+const todayDisplay=scheduled?'—':(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||'—');
+freshScores[name]={ pos:scheduled?'—':(c.status?.position?.displayName||'—'), score:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { console.log('❌ ESPN API error:', e.message); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline'); renderAll(); }}
 
 function setApiStatus(state, text) {
   _lastStatusText = text;
@@ -2267,6 +2317,6 @@ function selectTeamEntry(idx) {
 }
 
 async function initApp() { ENTRIES.forEach(e => { e.picks = e.picks.map(resolvePlayerName); }); allTeamEmails = [...new Set(ENTRIES.map(e => e.email))].sort(); OWNERSHIP_DATA = computeOwnership(); console.log('✅ Loaded', ENTRIES.length, 'baked-in entries');
-const returning = loadUser(); if (returning) console.log('👤 Returning user:', currentUserEmail); updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
+const returning = loadUser(); if (returning) console.log('👤 Returning user:', currentUserEmail); updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
 </script>
 </body></html>
