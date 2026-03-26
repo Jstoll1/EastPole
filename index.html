@@ -2061,17 +2061,17 @@ to  {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   color: var(--text);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b9e78'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
   cursor: pointer;
+  min-height: 44px;
+  -webkit-appearance: menulist;
+  appearance: menulist;
+  position: relative;
+  z-index: 10;
 }
 .h2h-sel:focus { border-color: var(--gold-dim); outline: none; }
 .h2h-vs {
@@ -2429,7 +2429,6 @@ to  {
 </div>
 <div id="payouts-list"></div>
 <div id="payouts-bubble" style="margin:16px 14px 0;"></div>
-</div>
 </div>
 <div class="view" id="view-h2h" style="padding-bottom:100px">
 <div class="tv-header">
@@ -2997,6 +2996,32 @@ function scorecardClass(strokes, par) {
 
 let _openScorecardIdx = null;
 
+function showPickerPopup(playerName, evt) {
+  evt.stopPropagation();
+  const existing = document.getElementById('picker-popup');
+  if (existing) existing.remove();
+  const resolved = resolvePlayerName(playerName);
+  const owners = ENTRIES.filter(e => e.picks.some(p => resolvePlayerName(p) === resolved));
+  if (!owners.length) return;
+  const popup = document.createElement('div');
+  popup.id = 'picker-popup';
+  popup.style.cssText = 'position:fixed;z-index:9999;background:var(--card);border:1px solid var(--gold);border-radius:10px;padding:12px 16px;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:260px;min-width:200px;';
+  const rect = evt.target.getBoundingClientRect();
+  popup.style.top = (rect.bottom + 6) + 'px';
+  popup.style.right = Math.max(12, window.innerWidth - rect.right) + 'px';
+  let html = '<div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;text-transform:uppercase;">Picked by</div>';
+  owners.forEach(e => {
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;gap:12px;border-bottom:1px solid var(--border);">'
+      + '<span style="font-size:12px;font-weight:600;color:var(--text)">' + e.name + '</span>'
+      + '<span style="font-size:10px;color:var(--text2);text-align:right;white-space:nowrap">' + e.team + '</span></div>';
+  });
+  popup.innerHTML = html;
+  document.body.appendChild(popup);
+  const dismiss = function(ev) { if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('click', dismiss, true); } };
+  setTimeout(function() { document.addEventListener('click', dismiss, true); }, 0);
+}
+
+
 async function toggleScorecard(idx, playerName) {
   const panel = document.getElementById('sc-panel-' + idx);
   if (!panel) return;
@@ -3020,13 +3045,23 @@ async function toggleScorecard(idx, playerName) {
   const rounds = SCORECARD_CACHE[playerName];
   const gd = GOLFER_SCORES[playerName];
   const ownEntry = OWNERSHIP_DATA.find(o => o.player === playerName);
-  const ownPctStr = ownEntry ? Math.round(ownEntry.pct * 100) + '% of entries' : '0% of entries';
+  const ownPct = ownEntry ? Math.round(ownEntry.pct * 100) : 0;
+  const ownPctStr = ownPct + '% of entries';
+
+  function buildOwnBadge() {
+    if (ownPct > 0) return '<span class="own-badge-btn" style="font-size:10px;color:var(--gold);font-weight:600;margin-left:auto;white-space:nowrap;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;padding:4px 6px">' + ownPctStr + '</span>';
+    return '<span style="font-size:10px;color:var(--text3);font-weight:600;margin-left:auto;white-space:nowrap">' + ownPctStr + '</span>';
+  }
+  function bindOwnBadge(container) {
+    var btn = container.querySelector('.own-badge-btn');
+    if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); showPickerPopup(playerName, e); });
+  }
 
   // Fallback: round-level summary if no hole-by-hole data
   if (!rounds || !rounds.length || !rounds.some(r => r.holes && r.holes.length > 0)) {
     let fb = '<div class="sc-header"><span class="sc-player-name">' + playerName + '</span>';
     if (gd) fb += '<span class="sc-player-pos">' + gd.pos + '</span>';
-    if (ownPctStr) fb += '<span style="font-size:10px;color:var(--gold);font-weight:600;margin-left:auto;white-space:nowrap">' + ownPctStr + '</span>';
+    fb += buildOwnBadge();
     fb += '</div><div style="padding:8px 12px 12px;">';
     const flag = FLAGS[playerName] || '';
     const cc = getCountryCode(playerName);
@@ -3048,12 +3083,13 @@ async function toggleScorecard(idx, playerName) {
     if (gd?.thru && gd.thru !== '—') fb += '<div style="margin-top:8px;font-size:10px;color:var(--text3);">Thru ' + gd.thru + (gd.todayDisplay !== '—' ? ' · Today: ' + gd.todayDisplay : '') + '</div>';
     fb += '</div>';
     panel.innerHTML = fb;
+    bindOwnBadge(panel);
     return;
   }
 
   let html = '<div class="sc-header"><span class="sc-player-name">' + playerName + '</span>';
   if (gd) html += '<span class="sc-player-pos">' + gd.pos + '</span>';
-  if (ownPctStr) html += '<span style="font-size:10px;color:var(--gold);font-weight:600;margin-left:auto;white-space:nowrap">' + ownPctStr + '</span>';
+  html += buildOwnBadge();
   html += '</div>';
 
   // Only show the most recent round with hole data
@@ -3113,6 +3149,7 @@ async function toggleScorecard(idx, playerName) {
   });
 
   panel.innerHTML = html;
+  bindOwnBadge(panel);
 }
 
 function switchTab(name,btn) {
