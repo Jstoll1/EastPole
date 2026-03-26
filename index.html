@@ -25,7 +25,7 @@
       --border: #1a3326;
       --safe-top: env(safe-area-inset-top, 47px);
       --safe-bot: env(safe-area-inset-bottom, 34px);
-      --header-h: 44px;
+      --header-h: 54px;
       --nav-h: 56px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -45,12 +45,14 @@
     }
     .hdr-inner {
       height: var(--header-h);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 5px 14px 6px; gap: 5px;
     }
-    .hdr-left { flex: 1; min-width: 0; }
-    .hdr-left h1 { font-size: 12px; font-weight: 900; letter-spacing: 0.5px; color: #fff; text-transform: uppercase; white-space: nowrap; }
-    .hdr-left p { display: none; }
+    /* Row 1: brand name left, team capsule right */
+    .hdr-row1 { display: flex; align-items: center; justify-content: space-between; }
+    .hdr-brand { font-size: 11px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); flex-shrink: 0; }
+    /* Row 2: status pill alone, full left — nothing to collide with */
+    .hdr-row2 { display: flex; align-items: center; }
     .hdr-pill {
       background: rgba(0,0,0,0.3); border: 1px solid rgba(212,168,67,0.25);
       border-radius: 20px; padding: 5px 9px;
@@ -160,7 +162,9 @@
     .seg-team-b { color: #FF7F7F; }
     .seg-team-a.active { background: rgba(91,200,245,0.15); color: #5BC8F5; }
     .seg-team-b.active { background: rgba(255,127,127,0.15); color: #FF7F7F; }
-    .lb-sticky-hdr { position: sticky; top: 0; z-index: 50; background: var(--bg); }
+    .lb-sticky-hdr { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); }
+    .lb-top-row { display: flex; align-items: center; padding: 10px 14px 2px; }
+    .lb-round-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); }
     .tv-header {
       background: linear-gradient(180deg, #1a4d2e 0%, #0e2a18 100%);
       padding: 0; text-align: center; overflow: hidden;
@@ -373,7 +377,7 @@
     .hdr-switch { font-size: 11px; color: var(--text3); cursor: pointer; margin-top: 4px; text-decoration: underline; }
 
     /* ── HEADER RIGHT COLUMN ── */
-    .hdr-right { display: flex; flex-direction: row; align-items: center; gap: 7px; flex-shrink: 0; }
+    .hdr-right { display: flex; align-items: center; flex-shrink: 0; }
     #hdr-team-display { display: none; }
     .hdr-team-pill {
       display: flex; align-items: center; gap: 5px;
@@ -384,8 +388,8 @@
     .hdr-dropdown-caret { font-size: 8px; color: rgba(212,168,67,0.6); flex-shrink: 0; line-height: 1; transition: transform 0.2s; }
     .hdr-dropdown-caret.open { transform: rotate(180deg); }
     #team-dropdown {
-      display: none; position: absolute; right: 16px;
-      top: calc(var(--safe-top) + var(--header-h) + 8px);
+      display: none; position: fixed; right: 14px;
+      top: calc(var(--safe-top) + var(--header-h) + 6px);
       z-index: 400; min-width: 180px;
       background: #0e2318; border: 1px solid var(--gold);
       border-radius: 12px; overflow: hidden;
@@ -489,6 +493,54 @@
     }
     .pill-a { background: #5BC8F5; color: #052030; }
     .pill-b { background: #FF7F7F; color: #300505; }
+
+    /* ── HERO POSITION CARD ── */
+    .my-pos-card {
+      margin: 10px 14px 4px;
+      background: linear-gradient(135deg, rgba(212,168,67,0.11), rgba(212,168,67,0.03));
+      border: 1px solid rgba(212,168,67,0.32); border-radius: 14px;
+      padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+    }
+    .my-pos-rank { font-size: 30px; font-weight: 900; color: var(--gold); width: 42px; flex-shrink: 0; text-align: center; line-height: 1; }
+    .my-pos-info { flex: 1; min-width: 0; }
+    .my-pos-team { font-size: 13px; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .my-pos-detail { font-size: 10px; color: var(--text2); margin-top: 3px; }
+    .my-pos-score { font-size: 26px; font-weight: 900; flex-shrink: 0; }
+    .my-pos-move { font-size: 9px; font-weight: 800; margin-top: 3px; }
+    .my-pos-move.up { color: #52b788; }
+    .my-pos-move.dn { color: var(--red); }
+
+    /* ── STANDINGS TWEAKS ── */
+    .s-name { font-size: 10px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .s-tb { font-size: 8px; color: rgba(212,168,67,0.5); margin-left: 5px; font-weight: 600; letter-spacing: 0.2px; }
+
+    /* ── LEADERBOARD POSITION MOVEMENT ── */
+    .pos-move { font-size: 7px; font-weight: 900; line-height: 1.2; margin-top: 1px; }
+    .pos-move.up { color: #52b788; }
+    .pos-move.dn { color: #ff7070; }
+
+    /* ── CUT LINE ── */
+    .cut-line-row {
+      display: flex; align-items: center; padding: 4px 14px;
+      background: rgba(130,15,15,0.2);
+      border-top: 1px dashed rgba(180,45,45,0.45);
+      border-bottom: 1px dashed rgba(180,45,45,0.45);
+    }
+    .cut-line-label { font-size: 8px; font-weight: 900; letter-spacing: 1.5px; color: rgba(255,85,85,0.6); text-transform: uppercase; width: 100%; text-align: center; }
+
+    /* ── ROUND HISTORY IN EXPAND PANEL ── */
+    .mini-pick-rounds { font-size: 9px; color: var(--text3); margin-left: 6px; flex-shrink: 0; font-weight: 600; letter-spacing: 0.2px; }
+
+    /* ── TEAM LEGEND ── */
+    #lb-legend { display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 14px 8px; }
+    .lb-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); font-weight: 600; white-space: nowrap; }
+    /* ── PLAYER COUNT LABEL ── */
+    .lb-count-tag { padding: 0 14px 5px; font-size: 9px; color: var(--text3); font-weight: 600; letter-spacing: 0.3px; }
+
+    /* ── LAST UPDATED (now inline in row1) ── */
+
+    /* ── TV TITLE OVERFLOW ── */
+    .tv-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -526,28 +578,35 @@
   </div>
 <header id="hdr">
   <div class="hdr-inner">
-    <div class="hdr-left">
-      <h1>East Pole Pool</h1>
-      <div id="hdr-sub-default"><p id="hdr-sub">Houston Open 2026 · March 26-29</p></div>
+    <!-- Row 1: Brand (left) + Team capsule (right) — anchored to edges, can never overlap -->
+    <div class="hdr-row1">
+      <span class="hdr-brand">East Pole</span>
+      <div class="hdr-right">
+        <div id="hdr-team-display" onclick="toggleTeamDropdown()" style="cursor:pointer">
+          <div class="hdr-team-pill">
+            <div style="display:flex;flex-direction:column;align-items:flex-start;min-width:0">
+              <span style="font-size:7px;color:rgba(212,168,67,0.45);font-weight:800;letter-spacing:1px;text-transform:uppercase;line-height:1;margin-bottom:2px">My Picks</span>
+              <span class="hdr-active-team" id="hdr-active-team"></span>
+            </div>
+            <span class="hdr-dropdown-caret" id="hdr-dd-caret">▾</span>
+          </div>
+        </div>
+        <button id="hdr-join-btn" onclick="showOnboarding()" style="display:none">Join Pool</button>
+      </div>
     </div>
-    <div class="hdr-right">
+    <!-- Row 2: Status pill alone — full room to grow, nothing to collide with -->
+    <div class="hdr-row2">
       <div class="hdr-pill" onclick="refreshData()" style="cursor:pointer">
         <div class="live-dot" id="live-dot"></div>
         <span id="hdr-status">Loading…</span>
       </div>
-      <div id="hdr-team-display" onclick="toggleTeamDropdown()" style="cursor:pointer;position:relative">
-        <div class="hdr-team-pill">
-          <span class="hdr-active-team" id="hdr-active-team"></span>
-          <span class="hdr-dropdown-caret" id="hdr-dd-caret">▾</span>
-        </div>
-      </div>
-      <div id="team-dropdown">
-        <div class="td-header">Entries</div>
-        <div id="team-dropdown-list"></div>
-        <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change User</button>
-      </div>
-      <button id="hdr-join-btn" onclick="showOnboarding()" style="display:none">Select Team</button>
     </div>
+  </div>
+  <!-- Dropdown anchored outside inner so it overlays content correctly -->
+  <div id="team-dropdown">
+    <div class="td-header">Entries</div>
+    <div id="team-dropdown-list"></div>
+    <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change User</button>
   </div>
 </header>
 <div id="views">
@@ -570,20 +629,17 @@
   </div>
   <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
     <div class="lb-sticky-hdr">
-      <div class="tv-header">
-        <div class="tv-header-top">
-          <div class="tv-title" id="lb-round-title">Houston Open</div>
-        </div>
-        <div class="tv-header-bot">
-          <div class="tv-sub">Tournament Leaderboard · March 26-29, 2026</div>
-        </div>
+      <div class="lb-top-row">
+        <span class="lb-round-label" id="lb-round-title">Houston Open</span>
       </div>
-      <div class="seg-wrap" style="padding:10px 14px 6px">
+      <div class="seg-wrap" style="padding:6px 14px 6px">
         <div class="seg">
-          <button class="seg-btn active" onclick="setLbFilter('all',this)">All Players</button>
+          <button class="seg-btn active" onclick="setLbFilter('all',this)">All</button>
           <button class="seg-btn" onclick="setLbFilter('pool',this)">In Pool</button>
         </div>
       </div>
+      <div id="lb-legend"></div>
+      <div class="lb-count-tag" id="lb-count"></div>
     </div>
     <div id="leaderboard-list"></div>
   </div>
@@ -623,12 +679,19 @@
 <script>
 let GOLFER_SCORES = {};
 let allTeamEmails = [];
+let PREV_POSITIONS = {}; // name → numeric pos from last fetch
+let PREV_RANKS = {};     // team → rank from last standings render
+let lastFetchTime = 0;
+function parsePos(pos) {
+  if (!pos || pos === '—' || pos === 'MC' || pos === 'WD') return null;
+  return parseInt(String(pos).replace('T','')) || null;
+}
 
 // ── USER STATE ──────────────────────────────────────────
 const STORAGE_KEY = 'eastpole_v2';
 let currentUserEmail   = null;
 let currentUserTeams   = []; // entry objects for this user
-let activeTeamIdx      = 0;  // which team is shown in header (0=A,1=B)
+let activeTeamIdx      = 0;  // which team is shown in header (0=A,1=B,-1=All)
 // legacy alias so existing renderStandings/renderLeaderboard still work
 Object.defineProperty(window, 'currentTeamEmail', { get: () => currentUserEmail });
 
@@ -651,7 +714,7 @@ function loadUser() {
 function setUser(email, teamIdx = 0, save = true) {
   currentUserEmail  = email;
   currentUserTeams  = ENTRIES.filter(e => e.email === email);
-  activeTeamIdx     = Math.min(teamIdx, Math.max(0, currentUserTeams.length - 1));
+  activeTeamIdx     = teamIdx === -1 ? -1 : Math.min(teamIdx, Math.max(0, currentUserTeams.length - 1));
   if (save) saveUser();
   updateHeaderDisplay();
   updateLbSeg();
@@ -774,12 +837,12 @@ function dismissSplashBrowse() {
 //  Top 4 scores count. MC (missed cut) = +11.
 // ═══════════════════════════════════════════════════════════════
 const ENTRIES = [
-  { team: "Jake Test", name: "Jake", email: "jhs797@gmail.com", picks: ["Sam Burns", "Michael Thorbjornsen", "Sungjae Im", "Aaron Rai", "Christiaan Bezuidenhout", "Gary Woodland"] },
-  { team: "Loves2splooge69_A", name: "Tyler D", email: "tdewitt815@gmail.com", picks: ["Chris Gotterup", "Ben Griffin", "Sungjae Im", "Max Greyserman", "Nicolas Echavarria", "Tom Kim"] },
-  { team: "Loves2splooge69_B", name: "Tyler D", email: "tdewitt815@gmail.com", picks: ["Min Woo Lee", "Shane Lowry", "Alex Smalley", "Tony Finau", "J.T. Poston", "Seonghyeon Kim"] },
-  { team: "Monkey fist pump", name: "Tyler Conlan", email: "tycon0612@gmail.com", picks: ["Brooks Koepka", "Marco Penge", "Sahith Theegala", "Jordan L. Smith", "Hao-Tong Li", "Tom Kim"] },
-  { team: "Monkey fist pump 2", name: "Tyler Conlan", email: "tycon0612@gmail.com", picks: ["Chris Gotterup", "Adam Scott", "Sungjae Im", "Will Zalatoris", "Nicolas Echavarria", "Gary Woodland"] },
-  { team: "Shark's Gonna Shark", name: "Jake", email: "jhs797@gmail.com", picks: ["Jake Knapp", "Shane Lowry", "Patrick Rodgers", "Aaron Rai", "Hao-Tong Li", "David Lipsky"] }
+  { team: "Jake Test",          name: "Jake",         email: "jhs797@gmail.com",     tb: -8,  picks: ["Sam Burns", "Michael Thorbjornsen", "Sungjae Im", "Aaron Rai", "Christiaan Bezuidenhout", "Gary Woodland"] },
+  { team: "Loves2splooge69_A",  name: "Tyler D",      email: "tdewitt815@gmail.com", tb: -16, picks: ["Chris Gotterup", "Ben Griffin", "Sungjae Im", "Max Greyserman", "Nicolas Echavarria", "Tom Kim"] },
+  { team: "Loves2splooge69_B",  name: "Tyler D",      email: "tdewitt815@gmail.com", tb: -18, picks: ["Min Woo Lee", "Shane Lowry", "Alex Smalley", "Tony Finau", "J.T. Poston", "Seonghyeon Kim"] },
+  { team: "Monkey fist pump",   name: "Tyler Conlan", email: "tycon0612@gmail.com",  tb: -15, picks: ["Brooks Koepka", "Marco Penge", "Sahith Theegala", "Jordan L. Smith", "Hao-Tong Li", "Tom Kim"] },
+  { team: "Monkey fist pump 2", name: "Tyler Conlan", email: "tycon0612@gmail.com",  tb: -18, picks: ["Chris Gotterup", "Adam Scott", "Sungjae Im", "Will Zalatoris", "Nicolas Echavarria", "Gary Woodland"] },
+  { team: "Shark's Gonna Shark",name: "Jake",         email: "jhs797@gmail.com",     tb: -12, picks: ["Jake Knapp", "Shane Lowry", "Patrick Rodgers", "Aaron Rai", "Hao-Tong Li", "David Lipsky"] }
 ];
 const FLAGS = {
   "Zach Bauchou":"🇺🇸","Cole Hammer":"🇺🇸","Denny McCarthy":"🇺🇸",
@@ -870,40 +933,102 @@ function renderStandings() {
   document.getElementById('entry-count').textContent = ranked.length;
   updateHeaderTeam();
   const el = document.getElementById('standings-list');
-  let rank=1, html='';
-  ranked.forEach((e,i) => {
-    if (i>0 && ranked[i].total!==ranked[i-1].total) rank=i+1;
-    const sc=e.total, scf=fmt(sc), scc=cls(sc);
-    const medal = rank;
-    const top4Str = e.top4.map(g=>fmt(g.score)).join(' ');
+
+  // Compute tie-aware ranks
+  const ranks = [];
+  let rk = 1;
+  ranked.forEach((e, i) => {
+    if (i > 0 && ranked[i].total !== ranked[i-1].total) rk = i + 1;
+    ranks.push(rk);
+  });
+
+  // Hero card for active user
+  let heroHtml = '';
+  if (currentUserEmail && currentUserTeams.length > 0) {
+    // When "All" selected, surface the best-ranked team
+    let activeTeam;
+    if (activeTeamIdx >= 0) {
+      activeTeam = currentUserTeams[activeTeamIdx] || currentUserTeams[0];
+    } else {
+      let bestRankPos = Infinity;
+      currentUserTeams.forEach(t => {
+        const ri = ranked.findIndex(e => e.email === t.email && e.team === t.team);
+        if (ri >= 0 && ri < bestRankPos) { bestRankPos = ri; activeTeam = t; }
+      });
+      activeTeam = activeTeam || currentUserTeams[0];
+    }
+    const myIdx = ranked.findIndex(e => e.email === activeTeam.email && e.team === activeTeam.team);
+    if (myIdx >= 0) {
+      const myEntry = ranked[myIdx];
+      const myRank  = ranks[myIdx];
+      const gap     = myEntry.total - ranked[0].total;
+      const gapStr  = gap === 0 ? 'Leading the pool' : `${fmt(gap)} behind leader`;
+      const scc     = cls(myEntry.total);
+      const prevRk  = PREV_RANKS[myEntry.team];
+      let moveHtml  = '';
+      if (prevRk && prevRk !== myRank) {
+        const d = prevRk - myRank;
+        moveHtml = d > 0
+          ? `<div class="my-pos-move up">▲${d} spot${d>1?'s':''}</div>`
+          : `<div class="my-pos-move dn">▼${Math.abs(d)} spot${Math.abs(d)>1?'s':''}</div>`;
+      }
+      heroHtml = `<div class="my-pos-card">
+        <div class="my-pos-rank">${myRank}</div>
+        <div class="my-pos-info">
+          <div class="my-pos-team">${myEntry.team}</div>
+          <div class="my-pos-detail">${gapStr}</div>
+          ${moveHtml}
+        </div>
+        <div class="my-pos-score ${scc}">${fmt(myEntry.total)}</div>
+      </div>`;
+    }
+  }
+
+  let html = '';
+  ranked.forEach((e, i) => {
+    const rank   = ranks[i];
+    const sc     = e.total, scf = fmt(sc), scc = cls(sc);
+    const top4Str = e.top4.map(g => fmt(g.score)).join(' ');
     const isMyTeam = e.email === currentTeamEmail ? 'is-my-team' : '';
+    // Tiebreaker display when tied with next entry
+    const isTied = (i < ranked.length-1 && ranked[i].total === ranked[i+1].total) ||
+                   (i > 0 && ranked[i].total === ranked[i-1].total);
+    const tbTag  = (isTied && e.tb != null) ? `<span class="s-tb">TB:${e.tb}</span>` : '';
     html += `
       <div class="standing-row ${isMyTeam}" onclick="togglePanel(this,${i})">
-        <div class="s-rank">${medal}</div>
+        <div class="s-rank">${rank}</div>
         <div class="s-info">
           <div class="s-team">${e.team}</div>
-          <div class="s-email">${e.email}</div>
+          <div class="s-name">${e.name}${tbTag}</div>
         </div>
         <div class="s-top4">${top4Str}</div>
         <div class="s-score ${scc}">${scf}</div>
         <div class="s-arrow" id="arr-${i}">›</div>
       </div>
       <div class="picks-panel" id="panel-${i}">
-        ${e.scores.map((g,j)=>{
-          const isTop=j<4, gd=GOLFER_SCORES[g.name];
-          const pos=gd?gd.pos:'—';
+        ${e.scores.map((g, j) => {
+          const isTop = j < 4;
+          const gd    = GOLFER_SCORES[g.name];
+          const pos   = gd ? gd.pos : '—';
+          const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
+          const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
           return `<div class="mini-pick ${isTop?'is-top':''}">
             <div class="mini-pick-left">
               ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'}
               <span class="mini-pick-name">${g.name}</span>
               <span class="mini-pick-pos">${pos}</span>
+              ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''}
             </div>
             <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span>
           </div>`;
         }).join('')}
       </div>`;
   });
-  el.innerHTML = html;
+
+  // Update PREV_RANKS for next render
+  ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; });
+
+  el.innerHTML = heroHtml + html;
 }
 function togglePanel(row, i) {
   const panel = document.getElementById('panel-'+i);
@@ -955,47 +1080,64 @@ function setLbFilter(f,btn) {
   btn.classList.add('active'); renderLeaderboard();
 }
 function updateLbSeg() {
-  // Rebuild the leaderboard seg control — add team buttons when user has multiple teams
   const seg = document.querySelector('#view-leaderboard .seg');
   if (!seg) return;
-  let btns = `
+  if (lbFilter === 'teamA' || lbFilter === 'teamB') lbFilter = 'all';
+  // Only show My Picks when user has an active team
+  if (lbFilter === 'myPicks' && !currentUserTeams.length) lbFilter = 'all';
+  const myPicksBtn = currentUserTeams.length
+    ? `<button class="seg-btn${lbFilter==='myPicks'?' active':''}" onclick="setLbFilter('myPicks',this)">My Picks</button>`
+    : '';
+  seg.innerHTML = `
     <button class="seg-btn${lbFilter==='all'?' active':''}" onclick="setLbFilter('all',this)">All</button>
-    <button class="seg-btn${lbFilter==='pool'?' active':''}" onclick="setLbFilter('pool',this)">In Pool</button>`;
-  if (currentUserTeams.length >= 1) {
-    const n1 = currentUserTeams[0].team; const l1 = n1.length > 10 ? n1.slice(0,9)+'…' : n1;
-    btns += `<button class="seg-btn seg-team-a${lbFilter==='teamA'?' active':''}" onclick="setLbFilter('teamA',this)">[1] ${l1}</button>`;
-  }
-  if (currentUserTeams.length >= 2) {
-    const n2 = currentUserTeams[1].team; const l2 = n2.length > 10 ? n2.slice(0,9)+'…' : n2;
-    btns += `<button class="seg-btn seg-team-b${lbFilter==='teamB'?' active':''}" onclick="setLbFilter('teamB',this)">[2] ${l2}</button>`;
-  }
-  seg.innerHTML = btns;
+    <button class="seg-btn${lbFilter==='pool'?' active':''}" onclick="setLbFilter('pool',this)">In Pool</button>
+    ${myPicksBtn}`;
 }
 function renderLeaderboard() {
   const poolNames  = new Set(ENTRIES.flatMap(e=>e.picks));
   const myPicksMap = getMyPicksMap();
-  const teamAPicks = currentUserTeams[0] ? new Set(currentUserTeams[0].picks) : new Set();
-  const teamBPicks = currentUserTeams[1] ? new Set(currentUserTeams[1].picks) : new Set();
-  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d})).sort((a,b)=>{
-    return a.score-b.score;
-  });
-  if (lbFilter==='pool')  players=players.filter(p=>poolNames.has(p.name));
-  if (lbFilter==='teamA') players=players.filter(p=>teamAPicks.has(p.name));
-  if (lbFilter==='teamB') players=players.filter(p=>teamBPicks.has(p.name));
+  const myAllPicks = new Set(currentUserTeams.flatMap(t => t.picks));
+  let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d})).sort((a,b)=>a.score-b.score);
+  if (lbFilter==='pool')    players=players.filter(p=>poolNames.has(p.name));
+  if (lbFilter==='myPicks') players=players.filter(p=>myAllPicks.has(p.name));
 
-  // Detect current round number
-  const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
-  const currentRoundCheck = samplePlayer ? (samplePlayer.r4!=null?4:samplePlayer.r3!=null?3:samplePlayer.r2!=null?2:samplePlayer.r1!=null?1:0) : 0;
-  // Pre-tournament only: pin defending champion to top
-  if (currentRoundCheck === 0) {
-    const winnerIdx = players.findIndex(p=>p.name===PREV_WINNER);
-    if (winnerIdx > 0) { const [w] = players.splice(winnerIdx,1); players.unshift(w); }
+  // Update player count tag
+  const countEl = document.getElementById('lb-count');
+  if (countEl) {
+    if (lbFilter==='pool')
+      countEl.textContent = `${players.length} pool picks`;
+    else if (lbFilter==='myPicks')
+      countEl.textContent = `${players.length} of your picks`;
+    else
+      countEl.textContent = `${players.filter(p=>p.thru!=='MC').length} active · ${players.filter(p=>p.thru==='MC').length} MC`;
   }
+
+  // Team legend — show on all filters when user has multiple teams
+  const legendEl = document.getElementById('lb-legend');
+  if (legendEl) {
+    if (currentUserTeams.length > 1) {
+      legendEl.innerHTML = currentUserTeams.map((t, i) =>
+        `<div class="lb-legend-item">
+          <span class="team-pill ${PILL_CLASSES[i]||''}" style="width:16px;height:13px;font-size:8px;border-radius:4px">${pillLabel(i)}</span>
+          <span>${t.team}</span>
+        </div>`).join('');
+    } else {
+      legendEl.innerHTML = '';
+    }
+  }
+
+  // Detect current round
+  const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
   const currentRound = samplePlayer ? (samplePlayer.r4!=null?4:samplePlayer.r3!=null?3:samplePlayer.r2!=null?2:samplePlayer.r1!=null?1:0) : 0;
-  const roundLabels = ['','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
   const isPreT = currentRound === 0;
 
-  // Update section header with round info
+  // Pre-tournament only: pin defending champion to top
+  if (isPreT) {
+    const wIdx = players.findIndex(p=>p.name===PREV_WINNER);
+    if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); }
+  }
+
+  const roundLabels = ['','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
   const tvTitle = document.getElementById('lb-round-title');
   if (tvTitle) tvTitle.textContent = isPreT ? 'Houston Open' : roundLabels[currentRound] || 'Houston Open';
 
@@ -1008,44 +1150,68 @@ function renderLeaderboard() {
     '<div style="width:32px;text-align:right">Rnd</div><div style="width:36px;text-align:right"><span class="today-hdr">TODAY</span></div>'}
   </div>`;
 
-  document.getElementById('leaderboard-list').innerHTML = colHdr + players.map(p=>{
-    const mc=p.thru==='MC', inPool=poolNames.has(p.name);
-    const sc=p.score, scf=fmt(sc);
+  let rows = '';
+  let cutInserted = false;
+  players.forEach(p => {
+    const mc = p.thru==='MC', inPool = poolNames.has(p.name);
+
+    // Insert cut line before first MC player (only during/after round 2)
+    if (!cutInserted && mc && currentRound >= 2) {
+      rows += `<div class="cut-line-row"><div class="cut-line-label">── Cut Line ──</div></div>`;
+      cutInserted = true;
+    }
+
+    const sc = p.score, scf = fmt(sc);
     const scClass = mc?'mc':sc<0?'neg':sc>0?'pos':'eve';
-    const cc = getCountryCode(p.name);
+    const cc  = getCountryCode(p.name);
     const flag = FLAGS[p.name] || '';
 
-    // Current round stroke score & today's +/-
     const curRndScore = [p.r4,p.r3,p.r2,p.r1].find(r=>r!=null);
     const todayRel = curRndScore!=null ? curRndScore - COURSE_PAR : null;
-    const todayStr = todayRel!=null ? (todayRel<0?todayRel:todayRel>0?'+'+todayRel:'E') : '';
+    const todayStr = todayRel!=null ? (todayRel<0?String(todayRel):todayRel>0?'+'+todayRel:'E') : '';
     const todayCls = todayRel!=null ? (todayRel<0?'neg':todayRel>0?'pos':'eve') : '';
 
-    // Tee time for pre-tournament
     let teeStr = '';
     if (p.teeTime && p.teeTime.includes('T')) {
       try { teeStr = new Date(p.teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); } catch(e){}
     } else if (p.teeTime) { teeStr = p.teeTime; }
     const preT = p.thru === '—';
 
+    // Position movement arrow
+    const prevP   = PREV_POSITIONS[p.name];
+    const currP   = parsePos(p.pos);
+    let moveHtml  = '';
+    if (!isPreT && prevP && currP && currP !== prevP) {
+      const d = prevP - currP;
+      moveHtml = d > 0
+        ? `<div class="pos-move up">▲${d}</div>`
+        : `<div class="pos-move dn">▼${Math.abs(d)}</div>`;
+    }
+
     const myTeamIdxs = myPicksMap[p.name] || [];
-    const pills = myTeamIdxs.map(i=>`<span class="team-pill ${PILL_CLASSES[i]||''}">${pillLabel(i)}</span>`).join('');
+    const pills   = myTeamIdxs.map(i=>`<span class="team-pill ${PILL_CLASSES[i]||''}">${pillLabel(i)}</span>`).join('');
     const isMyPick = myTeamIdxs.length > 0;
-    const isPrevWinner = p.name === PREV_WINNER;
-    return `<div class="tv-row${mc?' tv-mc':''}${isMyPick?' is-my-team':''}${isPrevWinner?' tv-prev-winner':''}">
-      <div class="tv-pos">${mc?'MC':p.pos}</div>
+    const isPrevWinner = isPreT && p.name === PREV_WINNER;
+
+    rows += `<div class="tv-row${mc?' tv-mc':''}${isMyPick?' is-my-team':''}${isPrevWinner?' tv-prev-winner':''}">
+      <div class="tv-pos" style="display:flex;flex-direction:column;align-items:flex-start;justify-content:center">
+        <span>${mc?'MC':p.pos}</span>
+        ${moveHtml}
+      </div>
       <div class="tv-pill-slot">${pills}</div>
       <div class="tv-player">
         <span class="tv-name ${isMyPick?'is-my-pick':''}">${p.name}</span>
         <span class="tv-country">${flag}${cc?' '+cc:''}</span>
-        ${isPrevWinner?'<span class="prev-winner-badge">Previous Winner</span>':''}
+        ${isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':''}
         ${inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':''}
       </div>
       <div class="tv-topar ${scClass}">${preT?'E':mc?'MC':scf}</div>
       ${preT ? `<div class="tv-today tv-tee">${teeStr||'—'}</div>` :
       `<div class="tv-rnd-score">${curRndScore||'—'}</div><div class="tv-today ${todayCls}">${mc?'':todayStr}</div>`}
     </div>`;
-  }).join('');
+  });
+
+  document.getElementById('leaderboard-list').innerHTML = colHdr + rows;
 }
 let ownFilter='most';
 function setOwnFilter(f,btn) {
@@ -1054,25 +1220,34 @@ function setOwnFilter(f,btn) {
   btn.classList.add('active'); renderOwnership();
 }
 function renderOwnership() {
-  const scoreMap={};
-  Object.entries(GOLFER_SCORES).forEach(([n,g])=>scoreMap[n]=g.score);
+  const gdMap={};
+  Object.entries(GOLFER_SCORES).forEach(([n,g])=>gdMap[n]=g);
   let data=[...OWNERSHIP_DATA];
   if (!data.length) { document.getElementById('ownership-list').innerHTML='<div class="empty-state">No entries yet</div>'; return; }
   const maxPct=data[0].pct;
   if (ownFilter==='least') data=[...data].sort((a,b)=>a.pct-b.pct);
   document.getElementById('ownership-list').innerHTML = data.map(d=>{
-    const sc=scoreMap[d.player];
-    const scf=sc!==undefined?fmt(sc):'—', scc=sc!==undefined?cls(sc):'eve';
+    const gd  = gdMap[d.player];
+    const sc  = gd?.score;
+    const pos = gd?.pos || '—';
+    const scf = sc!==undefined ? fmt(sc) : '—';
+    const scc = sc!==undefined ? cls(sc) : 'eve';
+    const mc  = gd?.thru === 'MC';
+    const flag = FLAGS[d.player] || '';
+    const posStr = mc ? 'MC' : (pos !== '—' ? pos : '');
     return `<div class="own-row">
       <div class="own-hdr">
-        <span class="own-name">${d.player}</span>
+        <div style="display:flex;align-items:baseline;gap:6px;min-width:0">
+          <span class="own-name">${flag} ${d.player}</span>
+          ${posStr ? `<span style="font-size:10px;color:var(--text3);font-weight:600;flex-shrink:0">${posStr}</span>` : ''}
+        </div>
         <div class="own-right">
           <span class="own-score-tag ${scc}">${scf}</span>
-          <span class="own-pct">${(d.pct*100).toFixed(1)}%</span>
+          <span class="own-pct">${(d.pct*100).toFixed(0)}%</span>
         </div>
       </div>
       <div class="own-bar-bg"><div class="own-bar" style="width:${(d.pct/maxPct*100).toFixed(1)}%"></div></div>
-      <div class="own-sub">${d.entries} of ${ENTRIES.length} entries</div>
+      <div class="own-sub">${d.entries} of ${ENTRIES.length} entries · ${d.entries===ENTRIES.length?'Everyone':'Unique pick'}</div>
     </div>`;
   }).join('');
 }
@@ -1101,6 +1276,11 @@ async function fetchESPN() {
     const openIdx = parts.findIndex(w => w.toLowerCase() === 'open');
     const shortName = openIdx > 0 ? parts.slice(Math.max(0, openIdx-1), openIdx+1).join(' ') : fullName;
     document.getElementById('hdr-sub').textContent = shortName + (isPreTournament ? ' · Pre-Tournament' : ' · Live');
+    // Save positions before replacing scores (for movement arrows)
+    Object.entries(GOLFER_SCORES).forEach(([n,d]) => {
+      const p = parsePos(d.pos);
+      if (p) PREV_POSITIONS[n] = p;
+    });
     const freshScores = {};
     comps.forEach(c=>{
       const name=c.athlete?.displayName; if(!name) return;
@@ -1120,7 +1300,8 @@ async function fetchESPN() {
       };
     });
     GOLFER_SCORES = freshScores;
-    setApiStatus('live', isPreTournament ? 'Pre-Tournament' : 'Live');
+    lastFetchTime = Date.now();
+    setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live');
     console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers');
     renderAll();
   } catch(e) {
@@ -1137,6 +1318,7 @@ async function fetchESPN() {
   }
 }
 function setApiStatus(state, text) {
+  _lastStatusText = text;
   const dot=document.getElementById('live-dot');
   dot.className='live-dot'+(state==='live'?' on':'');
   document.getElementById('hdr-status').textContent=text;
@@ -1155,6 +1337,16 @@ function startAutoRefresh() {
   }, 60000);
 }
 function stopAutoRefresh() { clearInterval(_autoRefresh); _autoRefresh = null; }
+let _lastStatusText = 'Loading…';
+function startAgeTimer() {
+  setInterval(() => {
+    if (!lastFetchTime) return;
+    const s = Math.floor((Date.now() - lastFetchTime) / 1000);
+    const age = s >= 45 ? (s < 60 ? ` · ${s}s ago` : ` · ${Math.floor(s/60)}m ago`) : '';
+    const el = document.getElementById('hdr-status');
+    if (el) el.textContent = _lastStatusText + age;
+  }, 5000);
+}
 function switchTab(name,btn) {
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -1174,8 +1366,8 @@ function updateHeaderDisplay() {
   const nameEl      = document.getElementById('hdr-active-team');
   const caret       = document.getElementById('hdr-dd-caret');
   if (currentUserEmail && currentUserTeams.length) {
-    const activeTeam = currentUserTeams[activeTeamIdx] || currentUserTeams[0];
-    nameEl.textContent = activeTeam.team;
+    const activeTeam = activeTeamIdx >= 0 ? currentUserTeams[activeTeamIdx] : null;
+    nameEl.textContent = activeTeam ? activeTeam.team : 'All Picks';
     // Show caret only if multiple teams
     if (caret) caret.style.display = currentUserTeams.length > 1 ? 'inline' : 'none';
     teamDisplay.style.display = 'block';
@@ -1195,7 +1387,12 @@ function toggleTeamDropdown() {
 function openTeamDropdown() {
   _teamDdOpen = true;
   const list = document.getElementById('team-dropdown-list');
-  list.innerHTML = currentUserTeams.map((t, i) => `
+  list.innerHTML = `
+    <button class="td-item${activeTeamIdx === -1 ? ' active' : ''}" onclick="event.stopPropagation();selectTeamEntry(-1)">
+      <span style="width:18px;height:14px;font-size:8px;display:flex;align-items:center;justify-content:center;opacity:0.5">⊕</span>
+      <span>All Picks</span>
+    </button>` +
+    currentUserTeams.map((t, i) => `
     <button class="td-item${i === activeTeamIdx ? ' active' : ''}" onclick="event.stopPropagation();selectTeamEntry(${i})">
       <span class="team-pill ${PILL_CLASSES[i] || ''}" style="width:18px;height:14px;font-size:8px">${pillLabel(i)}</span>
       <span>${t.team}</span>
@@ -1217,7 +1414,7 @@ function selectTeamEntry(idx) {
   updateLbSeg();
   renderAll();
   closeTeamDropdown();
-  showToast('✓ ' + currentUserTeams[idx].team);
+  showToast(idx === -1 ? '✓ All Picks' : '✓ ' + currentUserTeams[idx].team);
 }
 async function initApp() {
   // Resolve any form/sheet name variants → ESPN display names
@@ -1245,6 +1442,7 @@ async function initApp() {
   });
   renderAll();
   startAutoRefresh();
+  startAgeTimer();
 }
 initApp();
 
