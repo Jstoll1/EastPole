@@ -804,6 +804,9 @@ html, body  {
   border-bottom: 1px solid var(--border);
 }
 
+#lb-search:focus { border-color: var(--gold-dim, rgba(212,168,67,0.4)); }
+#lb-search::placeholder { color: rgba(255,255,255,0.25); }
+
 .lb-top-row  {
   display: flex;
   align-items: center;
@@ -2156,7 +2159,12 @@ to  {
 </div>
 <div id="lb-legend">
 </div>
-<div class="lb-count-tag" id="lb-count">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 14px 4px">
+<div class="lb-count-tag" id="lb-count" style="padding:0;margin:0"></div>
+<div style="position:relative;width:110px">
+<input type="text" id="lb-search" placeholder="Search…" oninput="filterLeaderboardSearch()" autocorrect="off" autocapitalize="off" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 24px 4px 8px;font-size:10px;color:var(--text);font-family:inherit;outline:none;letter-spacing:0.2px">
+<span id="lb-search-clear" onclick="document.getElementById('lb-search').value='';filterLeaderboardSearch();document.getElementById('lb-search').focus()" style="display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:16px;height:16px;line-height:16px;text-align:center;font-size:11px;color:rgba(255,255,255,0.4);cursor:pointer;border-radius:50%;background:rgba(255,255,255,0.1)">✕</span>
+</div>
 </div>
 </div>
 <div id="leaderboard-list">
@@ -2396,8 +2404,16 @@ const sc=calc.total, scf=fmt(sc), scc=cls(sc); return ` <div class="team-card"> 
 const pos=gd?gd.pos:'—', thru=gd?gd.thru:''; return `<div class="pick-row"> <div class="pick-n">${j+1}</div> <div class="pick-info"> <div class="pick-name">${g.name}${isTop?'<span class="pick-badge">TOP 4</span>':''}</div> <div class="pick-pos">${pos}${pos!=='MC'?' · Thru '+thru:' · Missed Cut'}</div> </div> <div class="pick-score ${cls(g.score)}">${fmt(g.score)}</div> </div>`; }).join('')} </div>`; }).join('');}
 
 let lbFilter='all';
+let lbSearch='';
 let lbSort='score';
 let lbSortAsc=true;
+
+function filterLeaderboardSearch() {
+  var v = document.getElementById('lb-search').value || '';
+  lbSearch = v.trim().toLowerCase();
+  document.getElementById('lb-search-clear').style.display = v.length ? 'block' : 'none';
+  renderLeaderboard();
+}
 
 function setLbSort(col) {
   if (lbSort === col) { lbSortAsc = !lbSortAsc; }
@@ -2463,6 +2479,7 @@ function renderLeaderboard() {
   else if (lbSort === 'tot') players.sort(function(a,b) { return ((a.tot||9999) - (b.tot||9999)) * dir; });
   if (lbFilter==='pool') players=players.filter(p=>poolNames.has(p.name));
   if (lbFilter==='myPicks') players=players.filter(p=>myAllPicks.has(p.name));
+  if (lbSearch) players=players.filter(p=>p.name.toLowerCase().indexOf(lbSearch)!==-1);
   const countEl = document.getElementById('lb-count');
   if (countEl) {
     if (lbFilter==='pool') countEl.textContent = players.length + ' pool picks';
