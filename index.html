@@ -1942,6 +1942,10 @@ to  {
 </div>
 <div id="standings-list">
 </div>
+<div id="standings-footnote" style="padding:12px 14px 0;font-size:10px;color:var(--text3);line-height:1.5;display:none;">
+<strong style="color:var(--text2);">TB</strong> = Pre-submitted tiebreaker prediction (winning score to par). Only shown when entries are tied. Closest to actual winning score wins the tiebreaker.
+<br><strong style="color:var(--text2);">MC</strong> = Missed Cut (+11 penalty).
+</div>
 </div>
 <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
 <div class="ptr-indicator" id="ptr-indicator"><span class="ptr-arrow">↓</span><span class="ptr-text">Pull to refresh</span><span class="ptr-spinner"></span></div>
@@ -2146,15 +2150,20 @@ function renderStandings() {
   ranked.forEach((e, i) => { if (i > 0 && ranked[i].total !== ranked[i-1].total) rk = i + 1;
   ranks.push(rk);
 });
-let heroHtml = ''; if (currentUserEmail && currentUserTeams.length > 0) { let activeTeam; if (activeTeamIdx >= 0) { activeTeam = currentUserTeams[activeTeamIdx] || currentUserTeams[0]; } else { let bestRankPos = Infinity; currentUserTeams.forEach(t => { const ri = ranked.findIndex(e => e.email === t.email && e.team === t.team); if (ri >= 0 && ri < bestRankPos) { bestRankPos = ri; activeTeam = t; } }); activeTeam = activeTeam || currentUserTeams[0]; }
-
-const myIdx = ranked.findIndex(e => e.email === activeTeam.email && e.team === activeTeam.team); if (myIdx >= 0) { const myEntry = ranked[myIdx];
-const myRank = ranks[myIdx];
-const gap = myEntry.total - ranked[0].total;
-const gapStr = gap === 0 ? 'Leading the pool' : `${fmt(gap)} behind leader`;
-const scc = cls(myEntry.total);
-const prevRk = PREV_RANKS[myEntry.team];
-let moveHtml = ''; if (prevRk && prevRk !== myRank) { const d = prevRk - myRank; moveHtml = d > 0 ? `<div class="my-pos-move up">▲${d} spot${d>1?'s':''}</div>` : `<div class="my-pos-move dn">▼${Math.abs(d)} spot${Math.abs(d)>1?'s':''}</div>`; } heroHtml = `<div class="my-pos-card"> <div class="my-pos-rank">${myRank}</div> <div class="my-pos-info"> <div class="my-pos-team">${myEntry.team}</div> <div class="my-pos-detail">${gapStr}</div> ${moveHtml} </div> <div class="my-pos-score ${scc}">${fmt(myEntry.total)}</div> </div>`; } }
+let heroHtml = ''; if (currentUserEmail && currentUserTeams.length > 0) {
+  const teamsToShow = activeTeamIdx >= 0 ? [currentUserTeams[activeTeamIdx]].filter(Boolean) : currentUserTeams;
+  teamsToShow.forEach(activeTeam => {
+    const myIdx = ranked.findIndex(e => e.email === activeTeam.email && e.team === activeTeam.team);
+    if (myIdx >= 0) { const myEntry = ranked[myIdx];
+    const myRank = ranks[myIdx];
+    const gap = myEntry.total - ranked[0].total;
+    const gapStr = gap === 0 ? 'Leading the pool' : `${fmt(gap)} behind leader`;
+    const scc = cls(myEntry.total);
+    const prevRk = PREV_RANKS[myEntry.team];
+    let moveHtml = ''; if (prevRk && prevRk !== myRank) { const d = prevRk - myRank; moveHtml = d > 0 ? `<div class="my-pos-move up">▲${d} spot${d>1?'s':''}</div>` : `<div class="my-pos-move dn">▼${Math.abs(d)} spot${Math.abs(d)>1?'s':''}</div>`; }
+    heroHtml += `<div class="my-pos-card" style="cursor:pointer" onclick="setUser('${myEntry.email}',${currentUserTeams.indexOf(activeTeam)})"> <div class="my-pos-rank">${myRank}</div> <div class="my-pos-info"> <div class="my-pos-team">${myEntry.team}</div> <div class="my-pos-detail">${gapStr}</div> ${moveHtml} </div> <div class="my-pos-score ${scc}">${fmt(myEntry.total)}</div> </div>`; }
+  });
+}
 
 let html = ''; ranked.forEach((e, i) => { const rank = ranks[i];
 const sc = e.total, scf = fmt(sc), scc = cls(sc);
@@ -2165,7 +2174,10 @@ const tbTag = (isTied && e.tb != null) ? `<span class="s-tb">TB:${e.tb}</span>` 
 const gd = GOLFER_SCORES[g.name];
 const pos = gd ? gd.pos : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
-const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : ''; return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')} </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;}
+const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : ''; return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')} </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
+  const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
+  document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
+}
 
 function togglePanel(row, i) {
   const panel = document.getElementById('panel-'+i);
