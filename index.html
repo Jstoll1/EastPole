@@ -2081,13 +2081,12 @@ const sc = p.score, scf = fmt(sc);
 const scClass = mc?'mc':sc<0?'neg':sc>0?'pos':'eve';
 const cc = getCountryCode(p.name);
 const flag = FLAGS[p.name] || '';
+const preT = p.thru === '—';
 const curRndScore = [p.r4,p.r3,p.r2,p.r1].find(r=>r!=null);
 const todayRel = curRndScore!=null ? curRndScore - COURSE_PAR : ((!preT && !mc && sc !== 11) ? sc : null);
 const todayStr = todayRel!=null ? (todayRel<0?String(todayRel):todayRel>0?'+'+todayRel:'E') : '';
 const todayCls = todayRel!=null ? (todayRel<0?'neg':todayRel>0?'pos':'eve') : '';
 let teeStr = ''; if (p.teeTime && p.teeTime.includes('T')) { try { teeStr = new Date(p.teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); } catch(e){} } else if (p.teeTime) { teeStr = p.teeTime; }
-
-const preT = p.thru === '—';
 const prevP = PREV_POSITIONS[p.name];
 const currP = parsePos(p.pos);
 let moveHtml = ''; if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? `<div class="pos-move up">▲${d}</div>` : `<div class="pos-move dn">▼${Math.abs(d)}</div>`; }
