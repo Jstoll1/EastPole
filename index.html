@@ -25,7 +25,7 @@
   --border: #1a3326;
   --safe-top: env(safe-area-inset-top, 47px);
   --safe-bot: env(safe-area-inset-bottom, 34px);
-  --header-h: 64px;
+  --header-h: 50px;
   --nav-h: 56px;
 }
 
@@ -56,47 +56,76 @@ html, body  {
   padding-top: var(--safe-top);
   border-bottom: 2px solid var(--gold);
 }
+#hdr::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(212,168,67,0.3) 50%, transparent 100%);
+}
 
 .hdr-inner  {
   min-height: var(--header-h);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 6px 14px 8px;
-  gap: 6px;
-}
-
-.hdr-row1  {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
+  padding: 6px 14px;
+  gap: 10px;
 }
 
-.hdr-brand  {
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.55);
+.hdr-left  {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   flex-shrink: 0;
 }
 
-.hdr-row2  {
+.hdr-brand  {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+.hdr-status-inline  {
   display: flex;
   align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+}
+
+.hdr-logo-center  {
+  flex: 1;
+  text-align: center;
+}
+
+.hdr-logo-center img  {
+  height: 38px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+.hdr-right  {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .hdr-pill  {
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(212,168,67,0.25);
   border-radius: 20px;
-  padding: 5px 9px;
-  font-size: 10px;
+  padding: 3px 8px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.2px;
   color: rgba(255,255,255,0.8);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   white-space: nowrap;
 }
@@ -1491,11 +1520,6 @@ to  {
   text-decoration: underline;
 }
 
-.hdr-right  {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
 
 #hdr-team-display  {
   display: none;
@@ -2062,28 +2086,25 @@ to  {
 </div>
 <header id="hdr">
 <div class="hdr-inner">
-<div class="hdr-row1">
+<div class="hdr-left">
 <span class="hdr-brand">East Pole</span>
+<div class="hdr-pill" onclick="refreshData()" style="cursor:pointer">
+<div class="live-dot" id="live-dot"></div>
+<span id="hdr-status">Loading…</span>
+</div>
+</div>
+<div class="hdr-logo-center">
+<img src="https://brandlogos.net/wp-content/uploads/2024/04/masters_tournament-logo_brandlogos.net_4zhff.png" alt="Masters Tournament">
+</div>
 <div class="hdr-right">
 <div id="hdr-team-display" onclick="toggleTeamDropdown()" style="cursor:pointer">
+<span style="font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(212,168,67,0.45);text-align:right;display:block;margin-bottom:2px">Filter Entry</span>
 <div class="hdr-team-pill">
-<div style="display:flex;flex-direction:column;align-items:flex-start;min-width:0">
-<span style="font-size:7px;color:rgba(212,168,67,0.45);font-weight:800;letter-spacing:1px;text-transform:uppercase;line-height:1;margin-bottom:2px">My Picks</span>
-<span class="hdr-active-team" id="hdr-active-team">
-</span>
-</div>
+<span class="hdr-active-team" id="hdr-active-team"></span>
 <span class="hdr-dropdown-caret" id="hdr-dd-caret">▾</span>
 </div>
 </div>
 <button id="hdr-join-btn" onclick="showOnboarding()" style="display:none">Join Pool</button>
-</div>
-</div>
-<div class="hdr-row2">
-<div class="hdr-pill" onclick="refreshData()" style="cursor:pointer">
-<div class="live-dot" id="live-dot">
-</div>
-<span id="hdr-status">Loading…</span>
-</div>
 </div>
 </div>
 <div id="team-dropdown">
