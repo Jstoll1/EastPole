@@ -25,7 +25,7 @@
   --border: #1a3326;
   --safe-top: env(safe-area-inset-top, 47px);
   --safe-bot: env(safe-area-inset-bottom, 34px);
-  --header-h: 54px;
+  --header-h: 64px;
   --nav-h: 56px;
 }
 
@@ -54,16 +54,16 @@ html, body  {
   z-index: 200;
   background: linear-gradient(180deg, #1a4430 0%, #143828 100%);
   padding-top: var(--safe-top);
-  border-bottom: 1.5px solid var(--gold);
+  border-bottom: 2px solid var(--gold);
 }
 
 .hdr-inner  {
-  height: var(--header-h);
+  min-height: var(--header-h);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 5px 14px 8px;
-  gap: 5px;
+  padding: 6px 14px 8px;
+  gap: 6px;
 }
 
 .hdr-row1  {
@@ -126,7 +126,7 @@ html, body  {
 
 #views  {
   position: fixed;
-  top: calc(var(--header-h) + var(--safe-top) + 1px);
+  top: calc(var(--header-h) + var(--safe-top) + 2px);
   bottom: calc(var(--nav-h) + var(--safe-bot));
   left: 0;
   right: 0;
@@ -488,20 +488,36 @@ html, body  {
 }
 
 .tv-header  {
-  background: linear-gradient(180deg, #1a4d2e 0%, #0e2a18 100%);
+  margin: 0;
   padding: 0;
-  text-align: center;
-  overflow: hidden;
+}
+
+#view-leaderboard .tv-header-top  {
+  background: linear-gradient(180deg, #6b1c1c 0%, #4a1414 100%);
+  border-bottom: 2px solid var(--gold);
+  border-top: 2px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  margin: 0;
+  padding: 0;
 }
 
 .tv-header-top  {
   background: linear-gradient(180deg, #6b1c1c 0%, #4a1414 100%);
-  padding: 6px 18px 5px;
-  border-bottom: 3px solid var(--gold);
+  padding: 10px 18px;
+  border-bottom: 2px solid var(--gold);
+  text-align: center;
 }
 
 .tv-header-top .tv-title  {
   color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-align: center;
 }
 
 .tv-header-bot  {
@@ -1705,7 +1721,7 @@ to  {
   white-space: nowrap;
 }
 </style>
-<script data-goatcounter="https://calcutta.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://calcutta.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div id="splash" onclick="enterApp()">
@@ -2035,8 +2051,9 @@ function updateLbSeg() {
   if (!seg) return;
   if (lbFilter === 'teamA' || lbFilter === 'teamB') lbFilter = 'all';
   if (lbFilter === 'myPicks' && !currentUserTeams.length) lbFilter = 'all';
-  const myPicksBtn = currentUserTeams.length ? `<button class="seg-btn${lbFilter==='myPicks'?' active':''
-}" onclick="setLbFilter('myPicks',this)">My Picks</button>` : ''; seg.innerHTML = ` <button class="seg-btn${lbFilter==='all'?' active':''}" onclick="setLbFilter('all',this)">All</button> <button class="seg-btn${lbFilter==='pool'?' active':''}" onclick="setLbFilter('pool',this)">In Pool</button> ${myPicksBtn}`;}
+  const myPicksBtn = currentUserTeams.length ? `<button class="seg-btn${lbFilter==='myPicks'?' active':''}" onclick="setLbFilter('myPicks',this)">My Picks</button>` : '';
+  seg.innerHTML = `<button class="seg-btn${lbFilter==='all'?' active':''}" onclick="setLbFilter('all',this)">All</button> <button class="seg-btn${lbFilter==='pool'?' active':''}" onclick="setLbFilter('pool',this)">In Pool</button> ${myPicksBtn}`;
+}
 
 function getActiveTeamPicks() {
   if (!currentUserEmail) return new Set();
@@ -2087,9 +2104,9 @@ function renderLeaderboard() {
   }
   const legendEl = document.getElementById('lb-legend');
   if (legendEl) {
-    if (currentUserTeams.length > 1 && activeTeamIdx === -1) {
+    if (lbFilter !== 'all' && currentUserTeams.length > 1 && activeTeamIdx === -1) {
       legendEl.innerHTML = currentUserTeams.map((t, i) => '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[i]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(i) + '</span><span>' + t.team + '</span></div>').join('');
-    } else if (currentUserTeams.length > 1 && activeTeamIdx >= 0) {
+    } else if (lbFilter !== 'all' && currentUserTeams.length > 1 && activeTeamIdx >= 0) {
       const t = currentUserTeams[activeTeamIdx];
       legendEl.innerHTML = '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[activeTeamIdx]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(activeTeamIdx) + '</span><span>' + t.team + '</span></div>';
     } else { legendEl.innerHTML = ''; }
@@ -2135,7 +2152,7 @@ function renderLeaderboard() {
     const currP = parsePos(p.pos);
     let moveHtml = '';
     if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? '<div class="pos-move up">▲' + d + '</div>' : '<div class="pos-move dn">▼' + Math.abs(d) + '</div>'; }
-    const myTeamIdxs = myPicksMap[p.name] || [];
+    const myTeamIdxs = lbFilter !== 'all' ? (myPicksMap[p.name] || []) : [];
     const pills = myTeamIdxs.map(i => '<span class="team-pill ' + (PILL_CLASSES[i]||'') + '">' + pillLabel(i) + '</span>').join('');
     const isMyPick = myTeamIdxs.length > 0;
     const isPrevWinner = isPreT && p.name === PREV_WINNER;
@@ -2209,7 +2226,18 @@ async function fetchESPN() {
   if (!res.ok) throw new Error();
   const data=await res.json();
   const comps=data.events?.[0]?.competitions?.[0]?.competitors||[];
-  if (!comps.length) throw new Error();
+  if (!comps.length) {
+    console.log('⚠️ ESPN API returned event but no competitors — field not published yet');
+    setApiStatus('scheduled', 'Pre-Tournament');
+    if (Object.keys(GOLFER_SCORES).length === 0) {
+      Object.keys(FLAGS).forEach(name => {
+        GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null };
+      });
+    }
+    lastFetchTime = Date.now();
+    renderAll();
+    return;
+  }
   const evStatus=data.events?.[0]?.status?.type?.name||'';
   const isPreTournament=evStatus==='STATUS_SCHEDULED';
   const fullName = data.events[0].name || 'Houston Open';
@@ -2238,7 +2266,7 @@ const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
 const todayDisplay=scheduled?'—':(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||'—');
-freshScores[name]={ pos:scheduled?'—':(c.status?.position?.displayName||'—'), score:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { console.log('❌ ESPN API error:', e.message); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline'); renderAll(); }}
+freshScores[name]={ pos:scheduled?'—':(c.status?.position?.displayName||'—'), score:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
 
 function setApiStatus(state, text) {
   _lastStatusText = text;
@@ -2332,6 +2360,6 @@ function selectTeamEntry(idx) {
 }
 
 async function initApp() { ENTRIES.forEach(e => { e.picks = e.picks.map(resolvePlayerName); }); allTeamEmails = [...new Set(ENTRIES.map(e => e.email))].sort(); OWNERSHIP_DATA = computeOwnership(); console.log('✅ Loaded', ENTRIES.length, 'baked-in entries');
-const returning = loadUser(); if (returning) console.log('👤 Returning user:', currentUserEmail); updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
+const returning = loadUser(); if (returning) { console.log('👤 Returning user:', currentUserEmail); const sp = document.getElementById('splash'); if (sp) { sp.style.display = 'none'; sp.classList.add('hidden'); } } updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
 </script>
 </body></html>
