@@ -62,7 +62,7 @@ html, body  {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 5px 14px 6px;
+  padding: 5px 14px 8px;
   gap: 5px;
 }
 
@@ -1794,9 +1794,14 @@ to  {
 </div>
 </div>
 <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
+<div class="tv-header">
+<div class="tv-header-top">
+<div class="tv-title" id="lb-tournament-name">Houston Open</div>
+</div>
+</div>
 <div class="lb-sticky-hdr">
 <div class="lb-top-row">
-<span class="lb-round-label" id="lb-round-title">Houston Open</span>
+<span class="lb-round-label" id="lb-round-title">First Round</span>
 </div>
 <div class="seg-wrap" style="padding:6px 14px 6px">
 <div class="seg">
@@ -2080,16 +2085,16 @@ function renderLeaderboard() {
   const currentRound = samplePlayer ? completedRoundCount + 1 : 0;
   const isPreT = currentRound === 0;
   if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
-  const roundLabels = ['','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
+  const roundLabels = ['PRE-TOURNAMENT','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
   const tvTitle = document.getElementById('lb-round-title');
-  if (tvTitle) tvTitle.textContent = isPreT ? 'Houston Open' : (roundLabels[currentRound] || 'Houston Open');
+  if (tvTitle) tvTitle.textContent = roundLabels[currentRound] || 'FIRST ROUND';
   var sortArrow = function(col) { return lbSort===col ? (lbSortAsc ? ' ▲' : ' ▼') : ''; };
   var sortCls = function(col) { return lbSort===col ? ' tv-h-active' : ''; };
   const colHdr = '<div class="tv-col-hdr"><div class="tv-h-pos">POS</div><div class="tv-h-pill"></div><div class="tv-h-player">PLAYER</div>'
     + '<div class="tv-h-score tv-h-sort' + sortCls('score') + '" onclick="setLbSort(\'score\')">SCORE' + sortArrow('score') + '</div>'
-    + '<div class="tv-h-today tv-h-sort' + sortCls('today') + '" onclick="setLbSort(\'today\')">TODAY' + sortArrow('today') + '</div>'
     + '<div class="tv-h-thru tv-h-sort' + sortCls('thru') + '" onclick="setLbSort(\'thru\')">THRU' + sortArrow('thru') + '</div>'
-    + '<div class="tv-h-tot tv-h-sort' + sortCls('tot') + '" onclick="setLbSort(\'tot\')">TOT' + sortArrow('tot') + '</div></div>';
+    + '<div class="tv-h-today tv-h-sort' + sortCls('today') + '" onclick="setLbSort(\'today\')">TODAY' + sortArrow('today') + '</div>'
+    + '</div>';
   let rows = '';
   let cutInserted = false;
   players.forEach(p => {
@@ -2128,9 +2133,8 @@ function renderLeaderboard() {
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
       + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?'MC':scf) + '</div>'
-      + '<div class="tv-today ' + todayCls + '">' + todayDisp + '</div>'
       + '<div class="tv-thru">' + thruDisp + '</div>'
-      + '<div class="tv-tot">' + totDisp + '</div>'
+      + '<div class="tv-today ' + todayCls + '">' + todayDisp + '</div>'
       + '</div>';
   });
   document.getElementById('leaderboard-list').innerHTML = colHdr + rows;
@@ -2200,6 +2204,8 @@ async function fetchESPN() {
   const shortName = openIdx > 0 ? parts.slice(Math.max(0, openIdx-1), openIdx+1).join(' ') : fullName;
   const hdrSub = document.getElementById('hdr-sub');
   if (hdrSub) hdrSub.textContent = shortName + (isPreTournament ? ' · Pre-Tournament' : ' · Live');
+  const tournBanner = document.getElementById('lb-tournament-name');
+  if (tournBanner) tournBanner.textContent = shortName;
   Object.entries(GOLFER_SCORES).forEach(([n,d]) => { const p = parsePos(d.pos);
   if (p) PREV_POSITIONS[n] = p;
 });
