@@ -2520,6 +2520,76 @@ to  {
 <div id="toast">
 </div>
 <script>
+// ── Error Tracker ──────────────────────────────────────────
+const ErrorTracker = (() => {
+  const log = [];
+  const MAX_LOG = 200;
+
+  function record(type, message, detail) {
+    const entry = {
+      ts: new Date().toISOString(),
+      type,       // 'api' | 'js' | 'render'
+      message,
+      detail: detail || null,
+      url: window.location.href,
+      user: (typeof currentUserEmail !== 'undefined') ? currentUserEmail : null
+    };
+    log.push(entry);
+    if (log.length > MAX_LOG) log.shift();
+
+    const style = type === 'api' ? 'color:#FF7F7F;font-weight:bold'
+                : type === 'js'  ? 'color:#f5c518;font-weight:bold'
+                :                  'color:#5BC8F5;font-weight:bold';
+    console.groupCollapsed('%c⚠ [' + type.toUpperCase() + '] ' + message, style);
+    console.log('Time:', entry.ts);
+    if (detail) console.log('Detail:', detail);
+    console.trace('Stack');
+    console.groupEnd();
+  }
+
+  function api(message, detail) { record('api', message, detail); }
+  function js(message, detail)  { record('js', message, detail); }
+  function render(message, detail) { record('render', message, detail); }
+
+  function dump() {
+    console.table(log);
+    return log;
+  }
+
+  function summary() {
+    const counts = { api: 0, js: 0, render: 0 };
+    log.forEach(e => { counts[e.type] = (counts[e.type] || 0) + 1; });
+    const recent = log.slice(-10);
+    console.log('%c─── Error Summary ───', 'color:var(--gold);font-weight:bold');
+    console.log('Total:', log.length, '| API:', counts.api, '| JS:', counts.js, '| Render:', counts.render);
+    if (recent.length) {
+      console.log('Last', recent.length, 'errors:');
+      console.table(recent.map(e => ({ time: e.ts, type: e.type, message: e.message })));
+    }
+    return counts;
+  }
+
+  return { api, js, render, dump, summary, log };
+})();
+
+// Global JS error handler
+window.addEventListener('error', function(e) {
+  ErrorTracker.js(e.message || 'Unknown error', {
+    file: e.filename,
+    line: e.lineno,
+    col: e.colno
+  });
+});
+
+// Unhandled promise rejection handler
+window.addEventListener('unhandledrejection', function(e) {
+  ErrorTracker.js('Unhandled promise rejection: ' + (e.reason?.message || String(e.reason)), {
+    reason: e.reason
+  });
+});
+
+// ── End Error Tracker ──────────────────────────────────────
+
 let GOLFER_SCORES = {};
 let allTeamEmails = [];
 let PREV_POSITIONS = {};
@@ -2903,7 +2973,7 @@ function confirmOnboarding() {
 
 async function fetchESPN() {
   try { const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga');
-  if (!res.ok) throw new Error();
+  if (!res.ok) { ErrorTracker.api('ESPN leaderboard fetch failed', { status: res.status, statusText: res.statusText }); throw new Error(); }
   const data=await res.json();
   const comps=data.events?.[0]?.competitions?.[0]?.competitors||[];
   if (!comps.length) {
@@ -2948,7 +3018,7 @@ const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
 const todayDisplay=scheduled?'—':(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||'—');
-freshScores[name]={ pos:scheduled?'—':(c.status?.position?.displayName||'—'), score:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
+freshScores[name]={ pos:scheduled?'—':(c.status?.position?.displayName||'—'), score:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
 
 function setApiStatus(state, text) {
   _lastStatusText = text;
@@ -2990,7 +3060,7 @@ async function fetchCourseHoles() {
       COURSE_HOLES = holes.map(h => ({ number: h.number, par: h.shotsToPar, yardage: h.totalYards }));
       console.log('✅ Course holes loaded:', COURSE_HOLES.length, 'holes');
     }
-  } catch(e) { console.error('❌ Course holes fetch error:', e.message); }
+  } catch(e) { ErrorTracker.api('Course holes fetch failed', { error: e.message }); console.error('❌ Course holes fetch error:', e.message); }
 }
 
 async function fetchPlayerScorecard(playerName) {
@@ -3032,7 +3102,7 @@ async function fetchPlayerScorecard(playerName) {
                 console.log('✅ Resolved $ref: got', holeData.length, 'holes for round', ri + 1);
               }
             }
-          } catch(e2) { console.warn('⚠️ $ref fetch failed for round', ri + 1, e2.message); }
+          } catch(e2) { ErrorTracker.api('Scorecard $ref fetch failed', { player: playerName, round: ri + 1, error: e2.message }); console.warn('⚠️ $ref fetch failed for round', ri + 1, e2.message); }
         }
       }
 
@@ -3047,10 +3117,23 @@ async function fetchPlayerScorecard(playerName) {
       return { value: r.value, displayValue: r.displayValue, period: r.period, holes };
     }));
 
+    // Data quality check: flag incomplete scorecards
+    const gd = GOLFER_SCORES[playerName];
+    rounds.forEach((r, ri) => {
+      if (r.holes.length > 0 && r.holes.length < 18) {
+        const thru = gd ? gd.thru : '?';
+        ErrorTracker.api('Incomplete scorecard: only ' + r.holes.length + '/18 holes', {
+          player: playerName, round: ri + 1, thru: thru,
+          holesReceived: r.holes.map(h => h.hole)
+        });
+      }
+    });
+
     SCORECARD_CACHE[playerName] = rounds;
     console.log('✅ Scorecard loaded for', playerName, ':', rounds.length, 'round(s),', rounds.map(r => r.holes.length + ' holes').join(', '));
     return rounds;
   } catch(e) {
+    ErrorTracker.api('Scorecard fetch failed', { player: playerName, error: e.message });
     console.error('❌ Scorecard fetch error for', playerName, ':', e.message);
     return null;
   }
