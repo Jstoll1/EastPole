@@ -2049,6 +2049,227 @@ to  {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* ─── Head-to-Head ─── */
+.h2h-selectors {
+  display: flex;
+  gap: 10px;
+  padding: 14px 14px 0;
+  align-items: center;
+}
+.h2h-sel {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b9e78'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+.h2h-sel:focus { border-color: var(--gold-dim); outline: none; }
+.h2h-vs {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--text3);
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+.h2h-prob-wrap {
+  margin: 18px 14px 0;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.h2h-prob-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.h2h-prob-name {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.h2h-prob-name.left { color: var(--text); }
+.h2h-prob-name.right { color: var(--text); text-align: right; }
+.h2h-prob-pcts {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.h2h-prob-pct {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+.h2h-prob-pct.left { color: #52b788; }
+.h2h-prob-pct.right { color: #52b788; }
+.h2h-prob-pct.losing { color: var(--text3); }
+.h2h-bar-track {
+  height: 28px;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  background: var(--card2);
+  border: 1px solid var(--border);
+}
+.h2h-bar-fill {
+  height: 100%;
+  border-radius: 14px;
+  transition: width 0.6s ease, background 0.6s ease;
+  position: relative;
+}
+.h2h-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+}
+.h2h-bar-label {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  letter-spacing: 0.3px;
+}
+.h2h-bar-label.left { left: 12px; }
+.h2h-bar-label.right { right: 12px; }
+.h2h-score-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.h2h-score-big {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+.h2h-score-lbl {
+  font-size: 9px;
+  color: var(--text3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+.h2h-tied-badge {
+  background: rgba(212,168,67,0.15);
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(212,168,67,0.3);
+}
+.h2h-matchups {
+  margin: 16px 14px 0;
+}
+.h2h-team-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.h2h-team-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.h2h-team-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+}
+.h2h-team-total {
+  font-size: 18px;
+  font-weight: 900;
+}
+.h2h-golfer-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(26,51,38,0.4);
+  gap: 8px;
+}
+.h2h-golfer-row:last-child { border-bottom: none; }
+.h2h-golfer-row.is-top { background: rgba(82,183,136,0.04); }
+.h2h-golfer-row.is-bench { opacity: 0.45; }
+.h2h-golfer-star {
+  width: 14px;
+  font-size: 10px;
+  color: var(--gold);
+  flex-shrink: 0;
+  text-align: center;
+}
+.h2h-golfer-info {
+  flex: 1;
+  min-width: 0;
+}
+.h2h-golfer-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.h2h-golfer-detail {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 600;
+  margin-top: 1px;
+}
+.h2h-golfer-score {
+  font-size: 14px;
+  font-weight: 900;
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
+}
+.h2h-golfer-thru {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+.h2h-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.h2h-empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
 </style>
 <script data-goatcounter="https://calcutta.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
@@ -2210,6 +2431,23 @@ to  {
 <div id="payouts-bubble" style="margin:16px 14px 0;"></div>
 </div>
 </div>
+<div class="view" id="view-h2h" style="padding-bottom:100px">
+<div class="tv-header">
+<div class="tv-header-top">
+<div class="tv-title">Head-to-Head</div>
+</div>
+<div class="tv-header-bot">
+<div class="tv-sub" id="h2h-sub">Compare two entries side by side</div>
+</div>
+</div>
+<div class="h2h-selectors">
+<select class="h2h-sel" id="h2h-team-a" onchange="renderH2H()"></select>
+<span class="h2h-vs">VS</span>
+<select class="h2h-sel" id="h2h-team-b" onchange="renderH2H()"></select>
+</div>
+<div id="h2h-content"></div>
+</div>
+</div>
 <nav id="nav">
 <button class="nav-btn active" onclick="switchTab('leaderboard',this)">
 <svg viewBox="0 0 24 24">
@@ -2235,6 +2473,10 @@ to  {
 <svg viewBox="0 0 24 24">
 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
 </svg> Payouts </button>
+<button class="nav-btn" onclick="switchTab('h2h',this)">
+<svg viewBox="0 0 24 24">
+<path d="M16 3h5v5M8 3H3v5M21 3l-7 7M3 3l7 7M16 21h5v-5M8 21H3v-5M21 21l-7-7M3 21l7-7"/>
+</svg> H2H </button>
 </nav>
 <div id="toast">
 </div>
@@ -2777,11 +3019,14 @@ async function toggleScorecard(idx, playerName) {
 
   const rounds = SCORECARD_CACHE[playerName];
   const gd = GOLFER_SCORES[playerName];
+  const ownEntry = OWNERSHIP_DATA.find(o => o.player === playerName);
+  const ownPctStr = ownEntry ? Math.round(ownEntry.pct * 100) + '% of entries' : '0% of entries';
 
   // Fallback: round-level summary if no hole-by-hole data
   if (!rounds || !rounds.length || !rounds.some(r => r.holes && r.holes.length > 0)) {
     let fb = '<div class="sc-header"><span class="sc-player-name">' + playerName + '</span>';
     if (gd) fb += '<span class="sc-player-pos">' + gd.pos + '</span>';
+    if (ownPctStr) fb += '<span style="font-size:10px;color:var(--gold);font-weight:600;margin-left:auto;white-space:nowrap">' + ownPctStr + '</span>';
     fb += '</div><div style="padding:8px 12px 12px;">';
     const flag = FLAGS[playerName] || '';
     const cc = getCountryCode(playerName);
@@ -2808,6 +3053,7 @@ async function toggleScorecard(idx, playerName) {
 
   let html = '<div class="sc-header"><span class="sc-player-name">' + playerName + '</span>';
   if (gd) html += '<span class="sc-player-pos">' + gd.pos + '</span>';
+  if (ownPctStr) html += '<span style="font-size:10px;color:var(--gold);font-weight:600;margin-left:auto;white-space:nowrap">' + ownPctStr + '</span>';
   html += '</div>';
 
   // Only show the most recent round with hole data
@@ -2886,7 +3132,192 @@ function showToast(msg) {
   toastT=setTimeout(()=>t.classList.remove('show'),2400);
 }
 
-function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); renderPayouts(); }
+// ─── Head-to-Head ───
+function populateH2HSelectors() {
+  const selA = document.getElementById('h2h-team-a');
+  const selB = document.getElementById('h2h-team-b');
+  if (!selA || !selB) return;
+  const prevA = selA.value;
+  const prevB = selB.value;
+  const opts = ENTRIES.map((e, i) => '<option value="' + i + '">' + e.team + '</option>').join('');
+  selA.innerHTML = '<option value="">Choose team…</option>' + opts;
+  selB.innerHTML = '<option value="">Choose team…</option>' + opts;
+  if (prevA !== '') selA.value = prevA;
+  if (prevB !== '') selB.value = prevB;
+  // Auto-select: default team A to user's team if set
+  if (!prevA && currentUserEmail) {
+    const myIdx = ENTRIES.findIndex(e => e.email === currentUserEmail);
+    if (myIdx >= 0) selA.value = myIdx;
+  }
+}
+
+function getHolesRemaining(playerName) {
+  const gd = GOLFER_SCORES[playerName];
+  if (!gd) return 0;
+  if (gd.thru === 'MC' || gd.thru === 'F' || gd.thru === '—') return 0;
+  const thru = parseInt(gd.thru);
+  if (isNaN(thru)) return 0;
+  return 18 - thru;
+}
+
+function calcWinProbability(entryA, entryB) {
+  const cA = calcEntry(entryA);
+  const cB = calcEntry(entryB);
+  const diff = cA.total - cB.total; // negative = A is winning
+
+  // Count total holes remaining across each team's top-4 contributing golfers
+  const holesA = cA.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
+  const holesB = cB.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
+  const totalHolesRemaining = holesA + holesB;
+
+  // If tournament is over for both teams, it's deterministic
+  if (totalHolesRemaining === 0) {
+    if (diff < 0) return { pctA: 100, pctB: 0 };
+    if (diff > 0) return { pctA: 0, pctB: 100 };
+    return { pctA: 50, pctB: 50 };
+  }
+
+  // Standard deviation per hole is roughly 1.2 strokes in golf.
+  // For the *difference* in best-4-of-6 team scores, we scale by
+  // sqrt of composite remaining holes. This is a simplified model
+  // but tracks reasonably with real tournament volatility.
+  const sigma = 1.15 * Math.sqrt(totalHolesRemaining / 4);
+
+  // Normal CDF approximation (Abramowitz & Stegun)
+  // We want P(A wins) = P(finalDiff < 0) where finalDiff starts at `diff`
+  // and has noise ~ N(0, sigma^2).
+  // P(A wins) = Phi(-diff / sigma)
+  const z = -diff / sigma;
+  const pA = normalCDF(z) * 100;
+  const pB = 100 - pA;
+
+  return { pctA: Math.round(pA), pctB: Math.round(pB) };
+}
+
+function normalCDF(x) {
+  // Approximation of the standard normal CDF
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.SQRT2;
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return 0.5 * (1.0 + sign * y);
+}
+
+function getBarGradient(pctA) {
+  // Left team: green when winning, fades to yellow, then red
+  // Right team: same logic flipped
+  // We build a single bar from left to right:
+  //   pctA side = green→yellow gradient
+  //   pctB side = yellow→red gradient
+  if (pctA >= 99) return 'linear-gradient(90deg, #2d9d5e 0%, #52b788 100%)';
+  if (pctA <= 1) return 'linear-gradient(90deg, #d9534f 0%, #c9302c 100%)';
+  return 'linear-gradient(90deg, #2d9d5e 0%, #52b788 35%, #e8c547 50%, #e07840 75%, #d9534f 100%)';
+}
+
+function renderH2H() {
+  const selA = document.getElementById('h2h-team-a');
+  const selB = document.getElementById('h2h-team-b');
+  const container = document.getElementById('h2h-content');
+  if (!selA || !selB || !container) return;
+
+  const idxA = selA.value;
+  const idxB = selB.value;
+
+  if (idxA === '' || idxB === '') {
+    container.innerHTML = '<div class="h2h-empty"><div class="h2h-empty-icon">⚔️</div>Select two teams above to compare them head-to-head</div>';
+    return;
+  }
+
+  if (idxA === idxB) {
+    container.innerHTML = '<div class="h2h-empty"><div class="h2h-empty-icon">🤔</div>Pick two different teams to compare</div>';
+    return;
+  }
+
+  const entryA = ENTRIES[parseInt(idxA)];
+  const entryB = ENTRIES[parseInt(idxB)];
+  const cA = calcEntry(entryA);
+  const cB = calcEntry(entryB);
+  const prob = calcWinProbability(entryA, entryB);
+
+  // Determine who's leading
+  const aLeading = prob.pctA >= prob.pctB;
+  const pctLeft = prob.pctA;
+  const pctRight = prob.pctB;
+
+  // Build probability bar
+  // Fill width = left team's percentage
+  // Gradient: green on left (team A strong), transitions to red on right (team B strong)
+  const fillWidth = Math.max(pctLeft, 2); // min 2% so it's visible
+  const barBg = getBarGradient(pctLeft);
+
+  let html = '<div class="h2h-prob-wrap">';
+  html += '<div class="h2h-prob-labels">';
+  html += '<div class="h2h-prob-name left">' + cA.team + '</div>';
+  html += '<div class="h2h-prob-name right">' + cB.team + '</div>';
+  html += '</div>';
+  html += '<div class="h2h-prob-pcts">';
+  html += '<div class="h2h-prob-pct left' + (pctLeft < pctRight ? ' losing' : '') + '">' + pctLeft + '%</div>';
+  html += '<div class="h2h-prob-pct right' + (pctRight < pctLeft ? ' losing' : '') + '">' + pctRight + '%</div>';
+  html += '</div>';
+  html += '<div class="h2h-bar-track">';
+  html += '<div class="h2h-bar-fill" style="width:' + fillWidth + '%;background:' + barBg + '">';
+  html += '</div>';
+  if (pctLeft > 8) html += '<span class="h2h-bar-label left">WIN</span>';
+  if (pctRight > 8) html += '<span class="h2h-bar-label right">WIN</span>';
+  html += '</div>';
+
+  // Score summary under the bar
+  html += '<div class="h2h-score-summary">';
+  html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmt(cA.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
+  if (cA.total === cB.total) {
+    html += '<div class="h2h-tied-badge">TIED</div>';
+  } else {
+    const gap = Math.abs(cA.total - cB.total);
+    html += '<div style="text-align:center;color:var(--text3);font-size:10px;font-weight:700">' + gap + ' stroke' + (gap > 1 ? 's' : '') + '</div>';
+  }
+  html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmt(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
+  html += '</div></div>';
+
+  // Team A golfers
+  html += '<div class="h2h-matchups">';
+  html += buildTeamBlock(cA);
+  html += buildTeamBlock(cB);
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+function buildTeamBlock(calc) {
+  let html = '<div class="h2h-team-block">';
+  html += '<div class="h2h-team-hdr">';
+  html += '<div class="h2h-team-name">' + calc.team + '</div>';
+  html += '<div class="h2h-team-total ' + cls(calc.total) + '">' + fmt(calc.total) + '</div>';
+  html += '</div>';
+  calc.scores.forEach(function(g, j) {
+    const isTop = j < 4;
+    const gd = GOLFER_SCORES[g.name];
+    const pos = gd ? gd.pos : '—';
+    const thru = gd ? gd.thru : '—';
+    const mc = thru === 'MC';
+    const flag = FLAGS[g.name] || '';
+    const thruDisp = mc ? 'MC' : (thru === 'F' ? 'F' : (thru === '—' ? '—' : 'Thru ' + thru));
+    html += '<div class="h2h-golfer-row ' + (isTop ? 'is-top' : 'is-bench') + '">';
+    html += '<div class="h2h-golfer-star">' + (isTop ? '★' : '') + '</div>';
+    html += '<div class="h2h-golfer-info">';
+    html += '<div class="h2h-golfer-name">' + flag + ' ' + g.name + '</div>';
+    html += '<div class="h2h-golfer-detail">' + pos + (pos !== '—' && !mc ? ' · ' + thruDisp : (mc ? ' · Missed Cut' : '')) + '</div>';
+    html += '</div>';
+    html += '<div class="h2h-golfer-thru">' + thruDisp + '</div>';
+    html += '<div class="h2h-golfer-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); renderPayouts(); populateH2HSelectors(); renderH2H(); }
 
 const POOL_CONFIG = { buyIn: 25, entries: 6, payouts: [ { place: '1st', pct: 0.60 }, { place: '2nd', pct: 0.27 }, { place: '3rd', pct: 0.13 } ] };
 POOL_CONFIG.pot = POOL_CONFIG.buyIn * POOL_CONFIG.entries;
