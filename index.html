@@ -25,7 +25,7 @@
       --border: #1a3326;
       --safe-top: env(safe-area-inset-top, 47px);
       --safe-bot: env(safe-area-inset-bottom, 34px);
-      --header-h: 52px;
+      --header-h: 44px;
       --nav-h: 56px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -49,8 +49,8 @@
       padding: 0 16px;
     }
     .hdr-left { flex: 1; min-width: 0; }
-    .hdr-left h1 { font-size: 15px; font-weight: 900; letter-spacing: 0.4px; color: #fff; text-transform: uppercase; white-space: nowrap; }
-    .hdr-left p { font-size: 9px; color: var(--gold-dim); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 2px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hdr-left h1 { font-size: 12px; font-weight: 900; letter-spacing: 0.5px; color: #fff; text-transform: uppercase; white-space: nowrap; }
+    .hdr-left p { display: none; }
     .hdr-pill {
       background: rgba(0,0,0,0.3); border: 1px solid rgba(212,168,67,0.25);
       border-radius: 20px; padding: 5px 9px;
@@ -167,11 +167,11 @@
     }
     .tv-header-top {
       background: linear-gradient(180deg, #6b1c1c 0%, #4a1414 100%);
-      padding: 10px 18px 8px;
+      padding: 6px 18px 5px;
       border-bottom: 3px solid var(--gold);
     }
     .tv-header-top .tv-title { color: #fff; }
-    .tv-header-bot { padding: 6px 18px 8px; }
+    .tv-header-bot { display: none; }
     .tv-title { font-size: 12px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
     .tv-sub { font-size: 9px; color: var(--gold-dim); margin-top: 2px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 500; }
     .tv-col-hdr {
@@ -401,6 +401,11 @@
     .td-item:last-of-type { border-bottom: none; }
     .td-item.active { background: var(--gold-bg); color: var(--gold); }
     .td-item:active { background: rgba(212,168,67,0.1); }
+    .td-header {
+      padding: 8px 14px 6px; font-size: 9px; font-weight: 800;
+      letter-spacing: 1px; text-transform: uppercase; color: var(--gold);
+      border-bottom: 1px solid var(--border);
+    }
     .td-change-btn {
       width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.3);
       border: none; border-top: 1px solid var(--border);
@@ -537,8 +542,9 @@
         </div>
       </div>
       <div id="team-dropdown">
+        <div class="td-header">Entries</div>
         <div id="team-dropdown-list"></div>
-        <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change person…</button>
+        <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change User</button>
       </div>
       <button id="hdr-join-btn" onclick="showOnboarding()" style="display:none">Select Team</button>
     </div>
@@ -770,7 +776,7 @@ function dismissSplashBrowse() {
 const ENTRIES = [
   { team: "Jake Test", name: "Jake", email: "jhs797@gmail.com", picks: ["Sam Burns", "Michael Thorbjornsen", "Sungjae Im", "Aaron Rai", "Christiaan Bezuidenhout", "Gary Woodland"] },
   { team: "Loves2splooge69_A", name: "Tyler D", email: "tdewitt815@gmail.com", picks: ["Chris Gotterup", "Ben Griffin", "Sungjae Im", "Max Greyserman", "Nicolas Echavarria", "Tom Kim"] },
-  { team: "Loves2splooge69_B", name: "Tyler D", email: "tdewitt815@gmail.com", picks: ["Scottie Scheffler", "Shane Lowry", "Alex Smalley", "Tony Finau", "J.T. Poston", "Seonghyeon Kim"] },
+  { team: "Loves2splooge69_B", name: "Tyler D", email: "tdewitt815@gmail.com", picks: ["Min Woo Lee", "Shane Lowry", "Alex Smalley", "Tony Finau", "J.T. Poston", "Seonghyeon Kim"] },
   { team: "Monkey fist pump", name: "Tyler Conlan", email: "tycon0612@gmail.com", picks: ["Brooks Koepka", "Marco Penge", "Sahith Theegala", "Jordan L. Smith", "Hao-Tong Li", "Tom Kim"] },
   { team: "Monkey fist pump 2", name: "Tyler Conlan", email: "tycon0612@gmail.com", picks: ["Chris Gotterup", "Adam Scott", "Sungjae Im", "Will Zalatoris", "Nicolas Echavarria", "Gary Woodland"] },
   { team: "Shark's Gonna Shark", name: "Jake", email: "jhs797@gmail.com", picks: ["Jake Knapp", "Shane Lowry", "Patrick Rodgers", "Aaron Rai", "Hao-Tong Li", "David Lipsky"] }
@@ -796,11 +802,11 @@ const FLAGS = {
   "Ben Silverman":"🇨🇦","Lee Hodges":"🇺🇸","Adam Hadwin":"🇨🇦",
   "Alejandro Tosti":"🇦🇷","Wesley Bryan":"🇺🇸","Henrik Norlander":"🇸🇪",
   "Carson Young":"🇺🇸","Joel Dahmen":"🇺🇸","J.J. Spaun":"🇺🇸",
-  "Ryo Hisatsune":"🇯🇵","Justin Rose":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Patrick Fishburn":"🇺🇸",
+  "Justin Rose":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Patrick Fishburn":"🇺🇸",
   "Taylor Moore":"🇺🇸","Lee Westwood":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","C.T. Pan":"🇹🇼",
   "Kevin Streelman":"🇺🇸","Nick Watney":"🇺🇸","Daniel Berger":"🇺🇸",
   "Ben Martin":"🇺🇸","Patton Kizzire":"🇺🇸","Webb Simpson":"🇺🇸",
-  "Adam Long":"🇺🇸","Sang-Moon Bae":"🇰🇷","Michael Kim":"🇺🇸",
+  "Adam Long":"🇺🇸","Sang-Moon Bae":"🇰🇷",
   "Matti Schmid":"🇩🇪","Si Woo Kim":"🇰🇷","Alex Noren":"🇸🇪",
   "Nate Lashley":"🇺🇸","Kevin Tway":"🇺🇸","Ryan Fox":"🇳🇿",
   "Pierceson Coody":"🇺🇸","Rasmus Neergaard-Petersen":"🇩🇰",
@@ -815,7 +821,7 @@ const FLAGS = {
   "Beau Hossler":"🇺🇸","Tom Hoge":"🇺🇸","David Lipsky":"🇺🇸",
   "Lucas Glover":"🇺🇸","Brooks Koepka":"🇺🇸","Patrick Rodgers":"🇺🇸",
   "Mackenzie Hughes":"🇨🇦","Stephan Jaeger":"🇩🇪","Adrien Saddier":"🇫🇷",
-  "Sam Ryder":"🇺🇸","K.H. Lee":"🇰🇷","Marcelo Rozo":"🇨🇴",
+  "Sam Ryder":"🇺🇸","K.H. Lee":"🇰🇷",
   "Zecheng Dou":"🇨🇳","Keith Mitchell":"🇺🇸","Adam Svensson":"🇨🇦",
   "Mark Hubbard":"🇺🇸","Haotong Li":"🇨🇳","Christiaan Bezuidenhout":"🇿🇦",
   "Erik van Rooyen":"🇿🇦","Alex Smalley":"🇺🇸","Jordan Smith":"🏴󠁧󠁢󠁥󠁮󠁧󠁿",
@@ -829,7 +835,7 @@ const FLAGS = {
   "Mac Meissner":"🇺🇸","Marco Penge":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Michael Thorbjornsen":"🇺🇸",
   "Min Woo Lee":"🇦🇺","Nick Dunlap":"🇺🇸","Nico Echavarria":"🇨🇴",
   "Pontus Nyholm":"🇸🇪","Ricky Castillo":"🇺🇸","S.H. Kim":"🇰🇷",
-  "Sam Stevens":"🇺🇸","Scottie Scheffler":"🇺🇸","Shane Lowry":"🇮🇪",
+  "Sam Stevens":"🇺🇸","Shane Lowry":"🇮🇪",
   "Steven Fisk":"🇺🇸","Takumi Kanaya":"🇯🇵","Tom Kim":"🇰🇷","Vince Whaley":"🇺🇸",
 };
 const TIERS = [];
@@ -1090,9 +1096,12 @@ async function fetchESPN() {
     const evStatus=data.events?.[0]?.status?.type?.name||'';
     const isPreTournament=evStatus==='STATUS_SCHEDULED';
     const fullName = data.events[0].name || 'Houston Open';
-    // Strip sponsor prefix (e.g. "Texas Children's Houston Open" → "Houston Open")
-    const shortName = fullName.replace(/^.*?(\w[\w\s]*Open\b.*)/i, '$1').trim() || fullName;
+    // Extract "City Open" — find the word before "Open" + "Open"
+    const parts = fullName.split(' ');
+    const openIdx = parts.findIndex(w => w.toLowerCase() === 'open');
+    const shortName = openIdx > 0 ? parts.slice(Math.max(0, openIdx-1), openIdx+1).join(' ') : fullName;
     document.getElementById('hdr-sub').textContent = shortName + (isPreTournament ? ' · Pre-Tournament' : ' · Live');
+    const freshScores = {};
     comps.forEach(c=>{
       const name=c.athlete?.displayName; if(!name) return;
       const state=c.status?.type?.name||'';
@@ -1102,7 +1111,7 @@ async function fetchESPN() {
       const mc=state.includes('CUT')||false;
       const lines=c.linescores||[];
       const teeTime=scheduled?raw:'';
-      GOLFER_SCORES[name]={
+      freshScores[name]={
         pos:scheduled?'—':(c.status?.position?.displayName||'—'),
         score:mc?11:score, thru:mc?'MC':(scheduled?'—':(c.status?.thru||'F')),
         teeTime:teeTime,
@@ -1110,7 +1119,8 @@ async function fetchESPN() {
         r3:lines[2]?.value||null, r4:lines[3]?.value||null
       };
     });
-    setApiStatus('live', `Live · ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`);
+    GOLFER_SCORES = freshScores;
+    setApiStatus('live', isPreTournament ? 'Pre-Tournament' : 'Live');
     console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers');
     renderAll();
   } catch(e) {
@@ -1122,7 +1132,7 @@ async function fetchESPN() {
       });
       console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)');
     }
-    setApiStatus('cached', 'Offline · Pre-Tournament');
+    setApiStatus('cached', 'Offline');
     renderAll();
   }
 }
@@ -1231,7 +1241,7 @@ async function initApp() {
 
   // Fetch live ESPN scores and overlay
   await fetchESPN().catch(() => {
-    setApiStatus('cached', 'Offline · Pre-Tournament');
+    setApiStatus('cached', 'Offline');
   });
   renderAll();
   startAutoRefresh();
