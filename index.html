@@ -144,6 +144,48 @@ html, body  {
   display: block;
 }
 
+.ptr-indicator  {
+  height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--gold);
+  transition: none;
+}
+
+.ptr-indicator.releasing  {
+  transition: height 0.25s ease;
+}
+
+.ptr-indicator .ptr-arrow  {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  margin-right: 6px;
+}
+
+.ptr-indicator.armed .ptr-arrow  {
+  transform: rotate(180deg);
+}
+
+.ptr-indicator.refreshing .ptr-spinner  {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(212,168,67,0.25);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 6px;
+}
+
+.ptr-indicator .ptr-spinner  {
+  display: none;
+}
+
 #nav  {
   position: fixed;
   bottom: 0;
@@ -1811,6 +1853,7 @@ to  {
 </div>
 </div>
 <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
+<div class="ptr-indicator" id="ptr-indicator"><span class="ptr-arrow">↓</span><span class="ptr-text">Pull to refresh</span><span class="ptr-spinner"></span></div>
 <div class="tv-header">
 <div class="tv-header-top">
 <div class="tv-title" id="lb-tournament-name">Houston Open</div>
@@ -2358,6 +2401,64 @@ function selectTeamEntry(idx) {
   closeTeamDropdown();
   showToast(idx === -1 ? '✓ All Picks' : '✓ ' + currentUserTeams[idx].team);
 }
+
+// Pull-to-refresh for leaderboard
+(function() {
+  const view = document.getElementById('view-leaderboard');
+  const ptr = document.getElementById('ptr-indicator');
+  const ptrText = ptr.querySelector('.ptr-text');
+  const threshold = 60;
+  let startY = 0, pulling = false, armed = false, refreshing = false;
+
+  view.addEventListener('touchstart', function(e) {
+    if (refreshing || view.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+    armed = false;
+    ptr.classList.remove('releasing', 'armed', 'refreshing');
+  }, { passive: true });
+
+  view.addEventListener('touchmove', function(e) {
+    if (!pulling || refreshing) return;
+    const dy = Math.max(0, e.touches[0].clientY - startY);
+    if (dy === 0) return;
+    const dist = Math.min(dy * 0.5, 80);
+    ptr.style.height = dist + 'px';
+    if (dist >= threshold && !armed) {
+      armed = true;
+      ptr.classList.add('armed');
+      ptrText.textContent = 'Release to refresh';
+    } else if (dist < threshold && armed) {
+      armed = false;
+      ptr.classList.remove('armed');
+      ptrText.textContent = 'Pull to refresh';
+    }
+  }, { passive: true });
+
+  view.addEventListener('touchend', function() {
+    if (!pulling) return;
+    pulling = false;
+    if (armed && !refreshing) {
+      refreshing = true;
+      ptr.classList.remove('armed');
+      ptr.classList.add('refreshing', 'releasing');
+      ptr.style.height = '40px';
+      ptrText.textContent = 'Refreshing…';
+      fetchESPN().finally(function() {
+        refreshing = false;
+        ptr.classList.add('releasing');
+        ptr.classList.remove('refreshing');
+        ptr.style.height = '0px';
+        ptrText.textContent = 'Pull to refresh';
+        setTimeout(function() { ptr.classList.remove('releasing'); }, 300);
+      });
+    } else {
+      ptr.classList.add('releasing');
+      ptr.style.height = '0px';
+      setTimeout(function() { ptr.classList.remove('releasing', 'armed'); }, 300);
+    }
+  }, { passive: true });
+})();
 
 async function initApp() { ENTRIES.forEach(e => { e.picks = e.picks.map(resolvePlayerName); }); allTeamEmails = [...new Set(ENTRIES.map(e => e.email))].sort(); OWNERSHIP_DATA = computeOwnership(); console.log('✅ Loaded', ENTRIES.length, 'baked-in entries');
 const returning = loadUser(); if (returning) { console.log('👤 Returning user:', currentUserEmail); const sp = document.getElementById('splash'); if (sp) { sp.style.display = 'none'; sp.classList.add('hidden'); } } updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
