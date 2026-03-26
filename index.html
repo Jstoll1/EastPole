@@ -2089,7 +2089,6 @@ function renderLeaderboard() {
     + '<div class="tv-h-score tv-h-sort' + sortCls('score') + '" onclick="setLbSort(\'score\')">SCORE' + sortArrow('score') + '</div>'
     + '<div class="tv-h-today tv-h-sort' + sortCls('today') + '" onclick="setLbSort(\'today\')">TODAY' + sortArrow('today') + '</div>'
     + '<div class="tv-h-thru tv-h-sort' + sortCls('thru') + '" onclick="setLbSort(\'thru\')">THRU' + sortArrow('thru') + '</div>'
-    + '<div class="tv-h-rnd">R1</div><div class="tv-h-rnd">R2</div><div class="tv-h-rnd">R3</div><div class="tv-h-rnd">R4</div>'
     + '<div class="tv-h-tot tv-h-sort' + sortCls('tot') + '" onclick="setLbSort(\'tot\')">TOT' + sortArrow('tot') + '</div></div>';
   let rows = '';
   let cutInserted = false;
@@ -2131,10 +2130,6 @@ function renderLeaderboard() {
       + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?'MC':scf) + '</div>'
       + '<div class="tv-today ' + todayCls + '">' + todayDisp + '</div>'
       + '<div class="tv-thru">' + thruDisp + '</div>'
-      + '<div class="tv-rnd">' + r1Disp + '</div>'
-      + '<div class="tv-rnd">' + r2Disp + '</div>'
-      + '<div class="tv-rnd">' + r3Disp + '</div>'
-      + '<div class="tv-rnd">' + r4Disp + '</div>'
       + '<div class="tv-tot">' + totDisp + '</div>'
       + '</div>';
   });
