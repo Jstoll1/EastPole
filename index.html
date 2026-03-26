@@ -2053,27 +2053,26 @@ to  {
 .cmp-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: none;
-  border: 1px solid var(--border);
+  gap: 0;
+  background: rgba(212,168,67,0.10);
+  border: 1.5px solid var(--gold);
   border-radius: 20px;
-  padding: 5px 12px;
-  color: var(--text3);
+  padding: 5px 14px;
+  color: var(--gold);
   font-family: inherit;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
 }
 .cmp-toggle.active {
-  background: rgba(212,168,67,0.12);
+  background: var(--gold);
   border-color: var(--gold);
-  color: var(--gold);
+  color: #000;
 }
-.cmp-toggle svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
 .cmp-hint {
   text-align: center;
   padding: 10px 14px;
@@ -2147,18 +2146,42 @@ to  {
   position: relative;
   background: var(--card2);
   border: 1px solid var(--border);
+  display: flex;
+  align-items: stretch;
 }
-.h2h-bar-fill {
-  height: 100%;
-  border-radius: 14px;
-  transition: width 0.6s ease, background 0.6s ease;
+/* Each half is a 50% container. The fill inside grows from the center edge outward. */
+.h2h-bar-half {
+  width: 50%;
   position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.h2h-bar-half.left { border-radius: 14px 0 0 14px; }
+.h2h-bar-half.right { border-radius: 0 14px 14px 0; }
+.h2h-bar-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: width 0.6s ease;
+}
+/* Left fill: anchored to center (right edge of left half), grows leftward.
+   Gradient: red at center → yellow → green at outer edge. */
+.h2h-bar-half.left .h2h-bar-fill {
+  right: 0;
+  border-radius: 14px 0 0 14px;
+  background: linear-gradient(to left, #d9534f 0%, #e07840 25%, #e8c547 55%, #52b788 80%, #2d9d5e 100%);
+}
+/* Right fill: anchored to center (left edge of right half), grows rightward.
+   Gradient: red at center → yellow → green at outer edge. */
+.h2h-bar-half.right .h2h-bar-fill {
+  left: 0;
+  border-radius: 0 14px 14px 0;
+  background: linear-gradient(to right, #d9534f 0%, #e07840 25%, #e8c547 55%, #52b788 80%, #2d9d5e 100%);
 }
 .h2h-bar-fill::after {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 14px;
   background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 50%);
 }
 .h2h-bar-label {
@@ -2380,10 +2403,7 @@ to  {
 </div>
 <div class="tv-header-bot" style="display:flex;align-items:center;justify-content:space-between">
 <div class="tv-sub">Houston Open 2026 · <span id="entry-count">0</span> Entries</div>
-<button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()">
-<svg viewBox="0 0 24 24"><path d="M16 3h5v5M8 3H3v5M21 3l-7 7M3 3l7 7"/></svg>
-Compare
-</button>
+<button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()">Compare</button>
 </div>
 </div>
 <div id="h2h-inline-panel"></div>
@@ -3287,25 +3307,36 @@ function calcWinProbability(entryA, entryB) {
   const cB = calcEntry(entryB);
   const diff = cA.total - cB.total; // negative = A is winning
 
-  // Average holes remaining per team's top-4 golfers
-  const holesA = cA.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
-  const holesB = cB.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
-  const avgHolesRemaining = (holesA + holesB) / 2;
+  // Holes remaining per golfer across each team's top 4
+  const holesA = cA.top4.map(g => getHolesRemaining(g.name));
+  const holesB = cB.top4.map(g => getHolesRemaining(g.name));
+  const totalHolesA = holesA.reduce((s, h) => s + h, 0);
+  const totalHolesB = holesB.reduce((s, h) => s + h, 0);
 
   // Tournament truly over for both teams
-  if (avgHolesRemaining === 0) {
+  if (totalHolesA + totalHolesB === 0) {
     if (diff < 0) return { pctA: 100, pctB: 0 };
     if (diff > 0) return { pctA: 0, pctB: 100 };
     return { pctA: 50, pctB: 50 };
   }
 
-  // Variance model:
-  // PGA Tour std dev ≈ ~1.1 strokes/hole/golfer.
-  // For best-4-of-6, the team composite is dampened to ~0.7/hole/team
-  // (dropping worst 2 reduces variance by ~35-40%).
-  // Difference of two teams: variances add → sigma = sqrt(2) * 0.7 * sqrt(avgHolesPerGolfer).
-  const avgHolesPerGolfer = avgHolesRemaining / 4;
-  const sigma = Math.SQRT2 * 0.7 * Math.sqrt(Math.max(avgHolesPerGolfer, 1));
+  // Variance model — built from individual golfer variance, not team-level.
+  //
+  // PGA Tour empirical std dev ≈ 1.1 strokes per hole per golfer.
+  // Per-golfer variance over their remaining holes = (1.1)^2 * holesRemaining.
+  //
+  // Each team's score = sum of best 4 of 6. Since the top 4 can change as
+  // scores shift, there's extra variance from golfer substitution. We apply
+  // a dampening factor of 0.65 (best-4 selection reduces raw variance by ~35%).
+  //
+  // Team variance = sum of each contributing golfer's variance * dampening.
+  // Diff variance = teamVarA + teamVarB (independent teams).
+  // sigma = sqrt(diffVar).
+  const STROKE_VAR = 1.1 * 1.1; // 1.21 per hole per golfer
+  const BEST4_DAMPEN = 0.65;
+  const teamVarA = holesA.reduce((s, h) => s + STROKE_VAR * h, 0) * BEST4_DAMPEN;
+  const teamVarB = holesB.reduce((s, h) => s + STROKE_VAR * h, 0) * BEST4_DAMPEN;
+  const sigma = Math.sqrt(Math.max(teamVarA + teamVarB, 1));
 
   const z = -diff / sigma;
   const pA = normalCDF(z) * 100;
@@ -3325,12 +3356,6 @@ function normalCDF(x) {
   return 0.5 * (1.0 + sign * y);
 }
 
-function getBarGradient(pctA) {
-  if (pctA >= 99) return 'linear-gradient(90deg, #2d9d5e 0%, #52b788 100%)';
-  if (pctA <= 1) return 'linear-gradient(90deg, #d9534f 0%, #c9302c 100%)';
-  return 'linear-gradient(90deg, #2d9d5e 0%, #52b788 35%, #e8c547 50%, #e07840 75%, #d9534f 100%)';
-}
-
 function renderH2HInline() {
   const container = document.getElementById('h2h-inline-panel');
   if (!container || cmpSelections.length < 2) { if (container) container.innerHTML = ''; return; }
@@ -3342,8 +3367,6 @@ function renderH2HInline() {
   const prob = calcWinProbability(entryA, entryB);
   const pctLeft = prob.pctA;
   const pctRight = prob.pctB;
-  const fillWidth = Math.max(pctLeft, 2);
-  const barBg = getBarGradient(pctLeft);
 
   let html = '<div class="h2h-panel-wrap">';
   html += '<div class="h2h-close-bar"><button class="h2h-close-btn" onclick="exitCompareMode()">✕ Exit Compare</button></div>';
@@ -3356,10 +3379,14 @@ function renderH2HInline() {
   html += '<div class="h2h-prob-pct left' + (pctLeft < pctRight ? ' losing' : '') + '">' + pctLeft + '%</div>';
   html += '<div class="h2h-prob-pct right' + (pctRight < pctLeft ? ' losing' : '') + '">' + pctRight + '%</div>';
   html += '</div>';
+  // Tug-of-war bar: two halves, each with a fill growing from the CENTER outward.
+  // 0% = empty (no fill from center). 100% = fill reaches all the way to the edge.
+  // Gradient on each side: red at center → yellow → green at outer edge.
   html += '<div class="h2h-bar-track">';
-  html += '<div class="h2h-bar-fill" style="width:' + fillWidth + '%;background:' + barBg + '"></div>';
-  if (pctLeft > 8) html += '<span class="h2h-bar-label left">WIN</span>';
-  if (pctRight > 8) html += '<span class="h2h-bar-label right">WIN</span>';
+  html += '<div class="h2h-bar-half left"><div class="h2h-bar-fill" style="width:' + pctLeft + '%"></div></div>';
+  html += '<div class="h2h-bar-half right"><div class="h2h-bar-fill" style="width:' + pctRight + '%"></div></div>';
+  if (pctLeft > 12) html += '<span class="h2h-bar-label left">WIN</span>';
+  if (pctRight > 12) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
   html += '<div class="h2h-score-summary">';
   html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmt(cA.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
