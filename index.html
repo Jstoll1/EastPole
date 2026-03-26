@@ -3264,8 +3264,8 @@ async function toggleScorecard(idx, playerName) {
   activeRounds.forEach((r) => {
     const ri = activeRi;
     if (!r.holes || r.holes.length === 0) return;
-    const front = r.holes.slice(0, 9);
-    const back = r.holes.slice(9, 18);
+    const front = r.holes.filter(h => h.hole >= 1 && h.hole <= 9);
+    const back = r.holes.filter(h => h.hole >= 10 && h.hole <= 18);
     const frontPars = front.map(h => h.par || getHolePar(h.hole));
     const backPars = back.map(h => h.par || getHolePar(h.hole));
     const frontOut = front.reduce((s, h) => s + (h.strokes || 0), 0);
@@ -3280,32 +3280,40 @@ async function toggleScorecard(idx, playerName) {
     html += '<div class="sc-round-label">R' + (ri + 1) + (r.value ? ' — ' + r.value : '') + (r.displayValue ? ' (<span style="' + dpColor + '">' + r.displayValue + '</span>)' : '') + '</div>';
     html += '<div class="sc-grid">';
 
-    // Front 9
+    // Build lookup of hole data by hole number
+    var holeMap = {};
+    r.holes.forEach(function(h) { holeMap[h.hole] = h; });
+
+    // Front 9 (holes 1-9)
     html += '<div class="sc-nine">';
     html += '<div class="sc-nine-label">OUT</div>';
     html += '<div class="sc-row sc-row-hdr">';
-    front.forEach(h => { html += '<div class="sc-cell">' + h.hole + '</div>'; });
+    for (var hn = 1; hn <= 9; hn++) { html += '<div class="sc-cell">' + hn + '</div>'; }
     html += '<div class="sc-cell sc-tot">Tot</div></div>';
     html += '<div class="sc-row sc-row-score">';
-    front.forEach((h, i) => {
-      const scCls = scorecardClass(h.strokes, frontPars[i]);
-      html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (h.strokes || '–') + '</span></div>';
-    });
+    for (var hn = 1; hn <= 9; hn++) {
+      var hd = holeMap[hn];
+      var par = getHolePar(hn);
+      var scCls = hd && hd.strokes ? scorecardClass(hd.strokes, par) : '';
+      html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '–') + '</span></div>';
+    }
     html += '<div class="sc-cell sc-tot">' + (frontOut || '–') + '</div></div>';
     html += '</div>';
 
-    // Back 9
-    if (back.length > 0 && back.some(h => h.strokes > 0)) {
+    // Back 9 (holes 10-18) — show if any back nine holes have been played
+    if (back.length > 0 && back.some(function(h) { return h.strokes > 0; })) {
       html += '<div class="sc-nine">';
       html += '<div class="sc-nine-label">IN</div>';
       html += '<div class="sc-row sc-row-hdr">';
-      back.forEach(h => { html += '<div class="sc-cell">' + h.hole + '</div>'; });
+      for (var hn = 10; hn <= 18; hn++) { html += '<div class="sc-cell">' + hn + '</div>'; }
       html += '<div class="sc-cell sc-tot">Tot</div></div>';
       html += '<div class="sc-row sc-row-score">';
-      back.forEach((h, i) => {
-        const scCls = scorecardClass(h.strokes, backPars[i]);
-        html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (h.strokes || '–') + '</span></div>';
-      });
+      for (var hn = 10; hn <= 18; hn++) {
+        var hd = holeMap[hn];
+        var par = getHolePar(hn);
+        var scCls = hd && hd.strokes ? scorecardClass(hd.strokes, par) : '';
+        html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '–') + '</span></div>';
+      }
       html += '<div class="sc-cell sc-tot">' + (backIn || '–') + '</div></div>';
       html += '</div>';
     }
