@@ -3300,8 +3300,8 @@ async function toggleScorecard(idx, playerName) {
     html += '<div class="sc-cell sc-tot">' + (frontOut || '–') + '</div></div>';
     html += '</div>';
 
-    // Back 9 (holes 10-18) — show if any back nine holes have been played
-    if (back.length > 0 && back.some(function(h) { return h.strokes > 0; })) {
+    // Back 9 (holes 10-18) — always show, dashes for unplayed holes
+    {
       html += '<div class="sc-nine">';
       html += '<div class="sc-nine-label">IN</div>';
       html += '<div class="sc-row sc-row-hdr">';
