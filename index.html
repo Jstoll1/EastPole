@@ -2786,7 +2786,13 @@ async function toggleScorecard(idx, playerName) {
     const frontOut = front.reduce((s, h) => s + (h.strokes || 0), 0);
     const backIn = back.reduce((s, h) => s + (h.strokes || 0), 0);
 
-    html += '<div class="sc-round-label">R' + (ri + 1) + ' — ' + (r.displayValue || r.value || '') + '</div>';
+    var dpColor = '';
+    if (r.displayValue) {
+      if (r.displayValue.indexOf('-') === 0) dpColor = 'color:var(--red)';
+      else if (r.displayValue === 'E') dpColor = '';
+      else dpColor = 'color:var(--green-bright)';
+    }
+    html += '<div class="sc-round-label">R' + (ri + 1) + (r.value ? ' — ' + r.value : '') + (r.displayValue ? ' (<span style="' + dpColor + '">' + r.displayValue + '</span>)' : '') + '</div>';
     html += '<div class="sc-grid">';
 
     // Front 9
