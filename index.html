@@ -2777,11 +2777,13 @@ function renderLeaderboard() {
   }
   const legendEl = document.getElementById('lb-legend');
   if (legendEl) {
-    if (lbFilter !== 'all' && currentUserTeams.length > 1 && activeTeamIdx === -1) {
+    if (currentUserTeams.length > 1 && activeTeamIdx === -1) {
       legendEl.innerHTML = currentUserTeams.map((t, i) => '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[i]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(i) + '</span><span>' + t.team + '</span></div>').join('');
-    } else if (lbFilter !== 'all' && currentUserTeams.length > 1 && activeTeamIdx >= 0) {
+    } else if (currentUserTeams.length > 1 && activeTeamIdx >= 0) {
       const t = currentUserTeams[activeTeamIdx];
       legendEl.innerHTML = '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[activeTeamIdx]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(activeTeamIdx) + '</span><span>' + t.team + '</span></div>';
+    } else if (currentUserTeams.length === 1) {
+      legendEl.innerHTML = '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[0]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(0) + '</span><span>' + currentUserTeams[0].team + '</span></div>';
     } else { legendEl.innerHTML = ''; }
   }
   const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
@@ -2827,7 +2829,7 @@ function renderLeaderboard() {
     const currP = parsePos(p.pos);
     let moveHtml = '';
     if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? '<div class="pos-move up">▲' + d + '</div>' : '<div class="pos-move dn">▼' + Math.abs(d) + '</div>'; }
-    const myTeamIdxs = lbFilter !== 'all' ? (myPicksMap[p.name] || []) : [];
+    const myTeamIdxs = myPicksMap[p.name] || [];
     const pills = myTeamIdxs.map(i => '<span class="team-pill ' + (PILL_CLASSES[i]||'') + '">' + pillLabel(i) + '</span>').join('');
     const isMyPick = myTeamIdxs.length > 0;
     const isPrevWinner = isPreT && p.name === PREV_WINNER;
@@ -2996,24 +2998,57 @@ async function fetchPlayerScorecard(playerName) {
   const playerId = ATHLETE_IDS[playerName];
   if (!playerId || !EVENT_ID) return null;
   try {
-    const url = 'https://sports.core.api.espn.com/v2/sports/golf/leagues/pga/events/' + EVENT_ID + '/competitions/' + EVENT_ID + '/competitors/' + playerId + '/linescores?lang=en&region=us';
+    const url = 'https://sports.core.api.espn.com/v2/sports/golf/leagues/pga/events/' + EVENT_ID + '/competitions/' + EVENT_ID + '/competitors/' + playerId + '/linescores?lang=en&region=us&limit=100';
     const res = await fetch(url);
     if (!res.ok) throw new Error('Scorecard API ' + res.status);
     const data = await res.json();
-    const rounds = (data.items || []).map(r => {
-      const holes = (r.linescores || []).map(h => ({
+
+    // DEBUG: log raw API response to diagnose missing holes
+    console.log('🔍 RAW linescores response for', playerName, JSON.stringify(data, null, 2).slice(0, 3000));
+
+    const roundItems = data.items || [];
+
+    const rounds = await Promise.all(roundItems.map(async (r, ri) => {
+      let holeData = r.linescores || [];
+
+      // DEBUG: log what each round item looks like
+      console.log('🔍 Round', ri + 1, 'for', playerName, '- holes in linescores:', holeData.length,
+        '- has $ref keys:', Object.keys(r).filter(k => typeof r[k] === 'string' && r[k].includes('http')),
+        '- all keys:', Object.keys(r));
+
+      // If linescores are paginated (ESPN returns $ref links or truncated arrays), resolve them
+      if (holeData.length < 18) {
+        // Check if linescores is a $ref object instead of inline data
+        const linesRef = r.linescores$ref || r.$ref || (r.linescores && r.linescores.$ref);
+        if (linesRef) {
+          console.log('🔍 Found $ref for round', ri + 1, ':', linesRef);
+          try {
+            const refUrl = linesRef + (linesRef.includes('?') ? '&' : '?') + 'limit=25';
+            const refRes = await fetch(refUrl);
+            if (refRes.ok) {
+              const refData = await refRes.json();
+              if (refData.items && refData.items.length > holeData.length) {
+                holeData = refData.items;
+                console.log('✅ Resolved $ref: got', holeData.length, 'holes for round', ri + 1);
+              }
+            }
+          } catch(e2) { console.warn('⚠️ $ref fetch failed for round', ri + 1, e2.message); }
+        }
+      }
+
+      const holes = holeData.map(h => ({
         hole: h.period,
         strokes: h.value,
         par: h.par,
         type: h.scoreType?.name || '',
         display: h.displayValue || String(h.value)
       }));
-      // Sort holes 1-18 for display (players with back-9 starts have holes out of order)
       holes.sort((a, b) => a.hole - b.hole);
       return { value: r.value, displayValue: r.displayValue, period: r.period, holes };
-    });
+    }));
+
     SCORECARD_CACHE[playerName] = rounds;
-    console.log('✅ Scorecard loaded for', playerName, ':', rounds.length, 'round(s)');
+    console.log('✅ Scorecard loaded for', playerName, ':', rounds.length, 'round(s),', rounds.map(r => r.holes.length + ' holes').join(', '));
     return rounds;
   } catch(e) {
     console.error('❌ Scorecard fetch error for', playerName, ':', e.message);
