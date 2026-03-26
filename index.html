@@ -3253,33 +3253,66 @@ function cmpSelectTeam(entryIdx) {
 }
 
 function getHolesRemaining(playerName) {
+  // Returns total holes remaining in the TOURNAMENT (72 total) for this golfer.
   const gd = GOLFER_SCORES[playerName];
-  if (!gd) return 0;
-  if (gd.thru === 'MC' || gd.thru === 'F' || gd.thru === '—') return 0;
-  const thru = parseInt(gd.thru);
-  if (isNaN(thru)) return 0;
-  return 18 - thru;
+  if (!gd) return 72;
+  if (gd.thru === 'MC') return 0;
+
+  // Count completed rounds from round scores
+  const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null).length;
+
+  // Determine holes done in current round
+  let holesThisRound = 0;
+  if (gd.thru === 'F' || gd.thru === '18') {
+    holesThisRound = 18;
+  } else if (gd.thru === '—') {
+    holesThisRound = 0;
+  } else {
+    holesThisRound = parseInt(gd.thru) || 0;
+  }
+
+  // When thru=F or 18, this round IS already counted in completedRounds
+  // (the ESPN data populates r1/r2/etc when the round finishes).
+  // When mid-round, the current round is NOT yet in completedRounds.
+  const isMidRound = gd.thru !== 'F' && gd.thru !== '18' && gd.thru !== '—' && gd.thru !== 'MC';
+  const totalPlayed = isMidRound
+    ? (completedRounds * 18) + holesThisRound
+    : completedRounds * 18;
+
+  return Math.max(0, 72 - totalPlayed);
 }
 
 function calcWinProbability(entryA, entryB) {
   const cA = calcEntry(entryA);
   const cB = calcEntry(entryB);
-  const diff = cA.total - cB.total;
+  const diff = cA.total - cB.total; // negative = A is winning
 
+  // Average holes remaining per team's top-4 golfers
   const holesA = cA.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
   const holesB = cB.top4.reduce((s, g) => s + getHolesRemaining(g.name), 0);
-  const totalHolesRemaining = holesA + holesB;
+  const avgHolesRemaining = (holesA + holesB) / 2;
 
-  if (totalHolesRemaining === 0) {
+  // Tournament truly over for both teams
+  if (avgHolesRemaining === 0) {
     if (diff < 0) return { pctA: 100, pctB: 0 };
     if (diff > 0) return { pctA: 0, pctB: 100 };
     return { pctA: 50, pctB: 50 };
   }
 
-  const sigma = 1.15 * Math.sqrt(totalHolesRemaining / 4);
+  // Variance model:
+  // PGA Tour std dev ≈ ~1.1 strokes/hole/golfer.
+  // For best-4-of-6, the team composite is dampened to ~0.7/hole/team
+  // (dropping worst 2 reduces variance by ~35-40%).
+  // Difference of two teams: variances add → sigma = sqrt(2) * 0.7 * sqrt(avgHolesPerGolfer).
+  const avgHolesPerGolfer = avgHolesRemaining / 4;
+  const sigma = Math.SQRT2 * 0.7 * Math.sqrt(Math.max(avgHolesPerGolfer, 1));
+
   const z = -diff / sigma;
   const pA = normalCDF(z) * 100;
-  return { pctA: Math.round(pA), pctB: Math.round(100 - pA) };
+
+  // Clamp [1, 99] while holes remain — never show a lock while golf is being played
+  const clampedA = Math.max(1, Math.min(99, Math.round(pA)));
+  return { pctA: clampedA, pctB: 100 - clampedA };
 }
 
 function normalCDF(x) {
