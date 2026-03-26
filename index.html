@@ -2771,17 +2771,19 @@ async function toggleScorecard(idx, playerName) {
   if (gd) html += '<span class="sc-player-pos">' + gd.pos + '</span>';
   html += '</div>';
 
-  rounds.forEach((r, ri) => {
+  // Only show the most recent round with hole data
+  const activeRound = [...rounds].reverse().find(r => r.holes && r.holes.length > 0);
+  const activeRounds = activeRound ? [activeRound] : [];
+  const activeRi = activeRound ? rounds.indexOf(activeRound) : 0;
+  activeRounds.forEach((r) => {
+    const ri = activeRi;
     if (!r.holes || r.holes.length === 0) return;
     const front = r.holes.slice(0, 9);
     const back = r.holes.slice(9, 18);
-    // Use par from the API response per hole, fallback to course holes
     const frontPars = front.map(h => h.par || getHolePar(h.hole));
     const backPars = back.map(h => h.par || getHolePar(h.hole));
     const frontOut = front.reduce((s, h) => s + (h.strokes || 0), 0);
     const backIn = back.reduce((s, h) => s + (h.strokes || 0), 0);
-    const frontParTotal = frontPars.reduce((s, p) => s + p, 0);
-    const backParTotal = backPars.reduce((s, p) => s + p, 0);
 
     html += '<div class="sc-round-label">R' + (ri + 1) + ' — ' + (r.displayValue || r.value || '') + '</div>';
     html += '<div class="sc-grid">';
@@ -2792,9 +2794,6 @@ async function toggleScorecard(idx, playerName) {
     html += '<div class="sc-row sc-row-hdr">';
     front.forEach(h => { html += '<div class="sc-cell">' + h.hole + '</div>'; });
     html += '<div class="sc-cell sc-tot">Tot</div></div>';
-    html += '<div class="sc-row sc-row-par">';
-    frontPars.forEach(p => { html += '<div class="sc-cell">' + p + '</div>'; });
-    html += '<div class="sc-cell sc-tot">' + frontParTotal + '</div></div>';
     html += '<div class="sc-row sc-row-score">';
     front.forEach((h, i) => {
       const scCls = scorecardClass(h.strokes, frontPars[i]);
@@ -2810,9 +2809,6 @@ async function toggleScorecard(idx, playerName) {
       html += '<div class="sc-row sc-row-hdr">';
       back.forEach(h => { html += '<div class="sc-cell">' + h.hole + '</div>'; });
       html += '<div class="sc-cell sc-tot">Tot</div></div>';
-      html += '<div class="sc-row sc-row-par">';
-      backPars.forEach(p => { html += '<div class="sc-cell">' + p + '</div>'; });
-      html += '<div class="sc-cell sc-tot">' + backParTotal + '</div></div>';
       html += '<div class="sc-row sc-row-score">';
       back.forEach((h, i) => {
         const scCls = scorecardClass(h.strokes, backPars[i]);
