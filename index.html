@@ -2159,7 +2159,6 @@ to  {
 <div id="ownership-list">
 </div>
 </div>
-</div>
 <div class="view" id="view-payouts" style="padding-bottom:100px">
 <div class="tv-header">
 <div class="tv-header-top">
@@ -2180,6 +2179,7 @@ to  {
 </div>
 <div id="payouts-list"></div>
 <div id="payouts-bubble" style="margin:16px 14px 0;"></div>
+</div>
 </div>
 <nav id="nav">
 <button class="nav-btn active" onclick="switchTab('leaderboard',this)">
@@ -2459,7 +2459,8 @@ function renderLeaderboard() {
   }
   const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
   const completedRoundCount = samplePlayer ? [samplePlayer.r1,samplePlayer.r2,samplePlayer.r3,samplePlayer.r4].filter(r=>r!=null).length : 0;
-  const currentRound = samplePlayer ? completedRoundCount + 1 : 0;
+  const anyStillPlaying = players.some(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'F' && parseInt(p.thru) > 0);
+  const currentRound = samplePlayer ? (anyStillPlaying ? completedRoundCount || 1 : completedRoundCount + 1) : 0;
   const isPreT = currentRound === 0;
   if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
   const roundLabels = ['PRE-TOURNAMENT','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
