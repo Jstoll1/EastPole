@@ -1058,6 +1058,8 @@ html, body  {
   font-weight: 800;
   color: var(--text2);
   flex-shrink: 0;
+  position: relative;
+  line-height: 1;
 }
 
 .tv-row.tv-mc .tv-pos  {
@@ -2084,8 +2086,11 @@ to  {
 .pos-move  {
   font-size: 7px;
   font-weight: 900;
-  line-height: 1.2;
-  margin-top: 1px;
+  line-height: 1;
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
 }
 
 .pos-move.up  {
