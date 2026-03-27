@@ -2772,7 +2772,7 @@ const pos = gd ? gd.pos : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
 const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
 const ownE = OWNERSHIP_DATA.find(o => o.player === g.name);
-const ownP = ownE ? Math.round(ownE.pct * 100) + '%' : '';
+const ownP = ownE ? Math.round(ownE.pct * 100) + '% Owned' : '';
 return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')} </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
   const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
   document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
