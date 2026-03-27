@@ -155,7 +155,7 @@ html, body  {
 
 #views  {
   position: fixed;
-  top: calc(var(--header-h) + var(--safe-top) + 2px);
+  top: calc(var(--header-h) + var(--safe-top) + 2px + 28px);
   bottom: calc(var(--nav-h) + var(--safe-bot));
   left: 0;
   right: 0;
@@ -900,6 +900,11 @@ html, body  {
 }
 
 .ticker-wrap {
+  position: fixed;
+  top: calc(var(--header-h) + var(--safe-top) + 2px);
+  left: 0;
+  right: 0;
+  z-index: 90;
   display: flex;
   align-items: center;
   background: rgba(0,0,0,0.4);
@@ -2719,6 +2724,10 @@ to  {
 <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change User</button>
 </div>
 </header>
+<div class="ticker-wrap">
+<div class="ticker-label">LIVE</div>
+<div class="ticker-track"><div class="ticker-content" id="ticker-content"></div></div>
+</div>
 <div id="views">
 <div class="view" id="view-standings" style="padding-bottom:100px">
 <div class="tv-header">
@@ -2749,10 +2758,6 @@ to  {
 </div>
 <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
 <div class="ptr-indicator" id="ptr-indicator"><span class="ptr-arrow">↓</span><span class="ptr-text">Pull to refresh</span><span class="ptr-spinner"></span></div>
-<div class="ticker-wrap">
-<div class="ticker-label">LIVE</div>
-<div class="ticker-track"><div class="ticker-content" id="ticker-content"></div></div>
-</div>
 <div class="lb-sticky-hdr">
 <div class="seg-wrap" style="padding:6px 14px 6px">
 <div class="seg">
