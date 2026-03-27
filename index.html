@@ -2022,6 +2022,24 @@ to  {
   width: 100%;
   text-align: center;
 }
+.est-cut-line-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 14px;
+  background: rgba(212,168,67,0.08);
+  border-top: 1px dashed rgba(212,168,67,0.35);
+  border-bottom: 1px dashed rgba(212,168,67,0.35);
+}
+.est-cut-line-label {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+  opacity: 0.6;
+  text-transform: uppercase;
+  width: 100%;
+  text-align: center;
+}
 
 .mini-pick-rounds  {
   font-size: 9px;
@@ -3072,10 +3090,15 @@ function renderLeaderboard() {
     + '</div>';
   let rows = '';
   let cutInserted = false;
+  let estCutInserted = false;
+  const estCutShow = currentRound >= 1 && currentRound <= 2 && lbSort === 'score' && lbFilter === 'all' && !lbSearch;
+  let estCutScore = null;
+  if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
   let rowIdx = 0;
   players.forEach(p => {
     const mc = p.thru==='MC', inPool = poolNames.has(p.name);
     if (!cutInserted && mc && currentRound >= 2) { rows += '<div class="cut-line-row"><div class="cut-line-label">── Cut Line ──</div></div>'; cutInserted = true; }
+    if (!estCutInserted && !cutInserted && estCutScore !== null && !mc && p.score > estCutScore) { rows += '<div class="est-cut-line-row"><div class="est-cut-line-label">── Estimated Cut Line ──</div></div>'; estCutInserted = true; }
     const sc = p.score, scf = fmt(sc);
     const scClass = mc ? 'mc' : sc < 0 ? 'neg' : sc > 0 ? 'pos' : 'eve';
     const flag = FLAGS[p.name] || '';
