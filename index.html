@@ -3725,7 +3725,7 @@ async function toggleScorecard(idx, playerName) {
     html += '<div class="sc-nine-label">OUT</div>';
     html += '<div class="sc-row sc-row-hdr">';
     for (var hn = 1; hn <= 9; hn++) { html += '<div class="sc-cell">' + hn + '</div>'; }
-    html += '<div class="sc-cell sc-tot">Tot</div></div>';
+    html += '</div>';
     html += '<div class="sc-row sc-row-score">';
     for (var hn = 1; hn <= 9; hn++) {
       var hd = holeMap[hn];
@@ -3733,7 +3733,7 @@ async function toggleScorecard(idx, playerName) {
       var scCls = hd && hd.strokes ? scorecardClass(hd.strokes, par) : '';
       html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '–') + '</span></div>';
     }
-    html += '<div class="sc-cell sc-tot">' + (frontOut || '–') + '</div></div>';
+    html += '</div>';
     html += '</div>';
 
     // Back 9 (holes 10-18) — always show, dashes for unplayed holes
@@ -3742,7 +3742,7 @@ async function toggleScorecard(idx, playerName) {
       html += '<div class="sc-nine-label">IN</div>';
       html += '<div class="sc-row sc-row-hdr">';
       for (var hn = 10; hn <= 18; hn++) { html += '<div class="sc-cell">' + hn + '</div>'; }
-      html += '<div class="sc-cell sc-tot">Tot</div></div>';
+      html += '</div>';
       html += '<div class="sc-row sc-row-score">';
       for (var hn = 10; hn <= 18; hn++) {
         var hd = holeMap[hn];
@@ -3750,7 +3750,7 @@ async function toggleScorecard(idx, playerName) {
         var scCls = hd && hd.strokes ? scorecardClass(hd.strokes, par) : '';
         html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '–') + '</span></div>';
       }
-      html += '<div class="sc-cell sc-tot">' + (backIn || '–') + '</div></div>';
+      html += '</div>';
       html += '</div>';
     }
 
