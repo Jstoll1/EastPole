@@ -996,7 +996,7 @@ html, body  {
   z-index: 5;
 }
 
-.tv-h-pos { width: 32px; flex-shrink: 0; }
+.tv-h-pos { width: 42px; flex-shrink: 0; }
 .tv-h-pill { width: 18px; flex-shrink: 0; }
 .tv-h-player { flex: 1; min-width: 0; }
 .tv-h-score { width: 48px; text-align: center; flex-shrink: 0; }
@@ -1053,13 +1053,12 @@ html, body  {
 }
 
 .tv-pos  {
-  width: 32px;
+  width: 42px;
   font-size: 13px;
   font-weight: 800;
   color: var(--text2);
   flex-shrink: 0;
-  position: relative;
-  line-height: 1;
+  white-space: nowrap;
 }
 
 .tv-row.tv-mc .tv-pos  {
@@ -2086,11 +2085,9 @@ to  {
 .pos-move  {
   font-size: 7px;
   font-weight: 900;
-  line-height: 1;
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  width: 100%;
+  display: inline;
+  margin-left: 1px;
+  vertical-align: middle;
 }
 
 .pos-move.up  {
