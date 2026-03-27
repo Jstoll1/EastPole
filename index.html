@@ -3438,7 +3438,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
     const scoreChange = SCORE_CHANGES[p.name] || '';
     const flashCls = scoreChange === 'birdie' ? ' birdie-flash' : scoreChange === 'bogey' ? ' bogey-flash' : scoreChange === 'eagle' ? ' eagle-flash' : '';
     rows += '<div class="tv-row' + (mc?' tv-mc':'') + (isMyPick?' is-my-team':'') + (isPrevWinner?' tv-prev-winner':'') + flashCls + '" onclick="toggleScorecard(' + ri + ',\'' + escapedName + '\')" style="cursor:pointer">'
-      + '<div class="tv-pos">' + (mc?'MC':p.pos) + moveHtml + '</div>'
+      + '<div class="tv-pos">' + (mc?'MC':p.pos) + (isMover ? '' : moveHtml) + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
       + (isMover ? '<span class="top-mover"><span class="mover-arrow">↑</span>' + roundDelta + '</span>' : '')
