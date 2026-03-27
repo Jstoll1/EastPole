@@ -999,9 +999,9 @@ html, body  {
 .tv-h-pos { width: 32px; flex-shrink: 0; }
 .tv-h-pill { width: 18px; flex-shrink: 0; }
 .tv-h-player { flex: 1; min-width: 0; }
-.tv-h-score { width: 40px; text-align: right; flex-shrink: 0; }
-.tv-h-today { width: 40px; text-align: right; flex-shrink: 0; color: var(--gold); }
-.tv-h-thru { width: 62px; text-align: center; flex-shrink: 0; }
+.tv-h-score { width: 46px; text-align: right; flex-shrink: 0; }
+.tv-h-today { width: 38px; text-align: right; flex-shrink: 0; color: var(--gold); }
+.tv-h-thru { width: 58px; text-align: center; flex-shrink: 0; }
 .tv-h-rnd { width: 26px; text-align: right; flex-shrink: 0; color: var(--text3); }
 .tv-h-tot { width: 30px; text-align: right; flex-shrink: 0; }
 .tv-h-sort { cursor: pointer; -webkit-user-select: none; user-select: none; white-space: nowrap; }
@@ -1111,7 +1111,7 @@ html, body  {
 }
 
 .tv-score  {
-  width: 40px;
+  width: 46px;
   font-size: 13px;
   font-weight: 800;
   text-align: right;
@@ -1123,7 +1123,7 @@ html, body  {
 .tv-score.mc { color: #ff6b6b; font-size: 10px; }
 
 .tv-today  {
-  width: 40px;
+  width: 38px;
   font-size: 12px;
   font-weight: 700;
   text-align: right;
@@ -1134,7 +1134,7 @@ html, body  {
 .tv-today.eve { color: var(--text2); }
 
 .tv-thru  {
-  width: 62px;
+  width: 58px;
   font-size: 11px;
   font-weight: 600;
   text-align: center;
@@ -3355,9 +3355,9 @@ function renderLeaderboard() {
   var sortArrow = function(col) { return lbSort===col ? (lbSortAsc ? ' ▲' : ' ▼') : ''; };
   var sortCls = function(col) { return lbSort===col ? ' tv-h-active' : ''; };
   const colHdr = '<div class="tv-col-hdr"><div class="tv-h-pos">POS</div><div class="tv-h-pill"></div><div class="tv-h-player">PLAYER</div>'
-    + '<div class="tv-h-score tv-h-sort' + sortCls('score') + '" onclick="setLbSort(\'score\')">SCORE' + sortArrow('score') + '</div>'
-    + '<div class="tv-h-thru tv-h-sort' + sortCls('thru') + '" onclick="setLbSort(\'thru\')">THRU' + sortArrow('thru') + '</div>'
     + '<div class="tv-h-today tv-h-sort' + sortCls('today') + '" onclick="setLbSort(\'today\')">TODAY' + sortArrow('today') + '</div>'
+    + '<div class="tv-h-thru tv-h-sort' + sortCls('thru') + '" onclick="setLbSort(\'thru\')">THRU' + sortArrow('thru') + '</div>'
+    + '<div class="tv-h-score tv-h-sort' + sortCls('score') + '" onclick="setLbSort(\'score\')">TOTAL' + sortArrow('score') + '</div>'
     + '</div>';
   let rows = '';
   let cutInserted = false;
@@ -3411,9 +3411,9 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
-      + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?'MC':scf) + '</div>'
-      + '<div class="tv-thru">' + thruDisp + '</div>'
       + '<div class="tv-today ' + todayCls + '">' + todayDisp + '</div>'
+      + '<div class="tv-thru">' + thruDisp + '</div>'
+      + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?'MC':scf) + '</div>'
       + '</div>'
       + '<div class="sc-panel" id="sc-panel-' + ri + '"></div>';
   });
