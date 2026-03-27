@@ -2560,7 +2560,6 @@ to  {
 </div>
 <div class="tv-header-bot" style="display:flex;align-items:center;justify-content:space-between">
 <div class="tv-sub">Houston Open 2026 · <span id="entry-count">0</span> Entries</div>
-<button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()">Compare</button>
 </div>
 </div>
 <div id="standings-cards" style="display:flex;gap:8px;margin:12px 14px 0;"></div>
@@ -2571,8 +2570,8 @@ to  {
 <div class="tv-col-hdr" style="margin-top:10px">
 <div style="width:44px">Rank</div>
 <div style="flex:1">Entry</div>
+<button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()" style="margin-right:4px">Compare</button>
 <div style="width:56px;text-align:right">Score</div>
-<div style="width:60px;text-align:right;padding-right:4px">Top 4</div>
 </div>
 <div id="standings-list">
 </div>
@@ -2926,7 +2925,7 @@ const cmpCls = compareMode ? ' cmp-mode' : '';
 const cmpSelCls = isCmpSelected ? ' cmp-selected' : '';
 const cmpBadge = isCmpSelected ? `<span class="cmp-badge">${cmpNum}</span>` : '';
 const rowClick = compareMode ? `cmpSelectTeam(${entryIdx})` : `togglePanel(this,${i})`;
-html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-top4">${top4Str}</div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
+html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
 const gd = GOLFER_SCORES[g.name];
 const pos = gd ? gd.pos : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
