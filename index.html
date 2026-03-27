@@ -2749,11 +2749,6 @@ to  {
 </div>
 <div class="view active" id="view-leaderboard" style="padding-bottom:100px">
 <div class="ptr-indicator" id="ptr-indicator"><span class="ptr-arrow">↓</span><span class="ptr-text">Pull to refresh</span><span class="ptr-spinner"></span></div>
-<div class="tv-header">
-<div class="tv-header-top">
-<div class="tv-title" id="lb-tournament-name">Houston Open</div>
-</div>
-</div>
 <div class="ticker-wrap">
 <div class="ticker-label">LIVE</div>
 <div class="ticker-track"><div class="ticker-content" id="ticker-content"></div></div>
@@ -3438,13 +3433,28 @@ const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
 const todayDisplay=scheduled?(lastCompletedRound?lastCompletedRound.displayValue:'—'):(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||'—');
-freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
+freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now();
+// Determine round status: live, between rounds, or pre-tournament
+if (isPreTournament) {
+  setApiStatus('scheduled', 'Pre-Tournament');
+} else {
+  const activePlayers = Object.values(freshScores).filter(g => g.score !== 11 && g.score !== 12);
+  const allDone = activePlayers.length > 0 && activePlayers.every(g => g.thru === 'F' || g.thru === '18' || (g.teeTime && g.teeTime !== '—' && g.teeTime !== 'TBD' && /\d{1,2}:\d{2}/.test(g.teeTime)));
+  if (allDone) {
+    const completedRound = [activePlayers[0]?.r4 ? 4 : 0, activePlayers[0]?.r3 ? 3 : 0, activePlayers[0]?.r2 ? 2 : 0, activePlayers[0]?.r1 ? 1 : 0].find(r => r > 0) || 1;
+    setApiStatus('between', 'End of Rd ' + completedRound);
+  } else {
+    setApiStatus('live', 'Live');
+  }
+} console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
 
 function setApiStatus(state, text) {
   _lastStatusText = text;
   const dot=document.getElementById('live-dot');
   dot.className='live-dot'+(state==='live'?' on':'');
   document.getElementById('hdr-status').textContent=text;
+  const ticker=document.querySelector('.ticker-label');
+  if(ticker) ticker.textContent=state==='live'?'LIVE':(state==='between'?'STANDINGS':'STANDINGS');
 }
 
 function refreshData() { setApiStatus('','Refreshing…'); fetchESPN();}
