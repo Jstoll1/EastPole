@@ -705,6 +705,14 @@ html, body  {
   display: block;
 }
 
+.picks-panel-footer {
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text3);
+  border-top: 1px solid #0d1f12;
+}
+
 .mini-pick  {
   display: flex;
   align-items: center;
@@ -2966,16 +2974,15 @@ const cmpCls = compareMode ? ' cmp-mode' : '';
 const cmpSelCls = isCmpSelected ? ' cmp-selected' : '';
 const cmpBadge = isCmpSelected ? `<span class="cmp-badge">${cmpNum}</span>` : '';
 const teamHolesLeft = e.picks.reduce((sum, p) => sum + getHolesRemaining(p), 0);
-const holesTag = `<span class="s-holes-left">${teamHolesLeft}h left</span>`;
 const rowClick = compareMode ? `cmpSelectTeam(${entryIdx})` : `togglePanel(this,${i})`;
-html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge} ${holesTag}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
+html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
 const gd = GOLFER_SCORES[g.name];
 const pos = gd ? (gd.thru === 'WD' ? 'WD' : gd.pos) : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
 const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
 const ownE = OWNERSHIP_DATA.find(o => o.player === g.name);
 const ownP = ownE ? Math.round(ownE.pct * 100) + '% Owned' : '';
-return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')} </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
+return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')}<div class="picks-panel-footer">${teamHolesLeft} holes remaining</div> </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
   const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
   document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
 }
