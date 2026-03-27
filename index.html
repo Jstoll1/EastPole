@@ -3186,7 +3186,9 @@ const lines=c.linescores||[];
 const teeTime=c.status?.teeTime||'';
 const thruRaw=c.status?.thru;
 const lastCompletedRound=lines.filter(l=>l.value&&l.value>50).pop();
-const thru=mc?'MC':(scheduled?(lastCompletedRound?'18':'—'):(thruRaw>0?String(thruRaw):(c.status?.displayValue||'F')));
+let nextTeeStr='';
+if(scheduled&&lastCompletedRound&&teeTime&&teeTime.includes('T')){try{nextTeeStr=new Date(teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}catch(e){}}
+const thru=mc?'MC':(scheduled?(lastCompletedRound?(nextTeeStr||'18'):'—'):(thruRaw>0?String(thruRaw):(c.status?.displayValue||'F')));
 const startHole=c.status?.startHole||1;
 const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value?s+l.value:s),0)||null;
