@@ -2123,9 +2123,20 @@ to  {
   font-size: 8px;
 }
 
+.top-mover.down {
+  color: #ff7070;
+  background: rgba(255,112,112,0.12);
+  border-color: rgba(255,112,112,0.3);
+  animation: moverPulseDn 2s ease-in-out infinite;
+}
+
 @keyframes moverPulse {
   0%, 100% { box-shadow: 0 0 4px rgba(82,183,136,0.15); }
   50% { box-shadow: 0 0 8px rgba(82,183,136,0.35); }
+}
+@keyframes moverPulseDn {
+  0%, 100% { box-shadow: 0 0 4px rgba(255,112,112,0.15); }
+  50% { box-shadow: 0 0 8px rgba(255,112,112,0.35); }
 }
 
 /* Live score update animations */
@@ -3020,18 +3031,21 @@ function saveRoundStartPositions(round) {
 }
 
 function getTopMovers(players, limit) {
-  const movers = [];
+  const upMovers = [], downMovers = [];
   players.forEach(p => {
     const startP = ROUND_START_POSITIONS[p.name];
     const currP = parsePos(p.pos);
-    if (startP && currP && currP < startP) {
-      movers.push({ name: p.name, delta: startP - currP });
-    }
+    if (!startP || !currP) return;
+    const delta = startP - currP; // positive = moved up, negative = moved down
+    if (delta >= 3) upMovers.push({ name: p.name, delta });
+    else if (delta <= -3) downMovers.push({ name: p.name, delta });
   });
-  movers.sort((a, b) => b.delta - a.delta);
-  const topNames = new Set();
-  movers.slice(0, limit).forEach(m => { if (m.delta >= 3) topNames.add(m.name); });
-  return topNames;
+  upMovers.sort((a, b) => b.delta - a.delta);
+  downMovers.sort((a, b) => a.delta - b.delta);
+  const names = new Set();
+  upMovers.slice(0, limit).forEach(m => names.add(m.name));
+  downMovers.slice(0, limit).forEach(m => names.add(m.name));
+  return names;
 }
 let lastFetchTime = 0;
 let ATHLETE_IDS = {};
@@ -3427,7 +3441,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
     if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? '<div class="pos-move up">▲' + d + '</div>' : '<div class="pos-move dn">▼' + Math.abs(d) + '</div>'; }
     // Top mover badge
     const startP = ROUND_START_POSITIONS[p.name];
-    const roundDelta = (startP && currP && currP < startP) ? startP - currP : 0;
+    const roundDelta = (startP && currP) ? startP - currP : 0; // positive = up, negative = down
     const isMover = topMoverNames.has(p.name);
     const myTeamIdxs = myPicksMap[p.name] || [];
     const pills = myTeamIdxs.map(i => '<span class="team-pill ' + (PILL_CLASSES[i]||'') + '">' + pillLabel(i) + '</span>').join('');
@@ -3441,7 +3455,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + '<div class="tv-pos">' + (mc?'MC':p.pos) + (isMover ? '' : moveHtml) + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
-      + (isMover ? '<span class="top-mover"><span class="mover-arrow">↑</span>' + roundDelta + '</span>' : '')
+      + (isMover ? (roundDelta >= 0 ? '<span class="top-mover"><span class="mover-arrow">↑</span>' + roundDelta + '</span>' : '<span class="top-mover down"><span class="mover-arrow">↓</span>' + Math.abs(roundDelta) + '</span>') : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
