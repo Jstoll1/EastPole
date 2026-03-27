@@ -2436,26 +2436,26 @@ to  {
   flex:1; display:flex; align-items:center; justify-content:center;
   color:var(--text3); font-size:13px; text-align:center; padding:40px;
 }
-.chat-name-bar {
-  display:flex; gap:8px; padding:10px 14px; border-top:1px solid var(--border);
-  background:var(--bg); align-items:center;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+.chat-name-row {
+  display:flex; align-items:center; gap:8px; padding:8px 14px;
+  border-bottom:1px solid var(--border); background:rgba(0,0,0,0.15); flex-shrink:0;
 }
-.chat-name-bar input {
-  flex:1; background:var(--card); border:1px solid var(--border); border-radius:20px;
-  padding:8px 14px; color:var(--text1); font-family:inherit; font-size:13px;
+.chat-name-label {
+  font-size:11px; font-weight:700; color:var(--text3); white-space:nowrap;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.chat-name-row input {
+  flex:1; background:var(--card); border:1px solid var(--border); border-radius:8px;
+  padding:6px 10px; color:var(--text1); font-family:inherit; font-size:13px;
   outline:none;
 }
-.chat-name-bar input:focus { border-color:var(--gold); }
-.chat-name-bar input::placeholder { color:var(--text3); }
-.chat-name-bar button {
-  background:var(--gold); border:none; border-radius:20px; padding:8px 16px;
-  color:var(--green1); font-family:inherit; font-size:12px; font-weight:800;
-  cursor:pointer; letter-spacing:0.5px; text-transform:uppercase;
+.chat-name-row input:focus { border-color:var(--gold); }
+.chat-name-row input::placeholder { color:var(--text3); }
+.chat-name-row input:disabled {
+  opacity:0.6; color:var(--gold); border-color:transparent; background:rgba(198,160,60,0.08);
 }
-#chat-user-tag {
-  font-size:10px; color:var(--gold); font-weight:600; cursor:pointer;
-  white-space:nowrap; flex-shrink:0;
+.chat-name-row .chat-lock-icon {
+  font-size:12px; color:var(--gold); flex-shrink:0;
 }
 </style>
 <script data-goatcounter="https://calcutta.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
@@ -2637,15 +2637,14 @@ to  {
 <div class="chat-drawer-title">Pool Chat</div>
 <button class="chat-drawer-close" onclick="toggleChatDrawer()">✕</button>
 </div>
+<div id="chat-name-row" class="chat-name-row">
+<label class="chat-name-label">Your Name</label>
+<input type="text" id="chat-name-input" placeholder="Enter your name…" autocomplete="off" maxlength="30">
+</div>
 <div id="chat-messages">
 <div class="chat-empty" id="chat-empty">No messages yet. Be the first to say something!</div>
 </div>
-<div id="chat-name-bar" class="chat-name-bar">
-<input type="text" id="chat-name-input" placeholder="Enter your name to chat…" autocomplete="off" maxlength="30">
-<button id="chat-name-btn" onclick="setChatName()">Join</button>
-</div>
-<div id="chat-input-bar" style="display:none">
-<div id="chat-user-tag"></div>
+<div id="chat-input-bar">
 <input type="text" id="chat-input" placeholder="Type a message…" autocomplete="off" maxlength="500">
 <button id="chat-send-btn" disabled onclick="sendChatMessage()">
 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -3890,30 +3889,32 @@ function updateChatBadge() {
   }
 }
 
-function setChatName() {
-  const inp = document.getElementById('chat-name-input');
-  const name = inp.value.trim();
-  if (!name) return;
-  chatDisplayName = name;
-  localStorage.setItem('eastpole_chat_name', name);
-  initChat();
+let chatNameLocked = false;
+
+function lockChatName() {
+  chatNameLocked = true;
+  const nameInp = document.getElementById('chat-name-input');
+  nameInp.disabled = true;
+  // Add lock icon if not already there
+  const row = document.getElementById('chat-name-row');
+  if (!row.querySelector('.chat-lock-icon')) {
+    const lock = document.createElement('span');
+    lock.className = 'chat-lock-icon';
+    lock.textContent = '🔒';
+    row.appendChild(lock);
+  }
 }
 
 function initChat() {
-  const inputBar = document.getElementById('chat-input-bar');
-  const nameBar = document.getElementById('chat-name-bar');
+  const nameInp = document.getElementById('chat-name-input');
+
+  // Pre-populate name: from localStorage first, then from team selection
+  if (!chatDisplayName && currentUserEmail && currentUserTeams.length > 0) {
+    const team = currentUserTeams[activeTeamIdx >= 0 ? activeTeamIdx : 0];
+    if (team) chatDisplayName = team.name;
+  }
   if (chatDisplayName) {
-    inputBar.style.display = 'flex';
-    nameBar.style.display = 'none';
-    document.getElementById('chat-user-tag').textContent = chatDisplayName;
-    document.getElementById('chat-user-tag').onclick = () => {
-      chatDisplayName = '';
-      localStorage.removeItem('eastpole_chat_name');
-      initChat();
-    };
-  } else {
-    inputBar.style.display = 'none';
-    nameBar.style.display = 'flex';
+    nameInp.value = chatDisplayName;
   }
 
   if (!chatLoaded) {
@@ -3927,14 +3928,12 @@ function initChat() {
       if (emptyEl.style.display !== 'none') emptyEl.style.display = 'none';
       chatMsgCount++;
       appendChatMessage(msg, messagesEl);
-      // Show unread badge if drawer is closed (skip initial load)
       if (!chatInitialLoad && !chatDrawerOpen) {
         chatUnread++;
         updateChatBadge();
       }
     });
 
-    // After initial load completes, mark future messages as new
     chatRef.orderByChild('timestamp').limitToLast(200).once('value', () => {
       chatInitialLoad = false;
     });
@@ -3945,9 +3944,6 @@ function initChat() {
   const btn = document.getElementById('chat-send-btn');
   input.oninput = () => { btn.disabled = !input.value.trim(); };
   input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } };
-  // Name input enter key
-  const nameInp = document.getElementById('chat-name-input');
-  nameInp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); setChatName(); } };
 }
 
 function appendChatMessage(msg, container) {
@@ -3978,10 +3974,20 @@ function appendChatMessage(msg, container) {
 function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 function sendChatMessage() {
-  if (!chatDisplayName) return;
+  const nameInp = document.getElementById('chat-name-input');
+  const name = nameInp.value.trim();
+  if (!name) { nameInp.focus(); return; }
+
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text) return;
+
+  // Lock the name on first send
+  if (!chatNameLocked) {
+    chatDisplayName = name;
+    localStorage.setItem('eastpole_chat_name', name);
+    lockChatName();
+  }
 
   chatRef.push({
     name: chatDisplayName,
