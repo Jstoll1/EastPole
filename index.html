@@ -2428,6 +2428,9 @@ to  {
 <button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()">Compare</button>
 </div>
 </div>
+<div id="standings-cards" style="display:flex;gap:8px;margin:12px 14px 0;"></div>
+<div id="standings-pool-sub" style="margin:8px 14px 0;font-size:11px;color:var(--text3);"></div>
+<div id="standings-bubble" style="margin:0 14px;"></div>
 <div id="h2h-inline-panel"></div>
 <div id="cmp-hint" style="display:none" class="cmp-hint">Tap two teams to compare</div>
 <div class="tv-col-hdr" style="margin-top:10px">
@@ -2491,27 +2494,6 @@ to  {
 <div id="ownership-list">
 </div>
 </div>
-<div class="view" id="view-payouts" style="padding-bottom:100px">
-<div class="tv-header">
-<div class="tv-header-top">
-<div class="tv-title">Payouts</div>
-</div>
-<div class="tv-header-bot">
-<div class="tv-sub" id="payouts-sub">6 entries × $25 = $150 pool</div>
-</div>
-</div>
-<div id="payouts-cards" style="display:flex;gap:8px;margin:12px 14px 0;"></div>
-<div style="margin:16px 14px 0;">
-<div class="tv-col-hdr">
-<div style="width:44px">Place</div>
-<div style="flex:1">Entry</div>
-<div style="width:70px;text-align:right">Score</div>
-<div style="width:60px;text-align:right;padding-right:4px">Payout</div>
-</div>
-</div>
-<div id="payouts-list"></div>
-<div id="payouts-bubble" style="margin:16px 14px 0;"></div>
-</div>
 </div>
 <nav id="nav">
 <button class="nav-btn active" onclick="switchTab('leaderboard',this)">
@@ -2534,10 +2516,6 @@ to  {
 <circle cx="12" cy="12" r="3"/>
 <circle cx="12" cy="12" r="7" stroke-dasharray="4 3"/>
 </svg> Owned </button>
-<button class="nav-btn" onclick="switchTab('payouts',this)">
-<svg viewBox="0 0 24 24">
-<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-</svg> Payouts </button>
 </nav>
 <div id="toast">
 </div>
@@ -2726,6 +2704,40 @@ function renderStandings() {
   ranked.forEach((e, i) => { if (i > 0 && ranked[i].total !== ranked[i-1].total) rk = i + 1;
   ranks.push(rk);
 });
+
+// Payout cards
+const cardsEl = document.getElementById('standings-cards');
+cardsEl.innerHTML = POOL_CONFIG.payouts.map((p, i) => {
+  const holder = ranked[i] ? ranked[i].team : '—';
+  const isGold = i === 0;
+  return `<div class="payout-card ${isGold?'gold':''}">
+    <div class="pc-lbl">${p.place}</div>
+    <div class="pc-amt">$${p.amount}</div>
+    <div class="pc-who">${holder}</div>
+  </div>`;
+}).join('');
+document.getElementById('standings-pool-sub').textContent = `${ENTRIES.length} entries × $${POOL_CONFIG.buyIn} = $${POOL_CONFIG.pot} pool`;
+
+// Payout bubble for current user
+const bubbleEl = document.getElementById('standings-bubble');
+if (currentUserEmail && currentUserTeams.length > 0) {
+  const myTeam = currentUserTeams[activeTeamIdx >= 0 ? activeTeamIdx : 0];
+  const myIdx = ranked.findIndex(e => e.email === myTeam.email && e.team === myTeam.team);
+  if (myIdx >= 0) {
+    const myRank = ranks[myIdx];
+    const pIdx = POOL_CONFIG.payouts.findIndex((p, pi) => myRank === pi + 1);
+    let msg;
+    if (pIdx >= 0) {
+      msg = `<strong>${myTeam.team}</strong> is currently in <strong>${POOL_CONFIG.payouts[pIdx].place} place</strong> — collecting <strong>$${POOL_CONFIG.payouts[pIdx].amount}</strong>`;
+    } else {
+      const spotsOut = myRank - POOL_CONFIG.payouts.length;
+      const gap = ranked[myIdx].total - ranked[POOL_CONFIG.payouts.length - 1].total;
+      msg = `<strong>${myTeam.team}</strong> is ${spotsOut} spot${spotsOut>1?'s':''} out of the money` + (gap > 0 ? ` — <strong>${gap} stroke${gap>1?'s':''}</strong> back from ${POOL_CONFIG.payouts[POOL_CONFIG.payouts.length-1].place}` : '');
+    }
+    bubbleEl.innerHTML = `<div class="bubble-card">${msg}</div>`;
+  } else { bubbleEl.innerHTML = ''; }
+} else { bubbleEl.innerHTML = ''; }
+
 let heroHtml = ''; if (currentUserEmail && currentUserTeams.length > 0) {
   const teamsToShow = activeTeamIdx >= 0 ? [currentUserTeams[activeTeamIdx]].filter(Boolean) : currentUserTeams;
   teamsToShow.forEach(activeTeam => {
@@ -2773,12 +2785,6 @@ function togglePanel(row, i) {
   arr.textContent = open ? '⌄' : '›';
 }
 
-function togglePayoutPanel(row, i) {
-  const panel = document.getElementById('pr-panel-'+i);
-  const arr = document.getElementById('pr-arr-'+i);
-  const open = panel.classList.toggle('open');
-  arr.textContent = open ? '⌄' : '›';
-}
 
 function searchTeam() {
   const q = document.getElementById('email-search').value.toLowerCase().trim();
@@ -3592,93 +3598,13 @@ function buildTeamBlock(calc) {
   return html;
 }
 
-function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); renderPayouts(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); }
+function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); }
 
 const POOL_CONFIG = { buyIn: 25, entries: 6, payouts: [ { place: '1st', pct: 0.60 }, { place: '2nd', pct: 0.27 }, { place: '3rd', pct: 0.13 } ] };
 POOL_CONFIG.pot = POOL_CONFIG.buyIn * POOL_CONFIG.entries;
 POOL_CONFIG.payouts.forEach(p => { p.amount = Math.round(POOL_CONFIG.pot * p.pct); });
 
-function renderPayouts() {
-  const ranked = getRanked();
-  const ranks = []; let rk = 1;
-  ranked.forEach((e, i) => { if (i > 0 && ranked[i].total !== ranked[i-1].total) rk = i + 1; ranks.push(rk); });
-
-  // Payout cards at top
-  const cardsEl = document.getElementById('payouts-cards');
-  cardsEl.innerHTML = POOL_CONFIG.payouts.map((p, i) => {
-    const holder = ranked[i] ? ranked[i].team : '—';
-    const isGold = i === 0;
-    return `<div class="payout-card ${isGold?'gold':''}">
-      <div class="pc-lbl">${p.place}</div>
-      <div class="pc-amt">$${p.amount}</div>
-      <div class="pc-who">${holder}</div>
-    </div>`;
-  }).join('');
-
-  // Full standings with payout column
-  const listEl = document.getElementById('payouts-list');
-  let html = '';
-  ranked.forEach((e, i) => {
-    const rank = ranks[i];
-    const sc = e.total, scf = fmt(sc), scc = cls(sc);
-    const isMyTeam = e.email === currentTeamEmail ? 'is-my-team' : '';
-    const payoutIdx = POOL_CONFIG.payouts.findIndex((p, pi) => rank === pi + 1);
-    const inMoney = payoutIdx >= 0;
-    const payoutStr = inMoney ? `$${POOL_CONFIG.payouts[payoutIdx].amount}` : '—';
-    html += `<div class="payout-row ${inMoney?'in-money':''} ${isMyTeam}" onclick="togglePayoutPanel(this,${i})">
-      <div class="pr-place">${rank}</div>
-      <div class="pr-info">
-        <div class="pr-team">${e.team}</div>
-        <div class="pr-name">${e.name}</div>
-      </div>
-      <div class="pr-score ${scc}">${scf}</div>
-      <div class="pr-payout ${inMoney?'':'none'}">${payoutStr}</div>
-      <div class="pr-arrow" id="pr-arr-${i}">›</div>
-    </div>
-    <div class="picks-panel" id="pr-panel-${i}">
-      ${e.scores.map((g, j) => {
-        const isTop = j < 4;
-        const gd = GOLFER_SCORES[g.name];
-        const pos = gd ? gd.pos : '—';
-        const ownEntry = OWNERSHIP_DATA.find(o => o.player === g.name);
-        const ownPct = ownEntry ? Math.round(ownEntry.pct * 100) + '%' : '';
-        return `<div class="mini-pick ${isTop?'is-top':''}">
-          <div class="mini-pick-left">
-            ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'}
-            <span class="mini-pick-name">${g.name}</span>
-            <span class="mini-pick-pos">${pos}</span>
-            ${ownPct?`<span class="mini-pick-own">${ownPct}</span>`:''}
-          </div>
-          <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span>
-        </div>`;
-      }).join('')}
-    </div>`;
-  });
-  listEl.innerHTML = html;
-
-  // Bubble line for the current user
-  const bubbleEl = document.getElementById('payouts-bubble');
-  if (currentUserEmail && currentUserTeams.length > 0) {
-    const myTeam = currentUserTeams[activeTeamIdx >= 0 ? activeTeamIdx : 0];
-    const myIdx = ranked.findIndex(e => e.email === myTeam.email && e.team === myTeam.team);
-    if (myIdx >= 0) {
-      const myRank = ranks[myIdx];
-      const pIdx = POOL_CONFIG.payouts.findIndex((p, pi) => myRank === pi + 1);
-      let msg;
-      if (pIdx >= 0) {
-        msg = `<strong>${myTeam.team}</strong> is currently in <strong>${POOL_CONFIG.payouts[pIdx].place} place</strong> — collecting <strong>$${POOL_CONFIG.payouts[pIdx].amount}</strong>`;
-      } else {
-        const spotsOut = myRank - POOL_CONFIG.payouts.length;
-        const gap = ranked[myIdx].total - ranked[POOL_CONFIG.payouts.length - 1].total;
-        msg = `<strong>${myTeam.team}</strong> is ${spotsOut} spot${spotsOut>1?'s':''} out of the money` + (gap > 0 ? ` — <strong>${gap} stroke${gap>1?'s':''}</strong> back from ${POOL_CONFIG.payouts[POOL_CONFIG.payouts.length-1].place}` : '');
-      }
-      bubbleEl.innerHTML = `<div class="bubble-card">${msg}</div>`;
-    } else { bubbleEl.innerHTML = ''; }
-  } else { bubbleEl.innerHTML = ''; }
-
-  // Update subtitle with live count
-  document.getElementById('payouts-sub').textContent = `${ENTRIES.length} entries × $${POOL_CONFIG.buyIn} = $${POOL_CONFIG.pot} pool`;
-}
+function renderPayouts() { /* merged into renderStandings */ }
 
 function updateHeaderDisplay() {
   const teamDisplay = document.getElementById('hdr-team-display');
