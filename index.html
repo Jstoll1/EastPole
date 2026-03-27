@@ -2688,6 +2688,11 @@ to  {
 .debug-row .tag.render { color:#5BC8F5; }
 .debug-row .tag.perf { color:#34c759; }
 .debug-row .msg { flex:1; word-break:break-all; }
+.debug-expandable { cursor:pointer; flex-wrap:wrap; position:relative; }
+.debug-expand-icon { color:rgba(255,255,255,0.3); margin-left:auto; flex-shrink:0; transition:transform 0.2s; }
+.debug-expandable.expanded .debug-expand-icon { transform:rotate(90deg); }
+.debug-explain { display:none; width:100%; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.06); border-radius:6px; color:rgba(255,255,255,0.85); font-size:11px; line-height:1.5; border-left:3px solid var(--gold); }
+.debug-expandable.expanded .debug-explain { display:block; }
 .debug-stat-grid {
   display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:4px 0;
 }
@@ -4602,6 +4607,62 @@ function debugExport() {
   a.click();
 }
 
+function explainError(e) {
+  const msg = (e.message || '').toLowerCase();
+  const detail = e.detail ? JSON.stringify(e.detail) : '';
+  const detailLower = detail.toLowerCase();
+
+  // API errors
+  if (msg.includes('scorecard') && msg.includes('incomplete')) {
+    const player = e.detail?.player || 'a player';
+    const holes = e.detail?.holesReceived?.length || '?';
+    return '⛳ <b>' + escHtml(player) + '</b> only has ' + holes + ' of 18 holes loaded. This usually means they\'re still playing their round, or ESPN hasn\'t updated all holes yet. The missing holes show as dashes on the scorecard.';
+  }
+  if (msg.includes('scorecard api')) {
+    const player = e.detail?.player || 'a player';
+    return '📡 Couldn\'t load the hole-by-hole scorecard for <b>' + escHtml(player) + '</b>. ESPN\'s scorecard endpoint returned an error. Tapping their row again will retry.';
+  }
+  if (msg.includes('scorecard $ref')) {
+    const player = e.detail?.player || 'a player';
+    return '📡 ESPN sends scorecard data in pages. We tried to load the full set of holes for <b>' + escHtml(player) + '</b> but the follow-up request failed. Some holes may show as dashes.';
+  }
+  if (msg.includes('espn leaderboard') && msg.includes('failed')) {
+    const status = e.detail?.status || '?';
+    return '📡 The main ESPN leaderboard API returned status ' + status + '. This means ESPN\'s servers are either down or rate-limiting us. Scores will auto-retry in 60 seconds.';
+  }
+  if (msg.includes('espn') && msg.includes('parse')) {
+    return '🔧 Got data back from ESPN but couldn\'t make sense of it. The response format may have changed, or the data was incomplete. Scores should recover on the next auto-refresh.';
+  }
+  if (msg.includes('course holes')) {
+    return '⛳ Couldn\'t load par/yardage info for the course. Scorecards will still work but won\'t show par comparisons.';
+  }
+  if (msg.includes('fetch failed') || msg.includes('network')) {
+    return '📶 A network request failed — you might be offline or have a weak connection. The app will keep retrying every 60 seconds.';
+  }
+
+  // JS errors
+  if (e.type === 'js') {
+    if (msg.includes('undefined') || msg.includes('null')) {
+      return '🐛 A piece of code tried to use data that doesn\'t exist yet. This can happen if the page loads before ESPN data arrives. Usually resolves on next refresh.';
+    }
+    if (msg.includes('typeerror')) {
+      return '🐛 JavaScript type error — a function received unexpected data. This is a code bug that should be reported.';
+    }
+    return '🐛 An unexpected JavaScript error occurred. If this keeps happening, it may indicate a bug. Details: <i>' + escHtml(msg) + '</i>';
+  }
+
+  // Render errors
+  if (e.type === 'render') {
+    return '🎨 Something went wrong while drawing the page. This is usually temporary and fixes itself on the next data refresh.';
+  }
+
+  // Generic fallback
+  if (e.detail) {
+    return '⚠️ ' + escHtml(e.message) + '<br><small style="color:rgba(255,255,255,0.5)">Raw detail: ' + escHtml(detail.substring(0, 200)) + '</small>';
+  }
+  return '⚠️ ' + escHtml(e.message) + ' — No additional details available.';
+}
+
 function renderDebugPanel() {
   const body = document.getElementById('debug-body');
   if (!body) return;
@@ -4632,9 +4693,15 @@ function renderDebugPanel() {
   } else if (_debugTab === 'errors') {
     const errs = ErrorTracker.log.slice().reverse();
     if (!errs.length) { body.innerHTML = '<div class="debug-empty">No errors logged</div>'; return; }
-    body.innerHTML = errs.map(e => {
+    body.innerHTML = errs.map((e, i) => {
       const t = e.ts.split('T')[1].substring(0, 8);
-      return '<div class="debug-row"><span class="ts">' + t + '</span><span class="tag ' + e.type + '">' + e.type + '</span><span class="msg">' + escHtml(e.message) + (e.detail ? ' — ' + escHtml(JSON.stringify(e.detail).substring(0, 120)) : '') + '</span></div>';
+      const plain = explainError(e);
+      return '<div class="debug-row debug-expandable" onclick="this.classList.toggle(\'expanded\')">'
+        + '<span class="ts">' + t + '</span><span class="tag ' + e.type + '">' + e.type + '</span>'
+        + '<span class="msg">' + escHtml(e.message) + '</span>'
+        + '<span class="debug-expand-icon">▸</span>'
+        + '<div class="debug-explain">' + plain + '</div>'
+        + '</div>';
     }).join('');
 
   } else if (_debugTab === 'network') {
