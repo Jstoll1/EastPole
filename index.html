@@ -387,6 +387,19 @@ html, body  {
   font-weight: 400;
 }
 
+.payout-row  {
+  cursor: pointer;
+}
+
+.payout-row .pr-arrow  {
+  width: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text3);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
 .bubble-card  {
   background: var(--card2);
   border: 1px solid var(--border);
@@ -2018,6 +2031,15 @@ to  {
   letter-spacing: 0.2px;
 }
 
+.mini-pick-own  {
+  font-size: 9px;
+  color: var(--gold);
+  margin-left: 6px;
+  flex-shrink: 0;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
 #lb-legend  {
   display: flex;
   align-items: center;
@@ -2736,7 +2758,10 @@ html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${
 const gd = GOLFER_SCORES[g.name];
 const pos = gd ? gd.pos : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
-const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : ''; return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')} </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
+const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
+const ownE = OWNERSHIP_DATA.find(o => o.player === g.name);
+const ownP = ownE ? Math.round(ownE.pct * 100) + '%' : '';
+return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')} </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
   const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
   document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
 }
@@ -2744,6 +2769,13 @@ const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : 
 function togglePanel(row, i) {
   const panel = document.getElementById('panel-'+i);
   const arr = document.getElementById('arr-'+i);
+  const open = panel.classList.toggle('open');
+  arr.textContent = open ? '⌄' : '›';
+}
+
+function togglePayoutPanel(row, i) {
+  const panel = document.getElementById('pr-panel-'+i);
+  const arr = document.getElementById('pr-arr-'+i);
   const open = panel.classList.toggle('open');
   arr.textContent = open ? '⌄' : '›';
 }
@@ -3593,7 +3625,7 @@ function renderPayouts() {
     const payoutIdx = POOL_CONFIG.payouts.findIndex((p, pi) => rank === pi + 1);
     const inMoney = payoutIdx >= 0;
     const payoutStr = inMoney ? `$${POOL_CONFIG.payouts[payoutIdx].amount}` : '—';
-    html += `<div class="payout-row ${inMoney?'in-money':''} ${isMyTeam}">
+    html += `<div class="payout-row ${inMoney?'in-money':''} ${isMyTeam}" onclick="togglePayoutPanel(this,${i})">
       <div class="pr-place">${rank}</div>
       <div class="pr-info">
         <div class="pr-team">${e.team}</div>
@@ -3601,6 +3633,25 @@ function renderPayouts() {
       </div>
       <div class="pr-score ${scc}">${scf}</div>
       <div class="pr-payout ${inMoney?'':'none'}">${payoutStr}</div>
+      <div class="pr-arrow" id="pr-arr-${i}">›</div>
+    </div>
+    <div class="picks-panel" id="pr-panel-${i}">
+      ${e.scores.map((g, j) => {
+        const isTop = j < 4;
+        const gd = GOLFER_SCORES[g.name];
+        const pos = gd ? gd.pos : '—';
+        const ownEntry = OWNERSHIP_DATA.find(o => o.player === g.name);
+        const ownPct = ownEntry ? Math.round(ownEntry.pct * 100) + '%' : '';
+        return `<div class="mini-pick ${isTop?'is-top':''}">
+          <div class="mini-pick-left">
+            ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'}
+            <span class="mini-pick-name">${g.name}</span>
+            <span class="mini-pick-pos">${pos}</span>
+            ${ownPct?`<span class="mini-pick-own">${ownPct}</span>`:''}
+          </div>
+          <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span>
+        </div>`;
+      }).join('')}
     </div>`;
   });
   listEl.innerHTML = html;
