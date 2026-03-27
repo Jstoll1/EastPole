@@ -3259,13 +3259,19 @@ function renderLeaderboard() {
   }
   const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
   const completedRoundCount = samplePlayer ? [samplePlayer.r1,samplePlayer.r2,samplePlayer.r3,samplePlayer.r4].filter(r=>r!=null).length : 0;
-  const anyStillPlaying = players.some(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'F' && /^\d+$/.test(p.thru));
-  const currentRound = samplePlayer ? (anyStillPlaying ? completedRoundCount || 1 : completedRoundCount + 1) : 0;
+  const activePlaying = players.filter(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'WD' && p.score !== 11 && p.score !== 12);
+  const anyStillPlaying = activePlaying.some(p => /^\d+$/.test(p.thru) && parseInt(p.thru) < 18);
+  const currentRound = samplePlayer ? (anyStillPlaying ? completedRoundCount || 1 : completedRoundCount) : 0;
   const isPreT = currentRound === 0;
   if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
   const roundLabels = ['PRE-TOURNAMENT','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
+  const endOfRoundLabels = ['','END OF ROUND 1','END OF ROUND 2','END OF ROUND 3','FINAL ROUND'];
   const tvTitle = document.getElementById('lb-round-title');
-  if (tvTitle) tvTitle.textContent = roundLabels[currentRound] || 'FIRST ROUND';
+  if (tvTitle) {
+    if (anyStillPlaying) { tvTitle.textContent = roundLabels[currentRound] || 'FIRST ROUND'; }
+    else if (currentRound > 0) { tvTitle.textContent = endOfRoundLabels[currentRound] || roundLabels[currentRound]; }
+    else { tvTitle.textContent = roundLabels[0]; }
+  }
   var sortArrow = function(col) { return lbSort===col ? (lbSortAsc ? ' ▲' : ' ▼') : ''; };
   var sortCls = function(col) { return lbSort===col ? ' tv-h-active' : ''; };
   const colHdr = '<div class="tv-col-hdr"><div class="tv-h-pos">POS</div><div class="tv-h-pill"></div><div class="tv-h-player">PLAYER</div>'
