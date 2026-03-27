@@ -2754,9 +2754,6 @@ to  {
 <div class="ticker-track"><div class="ticker-content" id="ticker-content"></div></div>
 </div>
 <div class="lb-sticky-hdr">
-<div class="lb-top-row">
-<span class="lb-round-label" id="lb-round-title">First Round</span>
-</div>
 <div class="seg-wrap" style="padding:6px 14px 6px">
 <div class="seg">
 <button class="seg-btn active" onclick="setLbFilter('all',this)">All</button>
@@ -2771,6 +2768,9 @@ to  {
 <input type="text" id="lb-search" placeholder="Search…" oninput="filterLeaderboardSearch()" autocorrect="off" autocapitalize="off" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 24px 4px 8px;font-size:10px;color:var(--text);font-family:inherit;outline:none;letter-spacing:0.2px">
 <span id="lb-search-clear" onclick="document.getElementById('lb-search').value='';filterLeaderboardSearch();document.getElementById('lb-search').focus()" style="display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:16px;height:16px;line-height:16px;text-align:center;font-size:11px;color:rgba(255,255,255,0.4);cursor:pointer;border-radius:50%;background:rgba(255,255,255,0.1)">✕</span>
 </div>
+</div>
+<div class="lb-top-row">
+<span class="lb-round-label" id="lb-round-title">First Round</span>
 </div>
 </div>
 <div id="leaderboard-list">
@@ -3257,11 +3257,19 @@ function renderLeaderboard() {
       legendEl.innerHTML = '<div class="lb-legend-item"><span class="team-pill ' + (PILL_CLASSES[0]||'') + '" style="width:16px;height:13px;font-size:8px;border-radius:4px">' + pillLabel(0) + '</span><span>' + currentUserTeams[0].team + '</span></div>';
     } else { legendEl.innerHTML = ''; }
   }
-  const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
-  const completedRoundCount = samplePlayer ? [samplePlayer.r1,samplePlayer.r2,samplePlayer.r3,samplePlayer.r4].filter(r=>r!=null).length : 0;
+  const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC'&&p.thru!=='WD');
+  // Count completed rounds across ALL active players for robustness
+  let maxCompletedRounds = 0;
+  players.forEach(p => {
+    if (p.thru === '—' || p.score === 11 || p.score === 12) return;
+    const cnt = [p.r1,p.r2,p.r3,p.r4].filter(r=>r!=null).length;
+    if (cnt > maxCompletedRounds) maxCompletedRounds = cnt;
+  });
+  const completedRoundCount = maxCompletedRounds;
   const activePlaying = players.filter(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'WD' && p.score !== 11 && p.score !== 12);
-  const anyStillPlaying = activePlaying.some(p => /^\d+$/.test(p.thru) && parseInt(p.thru) < 18);
+  const anyStillPlaying = activePlaying.some(p => /^\d+$/.test(p.thru) && parseInt(p.thru) >= 1 && parseInt(p.thru) < 18);
   const currentRound = samplePlayer ? (anyStillPlaying ? completedRoundCount || 1 : completedRoundCount) : 0;
+  console.log('🏌️ Round detection:', { completedRoundCount, anyStillPlaying, currentRound, sampleThru: samplePlayer?.thru, sampleR1: samplePlayer?.r1 });
   const isPreT = currentRound === 0;
   if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
   const roundLabels = ['PRE-TOURNAMENT','FIRST ROUND','SECOND ROUND','THIRD ROUND','FINAL ROUND'];
