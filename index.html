@@ -2096,6 +2096,33 @@ to  {
   color: #ff7070;
 }
 
+/* Top mover badge — Masters broadcast style */
+.top-mover {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #52b788;
+  background: rgba(82,183,136,0.12);
+  border: 1px solid rgba(82,183,136,0.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  letter-spacing: 0.3px;
+  animation: moverPulse 2s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+.top-mover .mover-arrow {
+  font-size: 8px;
+}
+
+@keyframes moverPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(82,183,136,0.15); }
+  50% { box-shadow: 0 0 8px rgba(82,183,136,0.35); }
+}
+
 .cut-line-row  {
   display: flex;
   align-items: center;
@@ -2941,6 +2968,39 @@ let GOLFER_SCORES = {};
 let allTeamEmails = [];
 let PREV_POSITIONS = {};
 let PREV_RANKS = {};
+let ROUND_START_POSITIONS = {};
+let ROUND_START_ROUND = 0;
+
+// Load round-start positions from localStorage
+try {
+  const saved = JSON.parse(localStorage.getItem('eastpole_round_start') || '{}');
+  if (saved.round && saved.positions) { ROUND_START_POSITIONS = saved.positions; ROUND_START_ROUND = saved.round; }
+} catch(e) {}
+
+function saveRoundStartPositions(round) {
+  ROUND_START_ROUND = round;
+  ROUND_START_POSITIONS = {};
+  Object.entries(GOLFER_SCORES).forEach(([name, d]) => {
+    const p = parsePos(d.pos);
+    if (p) ROUND_START_POSITIONS[name] = p;
+  });
+  try { localStorage.setItem('eastpole_round_start', JSON.stringify({ round: round, positions: ROUND_START_POSITIONS })); } catch(e) {}
+}
+
+function getTopMovers(players, limit) {
+  const movers = [];
+  players.forEach(p => {
+    const startP = ROUND_START_POSITIONS[p.name];
+    const currP = parsePos(p.pos);
+    if (startP && currP && currP < startP) {
+      movers.push({ name: p.name, delta: startP - currP });
+    }
+  });
+  movers.sort((a, b) => b.delta - a.delta);
+  const topNames = new Set();
+  movers.slice(0, limit).forEach(m => { if (m.delta >= 3) topNames.add(m.name); });
+  return topNames;
+}
 let lastFetchTime = 0;
 let ATHLETE_IDS = {};
 let EVENT_ID = null;
@@ -3305,6 +3365,7 @@ function renderLeaderboard() {
   const estCutShow = currentRound >= 1 && currentRound <= 2 && lbSort === 'score' && lbFilter === 'all' && !lbSearch;
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
+  const topMoverNames = isPreT ? new Set() : getTopMovers(players, 5);
   let rowIdx = 0;
   players.forEach(p => {
     const mc = p.thru==='MC', inPool = poolNames.has(p.name);
@@ -3332,6 +3393,10 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
     const currP = parsePos(p.pos);
     let moveHtml = '';
     if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? '<div class="pos-move up">▲' + d + '</div>' : '<div class="pos-move dn">▼' + Math.abs(d) + '</div>'; }
+    // Top mover badge
+    const startP = ROUND_START_POSITIONS[p.name];
+    const roundDelta = (startP && currP && currP < startP) ? startP - currP : 0;
+    const isMover = topMoverNames.has(p.name);
     const myTeamIdxs = myPicksMap[p.name] || [];
     const pills = myTeamIdxs.map(i => '<span class="team-pill ' + (PILL_CLASSES[i]||'') + '">' + pillLabel(i) + '</span>').join('');
     const isMyPick = myTeamIdxs.length > 0;
@@ -3342,6 +3407,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + '<div class="tv-pos">' + (mc?'MC':p.pos) + moveHtml + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
+      + (isMover ? '<span class="top-mover"><span class="mover-arrow">↑</span>' + roundDelta + '</span>' : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
@@ -3469,7 +3535,20 @@ if (isPreTournament) {
   if (allDone) {
     const completedRound = [activePlayers[0]?.r4 ? 4 : 0, activePlayers[0]?.r3 ? 3 : 0, activePlayers[0]?.r2 ? 2 : 0, activePlayers[0]?.r1 ? 1 : 0].find(r => r > 0) || 1;
     setApiStatus('between', 'End of Rd ' + completedRound);
+    // Save end-of-round positions as start for next round
+    if (ROUND_START_ROUND < completedRound + 1) {
+      saveRoundStartPositions(completedRound + 1);
+      console.log('📌 Saved round-start positions for Rd', completedRound + 1);
+    }
   } else {
+    // Detect current round number
+    const sampleActive = activePlayers.find(g => parseInt(g.thru) > 0);
+    const currentRound = sampleActive ? [sampleActive.r4?4:0, sampleActive.r3?3:0, sampleActive.r2?2:0, sampleActive.r1?1:0].find(r=>r>0) || 1 : (ROUND_START_ROUND || 1);
+    // Save start positions at the beginning of a new round
+    if (ROUND_START_ROUND < currentRound) {
+      saveRoundStartPositions(currentRound);
+      console.log('📌 Saved round-start positions for Rd', currentRound);
+    }
     setApiStatus('live', 'Live');
   }
 } console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
