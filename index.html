@@ -4011,7 +4011,8 @@ function renderTicker() {
     const scf = fmt(e.total);
     const scc = cls(e.total);
     const money = i < 3 ? ' 💰' : '';
-    return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> ${e.team} <span class="ticker-item-score ${scc}">${scf}</span>${money}</span>`;
+    const nameStyle = i < 3 ? ' style="color:var(--gold)"' : '';
+    return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> <span${nameStyle}>${e.team}</span> <span class="ticker-item-score ${scc}">${scf}</span>${money}</span>`;
   }).join('');
   el.innerHTML = items + items;
   const duration = Math.max(20, ranked.length * 2.5);
