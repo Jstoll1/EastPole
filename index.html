@@ -2970,7 +2970,7 @@ const holesTag = `<span class="s-holes-left">${teamHolesLeft}h left</span>`;
 const rowClick = compareMode ? `cmpSelectTeam(${entryIdx})` : `togglePanel(this,${i})`;
 html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge} ${holesTag}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
 const gd = GOLFER_SCORES[g.name];
-const pos = gd ? gd.pos : '—';
+const pos = gd ? (gd.thru === 'WD' ? 'WD' : gd.pos) : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
 const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
 const ownE = OWNERSHIP_DATA.find(o => o.player === g.name);
