@@ -2784,6 +2784,19 @@ function parsePos(pos) {
 }
 
 const STORAGE_KEY = 'eastpole_v2';
+const SPLASH_DATE_KEY = 'eastpole_splash_date';
+
+function shouldShowSplash() {
+  try {
+    const lastShown = localStorage.getItem(SPLASH_DATE_KEY);
+    const today = new Date().toISOString().slice(0, 10);
+    return lastShown !== today;
+  } catch(e) { return true; }
+}
+
+function markSplashSeen() {
+  try { localStorage.setItem(SPLASH_DATE_KEY, new Date().toISOString().slice(0, 10)); } catch(e) {}
+}
 let currentUserEmail = null;
 let currentUserTeams = [];
 let activeTeamIdx = 0;Object.defineProperty(window, 'currentTeamEmail', { get: () => currentUserEmail });
@@ -2834,6 +2847,7 @@ function hideOnboarding() {
 }, 300);}
 
 function enterApp() {
+  markSplashSeen();
   const splash = document.getElementById('splash');
   splash.classList.add('hidden');
   setTimeout(() => { splash.style.display = 'none';
@@ -2841,6 +2855,7 @@ function enterApp() {
 }, 500);}
 
 function dismissSplashBrowse() {
+  markSplashSeen();
   const splash = document.getElementById('splash');
   splash.classList.add('hidden');
   hideOnboarding();
@@ -4128,6 +4143,6 @@ function sendChatMessage() {
 // Re-init chat when user changes (show/hide input bar)
 
 async function initApp() { ENTRIES.forEach(e => { e.picks = e.picks.map(resolvePlayerName); }); allTeamEmails = [...new Set(ENTRIES.map(e => e.email))].sort(); OWNERSHIP_DATA = computeOwnership(); console.log('✅ Loaded', ENTRIES.length, 'baked-in entries');
-const returning = loadUser(); if (returning) { console.log('👤 Returning user:', currentUserEmail); const sp = document.getElementById('splash'); if (sp) { sp.style.display = 'none'; sp.classList.add('hidden'); } } updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); initChat(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
+const returning = loadUser(); if (returning) { console.log('👤 Returning user:', currentUserEmail); if (!shouldShowSplash()) { const sp = document.getElementById('splash'); if (sp) { sp.style.display = 'none'; sp.classList.add('hidden'); } } } updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); initChat(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
 </script>
 </body></html>
