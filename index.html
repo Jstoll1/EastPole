@@ -2990,6 +2990,7 @@ function renderLeaderboard() {
   var parseThruVal = function(p) {
     if (p.thru === '—') return -1;
     if (p.thru === 'MC') return 99;
+    if (/[AP]M/i.test(p.thru)) return 18;
     return parseInt(p.thru) || 0;
   };
   var dir = lbSortAsc ? 1 : -1;
@@ -3587,7 +3588,8 @@ function getHolesRemaining(playerName) {
 
   // Determine holes done in current round
   let holesThisRound = 0;
-  if (gd.thru === 'F' || gd.thru === '18') {
+  const isTeeTime = gd.thru && /[AP]M/i.test(gd.thru);
+  if (gd.thru === 'F' || gd.thru === '18' || isTeeTime) {
     holesThisRound = 18;
   } else if (gd.thru === '—') {
     holesThisRound = 0;
@@ -3595,10 +3597,9 @@ function getHolesRemaining(playerName) {
     holesThisRound = parseInt(gd.thru) || 0;
   }
 
-  // When thru=F or 18, this round IS already counted in completedRounds
-  // (the ESPN data populates r1/r2/etc when the round finishes).
+  // When thru=F or 18 or tee time (between rounds), this round IS already counted in completedRounds.
   // When mid-round, the current round is NOT yet in completedRounds.
-  const isMidRound = gd.thru !== 'F' && gd.thru !== '18' && gd.thru !== '—' && gd.thru !== 'MC';
+  const isMidRound = gd.thru !== 'F' && gd.thru !== '18' && gd.thru !== '—' && gd.thru !== 'MC' && !isTeeTime;
   const totalPlayed = isMidRound
     ? (completedRounds * 18) + holesThisRound
     : completedRounds * 18;
