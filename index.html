@@ -3259,7 +3259,7 @@ function renderLeaderboard() {
   }
   const samplePlayer = players.find(p=>p.thru!=='—'&&p.thru!=='MC');
   const completedRoundCount = samplePlayer ? [samplePlayer.r1,samplePlayer.r2,samplePlayer.r3,samplePlayer.r4].filter(r=>r!=null).length : 0;
-  const anyStillPlaying = players.some(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'F' && parseInt(p.thru) > 0);
+  const anyStillPlaying = players.some(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'F' && /^\d+$/.test(p.thru));
   const currentRound = samplePlayer ? (anyStillPlaying ? completedRoundCount || 1 : completedRoundCount + 1) : 0;
   const isPreT = currentRound === 0;
   if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
