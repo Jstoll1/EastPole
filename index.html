@@ -4010,7 +4010,8 @@ function renderTicker() {
   const items = ranked.map((e, i) => {
     const scf = fmt(e.total);
     const scc = cls(e.total);
-    return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> ${e.team} <span class="ticker-item-score ${scc}">${scf}</span></span>`;
+    const money = i < 3 ? ' 💰' : '';
+    return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> ${e.team} <span class="ticker-item-score ${scc}">${scf}</span>${money}</span>`;
   }).join('');
   el.innerHTML = items + items;
   const duration = Math.max(20, ranked.length * 2.5);
