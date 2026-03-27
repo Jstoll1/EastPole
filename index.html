@@ -898,6 +898,65 @@ html, body  {
   display: none;
 }
 
+.ticker-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(0,0,0,0.4);
+  border-top: 1px solid rgba(212,168,67,0.15);
+  border-bottom: 1px solid rgba(212,168,67,0.15);
+  overflow: hidden;
+  height: 28px;
+}
+.ticker-label {
+  flex-shrink: 0;
+  background: var(--gold);
+  color: #0a1a0e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 0 10px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+}
+.ticker-track {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+.ticker-content {
+  display: flex;
+  gap: 0;
+  white-space: nowrap;
+  animation: tickerScroll 30s linear infinite;
+  width: max-content;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.ticker-item-rank {
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 400;
+}
+.ticker-item-score {
+  font-weight: 800;
+}
+.ticker-item-score.sc-red { color: #FF7F7F; }
+.ticker-item-score.sc-green { color: var(--gold); }
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 .tv-title  {
   font-size: 12px;
   font-weight: 900;
@@ -2694,6 +2753,10 @@ to  {
 <div class="tv-title" id="lb-tournament-name">Houston Open</div>
 </div>
 </div>
+<div class="ticker-wrap">
+<div class="ticker-label">LIVE</div>
+<div class="ticker-track"><div class="ticker-content" id="ticker-content"></div></div>
+</div>
 <div class="lb-sticky-hdr">
 <div class="lb-top-row">
 <span class="lb-round-label" id="lb-round-title">First Round</span>
@@ -3923,7 +3986,21 @@ function buildTeamBlock(calc) {
   return html;
 }
 
-function renderAll() { _renderCount++; renderStandings(); renderLeaderboard(); renderOwnership(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); if (_debugOpen) renderDebugPanel(); }
+function renderTicker() {
+  const el = document.getElementById('ticker-content');
+  if (!el) return;
+  const ranked = getRanked();
+  const items = ranked.map((e, i) => {
+    const scf = fmt(e.total);
+    const scc = cls(e.total);
+    return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> ${e.team} <span class="ticker-item-score ${scc}">${scf}</span></span>`;
+  }).join('');
+  el.innerHTML = items + items;
+  const duration = Math.max(20, ranked.length * 2.5);
+  el.style.animationDuration = duration + 's';
+}
+
+function renderAll() { _renderCount++; renderStandings(); renderLeaderboard(); renderOwnership(); renderTicker(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); if (_debugOpen) renderDebugPanel(); }
 
 const POOL_CONFIG = { buyIn: 25, entries: 6, payouts: [ { place: '1st', pct: 0.60 }, { place: '2nd', pct: 0.27 }, { place: '3rd', pct: 0.13 } ] };
 POOL_CONFIG.pot = POOL_CONFIG.buyIn * POOL_CONFIG.entries;
