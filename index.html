@@ -3531,7 +3531,9 @@ if (isPreTournament) {
   setApiStatus('scheduled', 'Pre-Tournament');
 } else {
   const activePlayers = Object.values(freshScores).filter(g => g.score !== 11 && g.score !== 12);
-  const allDone = activePlayers.length > 0 && activePlayers.every(g => g.thru === 'F' || g.thru === '18' || (g.teeTime && g.teeTime !== '—' && g.teeTime !== 'TBD' && /\d{1,2}:\d{2}/.test(g.teeTime)));
+  // Check if ANY player is actively mid-round (thru 1-17)
+  const anyMidRound = activePlayers.some(g => /^\d+$/.test(g.thru) && parseInt(g.thru) >= 1 && parseInt(g.thru) <= 17);
+  const allDone = !anyMidRound && activePlayers.length > 0 && activePlayers.every(g => g.thru === 'F' || g.thru === '18' || g.thru.includes(':') || g.thru === 'MC' || g.thru === 'WD');
   if (allDone) {
     const completedRound = [activePlayers[0]?.r4 ? 4 : 0, activePlayers[0]?.r3 ? 3 : 0, activePlayers[0]?.r2 ? 2 : 0, activePlayers[0]?.r1 ? 1 : 0].find(r => r > 0) || 1;
     setApiStatus('between', 'End of Rd ' + completedRound);
