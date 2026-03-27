@@ -2516,6 +2516,62 @@ to  {
 .chat-name-row .chat-lock-icon {
   font-size:12px; color:var(--gold); flex-shrink:0;
 }
+/* ── Debug Panel ── */
+#debug-panel {
+  display:none; position:fixed; bottom:0; left:0; right:0;
+  max-height:45vh; background:rgba(10,10,10,0.96); z-index:9999;
+  border-top:2px solid var(--gold); overflow-y:auto;
+  font-family:'SF Mono',Monaco,Consolas,monospace; font-size:11px;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+#debug-panel.open { display:flex; flex-direction:column; }
+.debug-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.1);
+  position:sticky; top:0; background:rgba(10,10,10,0.98); z-index:1;
+}
+.debug-header-title { color:var(--gold); font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; }
+.debug-header button {
+  background:none; border:1px solid rgba(255,255,255,0.2); color:var(--text3);
+  font-size:10px; padding:3px 8px; border-radius:4px; cursor:pointer; font-family:inherit;
+}
+.debug-header button:hover { color:#fff; border-color:rgba(255,255,255,0.4); }
+.debug-tabs {
+  display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,0.1);
+  position:sticky; top:35px; background:rgba(10,10,10,0.98); z-index:1;
+}
+.debug-tab {
+  flex:1; padding:6px 8px; text-align:center; font-size:10px; font-weight:600;
+  color:var(--text3); cursor:pointer; border:none; background:none;
+  text-transform:uppercase; letter-spacing:0.5px; border-bottom:2px solid transparent;
+}
+.debug-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.debug-body { flex:1; overflow-y:auto; padding:8px 12px; }
+.debug-row {
+  display:flex; gap:8px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);
+  color:rgba(255,255,255,0.7); line-height:1.4;
+}
+.debug-row .ts { color:rgba(255,255,255,0.3); flex-shrink:0; width:60px; }
+.debug-row .tag { flex-shrink:0; width:48px; font-weight:700; text-transform:uppercase; }
+.debug-row .tag.api { color:#FF7F7F; }
+.debug-row .tag.js { color:#f5c518; }
+.debug-row .tag.render { color:#5BC8F5; }
+.debug-row .tag.perf { color:#34c759; }
+.debug-row .msg { flex:1; word-break:break-all; }
+.debug-stat-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:4px 0;
+}
+.debug-stat {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:6px; padding:8px 10px;
+}
+.debug-stat-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.debug-stat-value { font-size:16px; font-weight:700; color:#fff; }
+.debug-stat-value.good { color:#34c759; }
+.debug-stat-value.warn { color:#f5c518; }
+.debug-stat-value.bad { color:#FF7F7F; }
+.debug-empty { color:var(--text3); text-align:center; padding:24px; font-size:11px; }
 </style>
 <script data-goatcounter="https://calcutta.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -2710,6 +2766,24 @@ to  {
 </div>
 </div>
 <div id="chat-overlay" class="chat-overlay" onclick="toggleChatDrawer()"></div>
+<!-- Debug Panel (hidden, 5-tap Live pill to show) -->
+<div id="debug-panel">
+<div class="debug-header">
+<span class="debug-header-title">Debug</span>
+<div style="display:flex;gap:6px">
+<button onclick="debugClearLog()">Clear</button>
+<button onclick="debugExport()">Export</button>
+<button onclick="toggleDebugPanel()">✕</button>
+</div>
+</div>
+<div class="debug-tabs">
+<button class="debug-tab active" onclick="debugSwitchTab('overview',this)">Overview</button>
+<button class="debug-tab" onclick="debugSwitchTab('errors',this)">Errors</button>
+<button class="debug-tab" onclick="debugSwitchTab('network',this)">Network</button>
+<button class="debug-tab" onclick="debugSwitchTab('perf',this)">Perf</button>
+</div>
+<div class="debug-body" id="debug-body"></div>
+</div>
 <div id="toast">
 </div>
 <script>
@@ -3822,7 +3896,7 @@ function buildTeamBlock(calc) {
   return html;
 }
 
-function renderAll() { renderStandings(); renderLeaderboard(); renderOwnership(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); }
+function renderAll() { _renderCount++; renderStandings(); renderLeaderboard(); renderOwnership(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); if (_debugOpen) renderDebugPanel(); }
 
 const POOL_CONFIG = { buyIn: 25, entries: 6, payouts: [ { place: '1st', pct: 0.60 }, { place: '2nd', pct: 0.27 }, { place: '3rd', pct: 0.13 } ] };
 POOL_CONFIG.pot = POOL_CONFIG.buyIn * POOL_CONFIG.entries;
@@ -4163,6 +4237,164 @@ function sendChatMessage() {
 }
 
 // Re-init chat when user changes (show/hide input bar)
+
+// ── Debug Panel ──────────────────────────────────────────
+const DebugPerf = (() => {
+  const network = []; // { url, status, duration, ts, size }
+  const MAX = 100;
+  function logRequest(entry) { network.push(entry); if (network.length > MAX) network.shift(); }
+  return { network, logRequest };
+})();
+
+// Wrap fetch to track all network requests
+const _origFetch = window.fetch;
+window.fetch = async function(...args) {
+  const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+  const start = performance.now();
+  try {
+    const res = await _origFetch.apply(this, args);
+    DebugPerf.logRequest({
+      url: url.length > 80 ? url.substring(0, 80) + '…' : url,
+      status: res.status,
+      duration: Math.round(performance.now() - start),
+      ts: new Date().toISOString(),
+      ok: res.ok
+    });
+    return res;
+  } catch(e) {
+    DebugPerf.logRequest({
+      url: url.length > 80 ? url.substring(0, 80) + '…' : url,
+      status: 'ERR',
+      duration: Math.round(performance.now() - start),
+      ts: new Date().toISOString(),
+      ok: false,
+      error: e.message
+    });
+    throw e;
+  }
+};
+
+let _debugOpen = false;
+let _debugTapCount = 0;
+let _debugTapTimer = null;
+let _debugTab = 'overview';
+
+// 5-tap activation on the Live pill
+document.addEventListener('DOMContentLoaded', () => {
+  const pill = document.querySelector('.hdr-pill');
+  if (pill) {
+    pill.addEventListener('click', (e) => {
+      _debugTapCount++;
+      clearTimeout(_debugTapTimer);
+      _debugTapTimer = setTimeout(() => { _debugTapCount = 0; }, 1500);
+      if (_debugTapCount >= 5) {
+        e.stopPropagation();
+        e.preventDefault();
+        _debugTapCount = 0;
+        toggleDebugPanel();
+      }
+    });
+  }
+});
+
+function toggleDebugPanel() {
+  _debugOpen = !_debugOpen;
+  document.getElementById('debug-panel').classList.toggle('open', _debugOpen);
+  if (_debugOpen) renderDebugPanel();
+}
+
+function debugSwitchTab(tab, btn) {
+  _debugTab = tab;
+  document.querySelectorAll('.debug-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderDebugPanel();
+}
+
+function debugClearLog() {
+  ErrorTracker.log.length = 0;
+  DebugPerf.network.length = 0;
+  renderDebugPanel();
+}
+
+function debugExport() {
+  const data = {
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    errors: ErrorTracker.log,
+    network: DebugPerf.network,
+    golferCount: Object.keys(GOLFER_SCORES).length,
+    entryCount: ENTRIES.length
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'eastpole-debug-' + Date.now() + '.json';
+  a.click();
+}
+
+function renderDebugPanel() {
+  const body = document.getElementById('debug-body');
+  if (!body) return;
+
+  if (_debugTab === 'overview') {
+    const errs = ErrorTracker.log;
+    const apiErrs = errs.filter(e => e.type === 'api').length;
+    const jsErrs = errs.filter(e => e.type === 'js').length;
+    const renderErrs = errs.filter(e => e.type === 'render').length;
+    const nets = DebugPerf.network;
+    const avgLatency = nets.length ? Math.round(nets.reduce((s, n) => s + n.duration, 0) / nets.length) : 0;
+    const failedReqs = nets.filter(n => !n.ok).length;
+    const lastFetch = nets.length ? nets[nets.length - 1] : null;
+    const uptime = Math.floor(performance.now() / 1000);
+    const uptimeStr = uptime > 3600 ? Math.floor(uptime/3600) + 'h ' + Math.floor((uptime%3600)/60) + 'm' : Math.floor(uptime/60) + 'm ' + (uptime%60) + 's';
+
+    body.innerHTML = '<div class="debug-stat-grid">'
+      + '<div class="debug-stat"><div class="debug-stat-label">Total Errors</div><div class="debug-stat-value ' + (errs.length === 0 ? 'good' : errs.length < 5 ? 'warn' : 'bad') + '">' + errs.length + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">API Errors</div><div class="debug-stat-value ' + (apiErrs === 0 ? 'good' : 'bad') + '">' + apiErrs + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">JS Errors</div><div class="debug-stat-value ' + (jsErrs === 0 ? 'good' : 'bad') + '">' + jsErrs + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">Render Errors</div><div class="debug-stat-value ' + (renderErrs === 0 ? 'good' : 'bad') + '">' + renderErrs + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">Avg Latency</div><div class="debug-stat-value ' + (avgLatency < 500 ? 'good' : avgLatency < 2000 ? 'warn' : 'bad') + '">' + avgLatency + 'ms</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">Failed Requests</div><div class="debug-stat-value ' + (failedReqs === 0 ? 'good' : 'bad') + '">' + failedReqs + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">Golfers Loaded</div><div class="debug-stat-value">' + Object.keys(GOLFER_SCORES).length + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">Session Uptime</div><div class="debug-stat-value">' + uptimeStr + '</div></div>'
+      + '</div>';
+
+  } else if (_debugTab === 'errors') {
+    const errs = ErrorTracker.log.slice().reverse();
+    if (!errs.length) { body.innerHTML = '<div class="debug-empty">No errors logged</div>'; return; }
+    body.innerHTML = errs.map(e => {
+      const t = e.ts.split('T')[1].substring(0, 8);
+      return '<div class="debug-row"><span class="ts">' + t + '</span><span class="tag ' + e.type + '">' + e.type + '</span><span class="msg">' + escHtml(e.message) + (e.detail ? ' — ' + escHtml(JSON.stringify(e.detail).substring(0, 120)) : '') + '</span></div>';
+    }).join('');
+
+  } else if (_debugTab === 'network') {
+    const nets = DebugPerf.network.slice().reverse();
+    if (!nets.length) { body.innerHTML = '<div class="debug-empty">No network requests logged</div>'; return; }
+    body.innerHTML = nets.map(n => {
+      const t = n.ts.split('T')[1].substring(0, 8);
+      const statusClass = n.ok ? 'good' : 'bad';
+      return '<div class="debug-row"><span class="ts">' + t + '</span><span class="tag perf" style="color:' + (n.ok ? '#34c759' : '#FF7F7F') + '">' + n.status + '</span><span class="msg">' + escHtml(n.url) + ' <span style="color:' + (n.duration < 500 ? '#34c759' : n.duration < 2000 ? '#f5c518' : '#FF7F7F') + '">' + n.duration + 'ms</span></span></div>';
+    }).join('');
+
+  } else if (_debugTab === 'perf') {
+    const mem = performance.memory ? performance.memory : null;
+    const entries = performance.getEntriesByType('navigation')[0];
+    const paintEntries = performance.getEntriesByType('paint');
+    const fcp = paintEntries.find(e => e.name === 'first-contentful-paint');
+    const renderCount = typeof _renderCount !== 'undefined' ? _renderCount : '—';
+
+    body.innerHTML = '<div class="debug-stat-grid">'
+      + '<div class="debug-stat"><div class="debug-stat-label">Page Load</div><div class="debug-stat-value">' + (entries ? Math.round(entries.loadEventEnd - entries.startTime) + 'ms' : '—') + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">First Paint</div><div class="debug-stat-value">' + (fcp ? Math.round(fcp.startTime) + 'ms' : '—') + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">DOM Nodes</div><div class="debug-stat-value">' + document.querySelectorAll('*').length + '</div></div>'
+      + '<div class="debug-stat"><div class="debug-stat-label">Render Cycles</div><div class="debug-stat-value">' + renderCount + '</div></div>'
+      + (mem ? '<div class="debug-stat"><div class="debug-stat-label">JS Heap</div><div class="debug-stat-value">' + Math.round(mem.usedJSHeapSize / 1048576) + 'MB</div></div>' : '')
+      + (mem ? '<div class="debug-stat"><div class="debug-stat-label">Heap Limit</div><div class="debug-stat-value">' + Math.round(mem.jsHeapSizeLimit / 1048576) + 'MB</div></div>' : '')
+      + '</div>';
+  }
+}
+
+let _renderCount = 0;
 
 async function initApp() { ENTRIES.forEach(e => { e.picks = e.picks.map(resolvePlayerName); }); allTeamEmails = [...new Set(ENTRIES.map(e => e.email))].sort(); OWNERSHIP_DATA = computeOwnership(); console.log('✅ Loaded', ENTRIES.length, 'baked-in entries');
 const returning = loadUser(); if (returning) { console.log('👤 Returning user:', currentUserEmail); if (!shouldShowSplash()) { const sp = document.getElementById('splash'); if (sp) { sp.style.display = 'none'; sp.classList.add('hidden'); } } } updateLbSeg(); Object.keys(FLAGS).forEach(name => { if (!GOLFER_SCORES[name]) { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'—', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; } }); renderAll(); await fetchESPN().catch(() => { setApiStatus('cached', 'Offline'); }); renderAll(); initChat(); startAutoRefresh(); startAgeTimer();}initApp();document.addEventListener('click', function(e) { if (_teamDdOpen && !e.target.closest('#hdr-team-display') && !e.target.closest('#team-dropdown')) { closeTeamDropdown(); }});
