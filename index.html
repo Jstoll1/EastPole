@@ -2892,7 +2892,7 @@ function getCountryCode(name) { return FLAG_TO_CODE[FLAGS[name]] || ''; }
 const COURSE_PAR = 72;
 const PREV_WINNER = 'Min Woo Lee';
 const gs = n => GOLFER_SCORES[n] ? GOLFER_SCORES[n].score : 11;
-const fmt = s => s === 11 ? 'MC' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
+const fmt = s => s === 11 ? 'MC' : s === 12 ? 'WD' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
 const cls = s => s < 0 ? 'neg' : s > 0 ? 'pos' : 'eve';
 
 function calcEntry(e) { const scores = e.picks.map(n => ({name:n, score:gs(n)})).sort((a,b)=>a.score-b.score);
@@ -2977,7 +2977,7 @@ const teamHolesLeft = e.picks.reduce((sum, p) => sum + getHolesRemaining(p), 0);
 const rowClick = compareMode ? `cmpSelectTeam(${entryIdx})` : `togglePanel(this,${i})`;
 html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
 const gd = GOLFER_SCORES[g.name];
-const pos = gd ? (gd.thru === 'WD' ? 'WD' : gd.pos) : '—';
+const pos = gd ? (gd.thru === 'WD' || gd.score === 12 ? 'WD' : gd.pos) : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
 const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
 const ownE = OWNERSHIP_DATA.find(o => o.player === g.name);
@@ -3263,7 +3263,7 @@ const scheduled=state==='STATUS_SCHEDULED';
 const mc=state.includes('CUT')||false;
 const wd=state.includes('WD')||state.includes('WITHDRAW')||false;
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
-const score=(mc||wd)?11:(scoreToPar?scoreToPar.value:0);
+const score=mc?11:wd?12:(scoreToPar?scoreToPar.value:0);
 const lines=c.linescores||[];
 const teeTime=c.status?.teeTime||'';
 const thruRaw=c.status?.thru;
@@ -3276,7 +3276,7 @@ const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
 const todayDisplay=scheduled?(lastCompletedRound?lastCompletedRound.displayValue:'—'):(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||'—');
-freshScores[name]={ pos:c.status?.position?.displayName||'—', score:(mc||wd)?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
+freshScores[name]={ pos:c.status?.position?.displayName||'—', score:mc?11:wd?12:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
 
 function setApiStatus(state, text) {
   _lastStatusText = text;
@@ -3660,7 +3660,7 @@ function getHolesRemaining(playerName) {
   // Returns total holes remaining in the TOURNAMENT (72 total) for this golfer.
   const gd = GOLFER_SCORES[playerName];
   if (!gd) return 72;
-  if (gd.thru === 'MC' || gd.thru === 'WD') return 0;
+  if (gd.thru === 'MC' || gd.thru === 'WD' || gd.score === 11 || gd.score === 12) return 0;
 
   // Count completed rounds from round scores
   const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null).length;
