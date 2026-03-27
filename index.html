@@ -717,7 +717,7 @@ html, body  {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px 8px 60px;
+  padding: 8px 12px 8px 32px;
   border-bottom: 1px solid #0d1f12;
   font-size: 14px;
 }
@@ -741,10 +741,21 @@ html, body  {
 
 .mini-pick-left  {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
   min-width: 0;
+}
+.mini-pick-top  {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mini-pick-bottom  {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 20px;
 }
 
 .star  {
@@ -2058,21 +2069,25 @@ to  {
 }
 
 .mini-pick-rounds  {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--text3);
-  margin-left: 6px;
   flex-shrink: 0;
   font-weight: 600;
   letter-spacing: 0.2px;
 }
 
 .mini-pick-own  {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--gold);
-  margin-left: 6px;
   flex-shrink: 0;
   font-weight: 600;
   opacity: 0.7;
+}
+
+.mini-pick-thru  {
+  font-size: 10px;
+  color: #4a8054;
+  flex-shrink: 0;
 }
 
 #lb-legend  {
@@ -2564,8 +2579,10 @@ to  {
 }
 .debug-stat {
   background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-  border-radius:6px; padding:8px 10px;
+  border-radius:6px; padding:8px 10px; transition:background 0.15s, border-color 0.15s;
 }
+.debug-stat.clickable { cursor:pointer; }
+.debug-stat.clickable:active { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); }
 .debug-stat-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
 .debug-stat-value { font-size:16px; font-weight:700; color:#fff; }
 .debug-stat-value.good { color:#34c759; }
@@ -3056,7 +3073,10 @@ const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
 const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
 const ownE = OWNERSHIP_DATA.find(o => o.player === g.name);
 const ownP = ownE ? Math.round(ownE.pct * 100) + '% Owned' : '';
-return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')}<div class="picks-panel-footer">${teamHolesLeft} holes remaining</div> </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
+const thruVal = gd ? gd.thru : '';
+const holesLeft = getHolesRemaining(g.name);
+const thruDisplay = (gd && (gd.thru === 'WD' || gd.score === 12)) ? '' : (gd && gd.thru === 'F' ? '' : (thruVal ? `Thru ${thruVal}` : ''));
+return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> <div class="mini-pick-top"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> </div> <div class="mini-pick-bottom"> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${thruDisplay?`<span class="mini-pick-thru">${thruDisplay}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')}<div class="picks-panel-footer">${teamHolesLeft} holes remaining</div> </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); el.innerHTML = heroHtml + html;
   const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
   document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
 }
@@ -4317,6 +4337,14 @@ function debugSwitchTab(tab, btn) {
   renderDebugPanel();
 }
 
+function debugJumpTab(tab) {
+  _debugTab = tab;
+  document.querySelectorAll('.debug-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.trim().toLowerCase() === tab);
+  });
+  renderDebugPanel();
+}
+
 function debugClearLog() {
   ErrorTracker.log.length = 0;
   DebugPerf.network.length = 0;
@@ -4356,12 +4384,12 @@ function renderDebugPanel() {
     const uptimeStr = uptime > 3600 ? Math.floor(uptime/3600) + 'h ' + Math.floor((uptime%3600)/60) + 'm' : Math.floor(uptime/60) + 'm ' + (uptime%60) + 's';
 
     body.innerHTML = '<div class="debug-stat-grid">'
-      + '<div class="debug-stat"><div class="debug-stat-label">Total Errors</div><div class="debug-stat-value ' + (errs.length === 0 ? 'good' : errs.length < 5 ? 'warn' : 'bad') + '">' + errs.length + '</div></div>'
-      + '<div class="debug-stat"><div class="debug-stat-label">API Errors</div><div class="debug-stat-value ' + (apiErrs === 0 ? 'good' : 'bad') + '">' + apiErrs + '</div></div>'
-      + '<div class="debug-stat"><div class="debug-stat-label">JS Errors</div><div class="debug-stat-value ' + (jsErrs === 0 ? 'good' : 'bad') + '">' + jsErrs + '</div></div>'
-      + '<div class="debug-stat"><div class="debug-stat-label">Render Errors</div><div class="debug-stat-value ' + (renderErrs === 0 ? 'good' : 'bad') + '">' + renderErrs + '</div></div>'
-      + '<div class="debug-stat"><div class="debug-stat-label">Avg Latency</div><div class="debug-stat-value ' + (avgLatency < 500 ? 'good' : avgLatency < 2000 ? 'warn' : 'bad') + '">' + avgLatency + 'ms</div></div>'
-      + '<div class="debug-stat"><div class="debug-stat-label">Failed Requests</div><div class="debug-stat-value ' + (failedReqs === 0 ? 'good' : 'bad') + '">' + failedReqs + '</div></div>'
+      + '<div class="debug-stat' + (errs.length ? ' clickable' : '') + '" onclick="debugJumpTab(\'errors\')"><div class="debug-stat-label">Total Errors</div><div class="debug-stat-value ' + (errs.length === 0 ? 'good' : errs.length < 5 ? 'warn' : 'bad') + '">' + errs.length + '</div></div>'
+      + '<div class="debug-stat' + (apiErrs ? ' clickable' : '') + '" onclick="debugJumpTab(\'errors\')"><div class="debug-stat-label">API Errors</div><div class="debug-stat-value ' + (apiErrs === 0 ? 'good' : 'bad') + '">' + apiErrs + '</div></div>'
+      + '<div class="debug-stat' + (jsErrs ? ' clickable' : '') + '" onclick="debugJumpTab(\'errors\')"><div class="debug-stat-label">JS Errors</div><div class="debug-stat-value ' + (jsErrs === 0 ? 'good' : 'bad') + '">' + jsErrs + '</div></div>'
+      + '<div class="debug-stat' + (renderErrs ? ' clickable' : '') + '" onclick="debugJumpTab(\'errors\')"><div class="debug-stat-label">Render Errors</div><div class="debug-stat-value ' + (renderErrs === 0 ? 'good' : 'bad') + '">' + renderErrs + '</div></div>'
+      + '<div class="debug-stat' + (avgLatency >= 500 ? ' clickable' : '') + '" onclick="debugJumpTab(\'network\')"><div class="debug-stat-label">Avg Latency</div><div class="debug-stat-value ' + (avgLatency < 500 ? 'good' : avgLatency < 2000 ? 'warn' : 'bad') + '">' + avgLatency + 'ms</div></div>'
+      + '<div class="debug-stat' + (failedReqs ? ' clickable' : '') + '" onclick="debugJumpTab(\'network\')"><div class="debug-stat-label">Failed Requests</div><div class="debug-stat-value ' + (failedReqs === 0 ? 'good' : 'bad') + '">' + failedReqs + '</div></div>'
       + '<div class="debug-stat"><div class="debug-stat-label">Golfers Loaded</div><div class="debug-stat-value">' + Object.keys(GOLFER_SCORES).length + '</div></div>'
       + '<div class="debug-stat"><div class="debug-stat-label">Session Uptime</div><div class="debug-stat-value">' + uptimeStr + '</div></div>'
       + '</div>';
