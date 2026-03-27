@@ -3254,21 +3254,22 @@ if(c.athlete?.id) freshAthleteIds[name] = c.athlete.id;
 const state=c.status?.type?.name||'';
 const scheduled=state==='STATUS_SCHEDULED';
 const mc=state.includes('CUT')||false;
+const wd=state.includes('WD')||false;
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
-const score=mc?11:(scoreToPar?scoreToPar.value:0);
+const score=(mc||wd)?11:(scoreToPar?scoreToPar.value:0);
 const lines=c.linescores||[];
 const teeTime=c.status?.teeTime||'';
 const thruRaw=c.status?.thru;
 const lastCompletedRound=lines.filter(l=>l.value&&l.value>50).pop();
 let nextTeeStr='';
 if(scheduled&&lastCompletedRound&&teeTime&&teeTime.includes('T')){try{nextTeeStr=new Date(teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}catch(e){}}
-const thru=mc?'MC':(scheduled?(lastCompletedRound?(nextTeeStr||'18'):'—'):(thruRaw>0?String(thruRaw):(c.status?.displayValue||'F')));
+const thru=mc?'MC':wd?'WD':(scheduled?(lastCompletedRound?(nextTeeStr||'18'):'—'):(thruRaw>0?String(thruRaw):(c.status?.displayValue||'F')));
 const startHole=c.status?.startHole||1;
 const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
 const todayDisplay=scheduled?(lastCompletedRound?lastCompletedRound.displayValue:'—'):(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||'—');
-freshScores[name]={ pos:c.status?.position?.displayName||'—', score:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
+freshScores[name]={ pos:c.status?.position?.displayName||'—', score:(mc||wd)?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; }); GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now(); setApiStatus(isPreTournament ? 'scheduled' : 'live', isPreTournament ? 'Pre-Tournament' : 'Live'); console.log('✅ ESPN API returned', Object.keys(GOLFER_SCORES).length, 'golfers'); renderAll(); } catch(e) { ErrorTracker.api('ESPN leaderboard/scores parse failed', { message: e.message, stack: e.stack }); console.error('❌ ESPN API error:', e.message, e.stack); if (Object.keys(GOLFER_SCORES).length === 0) { Object.keys(FLAGS).forEach(name => { GOLFER_SCORES[name] = { pos:'—', score:0, thru:'—', teeTime:'TBD', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; }); console.log('⚠️ Seeded', Object.keys(GOLFER_SCORES).length, 'golfers from FLAGS (offline fallback)'); } setApiStatus('cached', 'Offline · tap to retry'); renderAll(); }}
 
 function setApiStatus(state, text) {
   _lastStatusText = text;
@@ -3652,7 +3653,7 @@ function getHolesRemaining(playerName) {
   // Returns total holes remaining in the TOURNAMENT (72 total) for this golfer.
   const gd = GOLFER_SCORES[playerName];
   if (!gd) return 72;
-  if (gd.thru === 'MC') return 0;
+  if (gd.thru === 'MC' || gd.thru === 'WD') return 0;
 
   // Count completed rounds from round scores
   const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null).length;
