@@ -642,6 +642,14 @@ html, body  {
   letter-spacing: -0.2px;
 }
 
+.s-holes-left {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  margin-left: 6px;
+  letter-spacing: 0;
+}
+
 .s-email  {
   font-size: 10px;
   color: var(--text3);
@@ -2957,8 +2965,10 @@ const cmpNum = isCmpSelected ? (cmpSelections.indexOf(entryIdx) + 1) : 0;
 const cmpCls = compareMode ? ' cmp-mode' : '';
 const cmpSelCls = isCmpSelected ? ' cmp-selected' : '';
 const cmpBadge = isCmpSelected ? `<span class="cmp-badge">${cmpNum}</span>` : '';
+const teamHolesLeft = e.picks.reduce((sum, p) => sum + getHolesRemaining(p), 0);
+const holesTag = `<span class="s-holes-left">${teamHolesLeft}h left</span>`;
 const rowClick = compareMode ? `cmpSelectTeam(${entryIdx})` : `togglePanel(this,${i})`;
-html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
+html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge} ${holesTag}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
 const gd = GOLFER_SCORES[g.name];
 const pos = gd ? gd.pos : '—';
 const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
