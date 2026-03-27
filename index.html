@@ -2836,15 +2836,13 @@ to  {
 </div>
 </div>
 <div id="lb-legend" style="display:none"></div>
+<div class="lb-count-tag" id="lb-count" style="padding:0;margin:0;display:none"></div>
 <div style="display:flex;align-items:center;justify-content:space-between;padding:0 14px 4px">
-<div class="lb-count-tag" id="lb-count" style="padding:0;margin:0"></div>
+<span class="lb-round-label" id="lb-round-title" style="margin:0">First Round</span>
 <div style="position:relative;width:110px">
 <input type="text" id="lb-search" placeholder="Search…" oninput="filterLeaderboardSearch()" autocorrect="off" autocapitalize="off" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:4px 24px 4px 8px;font-size:10px;color:var(--text);font-family:inherit;outline:none;letter-spacing:0.2px">
 <span id="lb-search-clear" onclick="document.getElementById('lb-search').value='';filterLeaderboardSearch();document.getElementById('lb-search').focus()" style="display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:16px;height:16px;line-height:16px;text-align:center;font-size:11px;color:rgba(255,255,255,0.4);cursor:pointer;border-radius:50%;background:rgba(255,255,255,0.1)">✕</span>
 </div>
-</div>
-<div class="lb-top-row">
-<span class="lb-round-label" id="lb-round-title">First Round</span>
 </div>
 </div>
 <div id="leaderboard-list">
@@ -3362,7 +3360,7 @@ function renderLeaderboard() {
   if (countEl) {
     if (lbFilter==='pool') countEl.textContent = players.length + ' pool picks';
     else if (lbFilter==='myPicks') countEl.textContent = players.length + ' of your picks';
-    else countEl.textContent = players.filter(p=>p.thru!=='MC').length + ' active · ' + players.filter(p=>p.thru==='MC').length + ' MC';
+    else countEl.textContent = '';
   }
   const legendEl = document.getElementById('lb-legend');
   if (legendEl) {
