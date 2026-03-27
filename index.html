@@ -909,7 +909,7 @@ html, body  {
 .tv-h-player { flex: 1; min-width: 0; }
 .tv-h-score { width: 40px; text-align: right; flex-shrink: 0; }
 .tv-h-today { width: 40px; text-align: right; flex-shrink: 0; color: var(--gold); }
-.tv-h-thru { width: 48px; text-align: right; flex-shrink: 0; }
+.tv-h-thru { width: 62px; text-align: right; flex-shrink: 0; }
 .tv-h-rnd { width: 26px; text-align: right; flex-shrink: 0; color: var(--text3); }
 .tv-h-tot { width: 30px; text-align: right; flex-shrink: 0; }
 .tv-h-sort { cursor: pointer; -webkit-user-select: none; user-select: none; }
@@ -1042,10 +1042,11 @@ html, body  {
 .tv-today.eve { color: var(--text2); }
 
 .tv-thru  {
-  width: 48px;
+  width: 62px;
   font-size: 11px;
   font-weight: 600;
   text-align: right;
+  white-space: nowrap;
   flex-shrink: 0;
   color: var(--text2);
 }
@@ -3059,7 +3060,8 @@ function renderLeaderboard() {
     let teeStr = '';
     if (p.teeTime && p.teeTime.includes('T')) { try { teeStr = new Date(p.teeTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); } catch(e){} }
     else if (p.teeTime) { teeStr = p.teeTime; }
-    const thruDisp = preT ? teeStr || '—' : p.thru + (p.startHole === 10 && p.thru !== 'MC' && !preT ? '*' : '');
+    const isTeeTime = p.thru && p.thru.includes(':');
+const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.startHole === 10 && p.thru !== 'MC' && p.thru !== 'F' && parseInt(p.thru) > 0 ? '*' : ''));
     const todayDisp = preT ? '—' : (p.todayDisplay || '—');
     const todayVal = todayDisp === 'E' || todayDisp === '—' ? 0 : parseInt(todayDisp.replace('+','')) || 0;
     const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
