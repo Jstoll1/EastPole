@@ -2411,6 +2411,30 @@ to  {
 .chat-time { font-size:9px; color:var(--text3); margin-top:3px; text-align:right; }
 .chat-msg.mine .chat-time { text-align:right; }
 .chat-msg.other .chat-time { text-align:left; }
+.chat-reactions { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.chat-react-btn {
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:2px 6px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:2px;
+  transition:background 0.15s;
+}
+.chat-react-btn.mine-react { border-color:var(--gold); background:rgba(198,160,60,0.12); }
+.chat-react-btn .react-count { font-size:10px; color:var(--text3); }
+.chat-react-add {
+  background:none; border:1px solid var(--border); border-radius:12px;
+  padding:2px 6px; font-size:11px; cursor:pointer; color:var(--text3);
+  transition:background 0.15s;
+}
+.chat-react-add:hover { background:var(--card); }
+.chat-react-picker {
+  display:flex; gap:2px; background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:4px 6px; position:absolute; bottom:100%; left:0;
+  margin-bottom:4px; box-shadow:0 2px 12px rgba(0,0,0,0.3); z-index:10;
+}
+.chat-react-picker button {
+  background:none; border:none; font-size:18px; cursor:pointer; padding:2px 4px;
+  border-radius:8px; transition:background 0.1s;
+}
+.chat-react-picker button:hover { background:rgba(255,255,255,0.1); }
 .chat-date-sep {
   text-align:center; font-size:10px; color:var(--text3); padding:8px 0 4px;
   font-weight:600; letter-spacing:0.5px; text-transform:uppercase;
@@ -3933,7 +3957,7 @@ function initChat() {
       if (!msg || !msg.text) return;
       if (emptyEl.style.display !== 'none') emptyEl.style.display = 'none';
       chatMsgCount++;
-      appendChatMessage(msg, messagesEl);
+      appendChatMessage(msg, messagesEl, snap.key);
       if (!chatInitialLoad && !chatDrawerOpen) {
         chatUnread++;
         updateChatBadge();
@@ -3952,10 +3976,13 @@ function initChat() {
   input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } };
 }
 
-function appendChatMessage(msg, container) {
+const CHAT_EMOJIS = ['👍','😂','🔥','⛳','💀','❤️'];
+
+function appendChatMessage(msg, container, msgKey) {
   const isMine = chatDisplayName && msg.name === chatDisplayName;
   const div = document.createElement('div');
   div.className = 'chat-msg ' + (isMine ? 'mine' : 'other');
+  if (msgKey) div.dataset.msgKey = msgKey;
 
   const ts = msg.timestamp ? new Date(msg.timestamp) : new Date();
   const now = new Date();
@@ -3972,9 +3999,80 @@ function appendChatMessage(msg, container) {
   }
 
   const senderHtml = `<div class="chat-sender">${escHtml(msg.name || 'Anonymous')}</div>`;
-  div.innerHTML = `${senderHtml}<div class="chat-text">${escHtml(msg.text)}</div><div class="chat-time">${timeStr}</div>`;
+  div.innerHTML = `${senderHtml}<div class="chat-text">${escHtml(msg.text)}</div><div class="chat-time">${timeStr}</div><div class="chat-reactions" data-key="${msgKey||''}"></div><button class="chat-react-add" onclick="showReactPicker(this)">+</button>`;
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
+
+  // Listen for reactions on this message
+  if (msgKey) {
+    chatRef.child(msgKey).child('reactions').on('value', snap => {
+      renderReactions(div, snap.val(), msgKey);
+    });
+  }
+}
+
+function renderReactions(msgEl, reactions, msgKey) {
+  const container = msgEl.querySelector('.chat-reactions');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!reactions) return;
+  // Aggregate: { emoji: [name1, name2] }
+  const agg = {};
+  Object.entries(reactions).forEach(([uid, emoji]) => {
+    if (!agg[emoji]) agg[emoji] = [];
+    agg[emoji].push(uid);
+  });
+  Object.entries(agg).forEach(([emoji, users]) => {
+    const isMineReact = users.includes(chatDisplayName);
+    const btn = document.createElement('button');
+    btn.className = 'chat-react-btn' + (isMineReact ? ' mine-react' : '');
+    btn.innerHTML = `${emoji}<span class="react-count">${users.length}</span>`;
+    btn.onclick = () => toggleReaction(msgKey, emoji);
+    container.appendChild(btn);
+  });
+}
+
+function showReactPicker(addBtn) {
+  // Close any existing picker
+  const existing = document.querySelector('.chat-react-picker');
+  if (existing) existing.remove();
+  if (!chatDisplayName) return;
+
+  const picker = document.createElement('div');
+  picker.className = 'chat-react-picker';
+  CHAT_EMOJIS.forEach(emoji => {
+    const btn = document.createElement('button');
+    btn.textContent = emoji;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const msgEl = addBtn.closest('.chat-msg');
+      const msgKey = msgEl.dataset.msgKey;
+      if (msgKey) toggleReaction(msgKey, emoji);
+      picker.remove();
+    };
+    picker.appendChild(btn);
+  });
+  addBtn.parentElement.style.position = 'relative';
+  addBtn.parentElement.appendChild(picker);
+
+  // Close picker on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closePicker(e) {
+      if (!picker.contains(e.target)) { picker.remove(); document.removeEventListener('click', closePicker); }
+    });
+  }, 0);
+}
+
+function toggleReaction(msgKey, emoji) {
+  if (!chatDisplayName || !msgKey) return;
+  const reactRef = chatRef.child(msgKey).child('reactions').child(chatDisplayName);
+  reactRef.once('value', snap => {
+    if (snap.val() === emoji) {
+      reactRef.remove(); // un-react
+    } else {
+      reactRef.set(emoji); // add/change reaction
+    }
+  });
 }
 
 function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
