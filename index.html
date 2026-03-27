@@ -3261,7 +3261,7 @@ if(c.athlete?.id) freshAthleteIds[name] = c.athlete.id;
 const state=c.status?.type?.name||'';
 const scheduled=state==='STATUS_SCHEDULED';
 const mc=state.includes('CUT')||false;
-const wd=state.includes('WD')||false;
+const wd=state.includes('WD')||state.includes('WITHDRAW')||false;
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
 const score=(mc||wd)?11:(scoreToPar?scoreToPar.value:0);
 const lines=c.linescores||[];
