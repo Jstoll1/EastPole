@@ -3741,7 +3741,7 @@ function getHolesRemaining(playerName) {
   if (gd.thru === 'MC' || gd.thru === 'WD' || gd.score === 11 || gd.score === 12) return 0;
 
   // Count completed rounds from round scores
-  const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null).length;
+  let completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null).length;
 
   // Determine holes done in current round
   let holesThisRound = 0;
@@ -3752,6 +3752,13 @@ function getHolesRemaining(playerName) {
     holesThisRound = 0;
   } else {
     holesThisRound = parseInt(gd.thru) || 0;
+  }
+
+  // When showing a tee time (between rounds), infer at least 1 completed round
+  // even if r1/r2/etc are null (ESPN data gap)
+  if (isTeeTime && completedRounds === 0) {
+    // todayDisplay shows last round score (e.g. "67"), meaning at least 1 round done
+    completedRounds = 1;
   }
 
   // When thru=F or 18 or tee time (between rounds), this round IS already counted in completedRounds.
