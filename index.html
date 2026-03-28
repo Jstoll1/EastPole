@@ -3682,7 +3682,7 @@ const scheduled=state==='STATUS_SCHEDULED';
 const dispVal=(c.status?.displayValue||'').toUpperCase();
 const stateDesc=(c.status?.type?.description||'').toUpperCase();
 const posName=(c.status?.position?.displayName||'').toUpperCase();
-if(name==='Aaron Rai') console.log('🔍 Aaron Rai ESPN status:', JSON.stringify(c.status));
+if(name==='Aaron Rai') console.log('🔍 Aaron Rai FULL:', JSON.stringify({status:c.status, statistics:c.statistics, sortOrder:c.sortOrder, linescores:c.linescores}));
 const wd=state.includes('WD')||state.includes('WITHDRAW')||dispVal==='WD'||stateDesc.includes('WITHDRAW')||posName==='WD'||false;
 const mc=!wd&&(state.includes('CUT')||false);
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
