@@ -3227,6 +3227,7 @@ const COURSE_PAR = 72;
 const PREV_WINNER = 'Min Woo Lee';
 const gs = n => GOLFER_SCORES[n] ? GOLFER_SCORES[n].score : 11;
 const fmt = s => s === 11 ? 'MC' : s === 12 ? 'WD' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
+const fmtTeam = s => s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
 const cls = s => s < 0 ? 'neg' : s > 0 ? 'pos' : 'eve';
 
 function calcEntry(e) { const scores = e.picks.map(n => ({name:n, score:gs(n)})).sort((a,b)=>a.score-b.score);
@@ -3291,12 +3292,12 @@ let heroHtml = ''; if (currentUserEmail && currentUserTeams.length > 0) {
     const scc = cls(myEntry.total);
     const prevRk = PREV_RANKS[myEntry.team];
     let moveHtml = ''; if (prevRk && prevRk !== myRank) { const d = prevRk - myRank; moveHtml = d > 0 ? `<div class="my-pos-move up">▲${d} spot${d>1?'s':''}</div>` : `<div class="my-pos-move dn">▼${Math.abs(d)} spot${Math.abs(d)>1?'s':''}</div>`; }
-    heroHtml += `<div class="my-pos-card" style="cursor:pointer" onclick="setUser('${myEntry.email}',${currentUserTeams.indexOf(activeTeam)})"> <div class="my-pos-rank">${myRank}</div> <div class="my-pos-info"> <div class="my-pos-team">${myEntry.team}</div> <div class="my-pos-detail">${gapStr}</div> ${moveHtml} </div> <div class="my-pos-score ${scc}">${fmt(myEntry.total)}</div> </div>`; }
+    heroHtml += `<div class="my-pos-card" style="cursor:pointer" onclick="setUser('${myEntry.email}',${currentUserTeams.indexOf(activeTeam)})"> <div class="my-pos-rank">${myRank}</div> <div class="my-pos-info"> <div class="my-pos-team">${myEntry.team}</div> <div class="my-pos-detail">${gapStr}</div> ${moveHtml} </div> <div class="my-pos-score ${scc}">${fmtTeam(myEntry.total)}</div> </div>`; }
   });
 }
 
 let html = ''; ranked.forEach((e, i) => { const rank = ranks[i];
-const sc = e.total, scf = fmt(sc), scc = cls(sc);
+const sc = e.total, scf = fmtTeam(sc), scc = cls(sc);
 const top4Str = e.top4.map(g => fmt(g.score)).join(' ');
 const isMyTeam = e.email === currentTeamEmail ? 'is-my-team' : '';
 const isTied = (i < ranked.length-1 && ranked[i].total === ranked[i+1].total) || (i > 0 && ranked[i].total === ranked[i-1].total);
@@ -4292,14 +4293,14 @@ function renderH2HInline() {
   if (pctRight > 12) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
   html += '<div class="h2h-score-summary">';
-  html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmt(cA.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
+  html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmtTeam(cA.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
   if (cA.total === cB.total) {
     html += '<div class="h2h-tied-badge">TIED</div>';
   } else {
     const gap = Math.abs(cA.total - cB.total);
     html += '<div style="text-align:center;color:var(--text3);font-size:10px;font-weight:700">' + gap + ' stroke' + (gap > 1 ? 's' : '') + '</div>';
   }
-  html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmt(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
+  html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmtTeam(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
   html += '</div></div>';
   html += '<div class="h2h-matchups">';
   html += buildTeamBlock(cA);
@@ -4313,7 +4314,7 @@ function buildTeamBlock(calc) {
   let html = '<div class="h2h-team-block">';
   html += '<div class="h2h-team-hdr">';
   html += '<div class="h2h-team-name">' + calc.team + '</div>';
-  html += '<div class="h2h-team-total ' + cls(calc.total) + '">' + fmt(calc.total) + '</div>';
+  html += '<div class="h2h-team-total ' + cls(calc.total) + '">' + fmtTeam(calc.total) + '</div>';
   html += '</div>';
   calc.scores.forEach(function(g, j) {
     const isTop = j < 4;
@@ -4344,7 +4345,7 @@ function renderTicker() {
   const prevScroll = track ? track.scrollLeft : 0;
   const ranked = getRanked();
   const items = ranked.map((e, i) => {
-    const scf = fmt(e.total);
+    const scf = fmtTeam(e.total);
     const scc = cls(e.total);
     const money = i < 3 ? ' 💰' : '';
     const nameStyle = i < 3 ? ' style="color:var(--gold)"' : '';
