@@ -2709,6 +2709,7 @@ to  {
 .feed-event.feed-faller { border-left-color:#ef5350; }
 .feed-event.feed-entry  { border-left-color:#d4a843; }
 .feed-event.feed-cut    { border-left-color:#999; }
+.feed-event.feed-margin { border-left-color:#ff6b35; }
 .feed-icon { font-size:18px; flex-shrink:0; line-height:1.2; }
 .feed-body { flex:1; min-width:0; }
 .feed-msg { font-size:13px; color:var(--text1); line-height:1.4; }
@@ -3769,6 +3770,9 @@ let FEED_EVENTS = []; // Rolling event feed
 let PREV_FEED_POSITIONS = {}; // Track positions for feed movement detection
 let _feedInitialized = false; // Suppress events on first data load
 let _feedFilter = 'all'; // 'all' or 'myteam'
+let _playerStreaks = {}; // Track consecutive birdies per player { name: count }
+let _prevLeaderTeam = null; // Track pool leader for lead change detection
+let _prevPayoutTeams = []; // Track teams in payout positions
 
 function feedTimeAgo(ts) {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -3814,9 +3818,19 @@ function generateFeedEvents(freshScores) {
       const diff = d.score - prev;
       const hole = d.thru === 'F' ? '18' : d.thru;
       const holeTag = /^\d+$/.test(hole) ? ' on #' + hole : '';
-      if (diff <= -2) addFeedEvent('eagle', '\uD83E\uDD85', name + ' eagles' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
-      else if (diff < 0) addFeedEvent('birdie', '\uD83D\uDC26', name + ' birdies' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
-      else if (diff > 0) addFeedEvent('bogey', '\uD83D\uDCA5', name + ' bogeys' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
+      // Ownership context for pool picks
+      const ownE = OWNERSHIP_DATA.find(o => o.player === name);
+      const ownTag = ownE && ownE.entries > 1 ? ' (' + Math.round(ownE.pct * 100) + '% owned)' : '';
+      if (diff <= -2) addFeedEvent('eagle', '\uD83E\uDD85', name + ownTag + ' eagles' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
+      else if (diff < 0) addFeedEvent('birdie', '\uD83D\uDC26', name + ownTag + ' birdies' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
+      else if (diff > 0) addFeedEvent('bogey', '\uD83D\uDCA5', name + ownTag + ' bogeys' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
+      // Hot streak tracking
+      if (diff < 0) {
+        _playerStreaks[name] = (_playerStreaks[name] || 0) + 1;
+        if (_playerStreaks[name] >= 3) addFeedEvent('mover', '\uD83D\uDD25', name + ' is on fire \u2014 ' + _playerStreaks[name] + ' birdies in a row', { player: name });
+      } else {
+        _playerStreaks[name] = 0;
+      }
     }
   });
   // Position changes: big movers/fallers
@@ -3830,6 +3844,36 @@ function generateFeedEvents(freshScores) {
       else if (delta <= -3) addFeedEvent('faller', '\uD83D\uDCC9', name + ' drops ' + Math.abs(delta) + ' spots to ' + d.pos, { player: name });
     }
   });
+  // Round milestones: detect completed rounds
+  if (!isInit) {
+    Object.entries(freshScores).forEach(([name, d]) => {
+      if (d.score === 11 || d.score === 12) return;
+      const prevD = GOLFER_SCORES[name];
+      // Player just finished a round (thru went to 'F' from a number)
+      if (d.thru === 'F' && prevD && /^\d+$/.test(prevD.thru)) {
+        const roundScores = [d.r1, d.r2, d.r3, d.r4].filter(r => r != null);
+        const lastRound = roundScores[roundScores.length - 1];
+        if (lastRound && lastRound <= 66) {
+          addFeedEvent('eagle', '\uD83C\uDFAF', name + ' fires a ' + lastRound + ' \u2014 round of the day candidate', { player: name });
+        }
+      }
+    });
+    // Under par watch: players significantly under par mid-round
+    Object.entries(freshScores).forEach(([name, d]) => {
+      if (d.score === 11 || d.score === 12) return;
+      const thruNum = parseInt(d.thru);
+      if (thruNum >= 9 && thruNum <= 17 && d.todayDisplay) {
+        const todayScore = parseInt(d.todayDisplay);
+        const prevD = GOLFER_SCORES[name];
+        const prevThru = prevD ? parseInt(prevD.thru) : 0;
+        // Only fire once when crossing thresholds (thru 9 or 14)
+        if (todayScore && todayScore <= 65 && (thruNum >= 14 && (!prevThru || prevThru < 14))) {
+          const parDiff = todayScore - 72;
+          if (parDiff <= -5) addFeedEvent('mover', '\u26F3', name + ' is ' + parDiff + ' today through ' + thruNum + ' holes', { player: name });
+        }
+      }
+    });
+  }
   // On first load, add snapshot: leader + active mid-round players
   if (isInit) {
     const active = Object.entries(freshScores).filter(([,d]) => d.score !== 11 && d.score !== 12);
@@ -3850,6 +3894,7 @@ function generateFeedEvents(freshScores) {
 }
 
 function generateEntryEvents(ranked, ranks) {
+  const payoutCount = typeof POOL_CONFIG !== 'undefined' ? POOL_CONFIG.payouts.length : 3;
   ranked.forEach((e, i) => {
     const prevRk = PREV_RANKS[e.team];
     const newRk = ranks[i];
@@ -3859,6 +3904,44 @@ function generateEntryEvents(ranked, ranks) {
       else if (delta < 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' drops to #' + newRk, { team: e.team });
     }
   });
+  // Lead change detection
+  const newLeader = ranked.length ? ranked[0].team : null;
+  if (_prevLeaderTeam && newLeader && newLeader !== _prevLeaderTeam) {
+    addFeedEvent('entry', '\uD83D\uDCA5', newLeader + ' takes the lead from ' + _prevLeaderTeam, { team: newLeader });
+  }
+  _prevLeaderTeam = newLeader;
+  // Payout line movement
+  const currPayoutTeams = ranked.slice(0, payoutCount).map((e, i) => ({ team: e.team, rank: ranks[i] }));
+  if (_prevPayoutTeams.length) {
+    currPayoutTeams.forEach(({ team, rank }) => {
+      const wasPaying = _prevPayoutTeams.some(p => p.team === team);
+      if (!wasPaying && rank <= payoutCount) {
+        const payoutLabel = typeof POOL_CONFIG !== 'undefined' ? POOL_CONFIG.payouts[rank - 1]?.place || ('#' + rank) : '#' + rank;
+        addFeedEvent('entry', '\uD83D\uDCB0', team + ' moves into the money (' + payoutLabel + ')', { team });
+      }
+    });
+    _prevPayoutTeams.forEach(({ team }) => {
+      const stillPaying = currPayoutTeams.some(p => p.team === team);
+      if (!stillPaying) {
+        addFeedEvent('entry', '\uD83D\uDCC9', team + ' drops out of the money', { team });
+      }
+    });
+  }
+  _prevPayoutTeams = currPayoutTeams;
+  // Margin tracker: alert when race is tight
+  if (ranked.length >= 2 && _prevLeaderTeam) {
+    const topScore = ranked[0].total;
+    const thirdScore = ranked.length >= payoutCount ? ranked[payoutCount - 1].total : ranked[ranked.length - 1].total;
+    const margin = thirdScore - topScore;
+    if (margin <= 2 && margin >= 0) {
+      // Only fire occasionally — check if we already have a recent margin event
+      const recentMargin = FEED_EVENTS.find(ev => ev.type === 'margin' && (Date.now() - ev.ts) < 300000);
+      if (!recentMargin) {
+        const spots = Math.min(payoutCount, ranked.length);
+        addFeedEvent('margin', '\u26A1', 'Only ' + margin + ' stroke' + (margin !== 1 ? 's' : '') + ' separate' + (margin === 1 ? 's' : '') + ' the top ' + spots, {});
+      }
+    }
+  }
 }
 
 function getMyPickNames() {
@@ -3872,6 +3955,8 @@ function getMyTeamNames() {
 
 function feedMatchesFilter(ev) {
   if (_feedFilter === 'all') return true;
+  // Margin alerts are relevant to everyone
+  if (ev.type === 'margin') return true;
   const myPicks = getMyPickNames();
   const myTeams = getMyTeamNames();
   if (ev.meta?.player && myPicks.has(ev.meta.player)) return true;
