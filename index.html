@@ -2812,6 +2812,8 @@ to  {
 .debug-stat-value.warn { color:#f5c518; }
 .debug-stat-value.bad { color:#FF7F7F; }
 .debug-empty { color:var(--text3); text-align:center; padding:24px; font-size:11px; }
+.debug-copy-btn { color:rgba(255,255,255,0.3); cursor:pointer; font-size:14px; flex-shrink:0; padding:0 4px; }
+.debug-copy-btn:active { color:var(--gold); }
 </style>
 <script data-goatcounter="https://calcutta.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -3033,6 +3035,7 @@ to  {
 <button class="debug-tab active" onclick="debugSwitchTab('overview',this)">Overview</button>
 <button class="debug-tab" onclick="debugSwitchTab('errors',this)">Errors</button>
 <button class="debug-tab" onclick="debugSwitchTab('network',this)">Network</button>
+<button class="debug-tab" onclick="debugSwitchTab('players',this)">Players</button>
 <button class="debug-tab" onclick="debugSwitchTab('perf',this)">Perf</button>
 </div>
 <div class="debug-body" id="debug-body"></div>
@@ -4881,31 +4884,36 @@ window.fetch = async function(...args) {
   }
 };
 
-let _debugOpen = false;
+let _debugOpen = sessionStorage.getItem('debugOpen') === '1';
 let _debugTapCount = 0;
 let _debugTapTimer = null;
 let _debugTab = 'overview';
+let _debugErrFilter = 'all';
+let _debugPlayerSearch = '';
 
-// 5-tap activation on the Live pill
+// Long press Live pill to open debug (700ms hold)
 document.addEventListener('DOMContentLoaded', () => {
   const pill = document.querySelector('.hdr-pill');
   if (pill) {
-    pill.addEventListener('click', (e) => {
-      _debugTapCount++;
-      clearTimeout(_debugTapTimer);
-      _debugTapTimer = setTimeout(() => { _debugTapCount = 0; }, 1500);
-      if (_debugTapCount >= 5) {
-        e.stopPropagation();
-        e.preventDefault();
-        _debugTapCount = 0;
-        toggleDebugPanel();
-      }
-    });
+    let pressTimer = null;
+    pill.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => { e.preventDefault(); toggleDebugPanel(); }, 700); }, {passive:false});
+    pill.addEventListener('touchend', () => { clearTimeout(pressTimer); });
+    pill.addEventListener('touchmove', () => { clearTimeout(pressTimer); });
+    // Desktop: long click
+    pill.addEventListener('mousedown', () => { pressTimer = setTimeout(() => { toggleDebugPanel(); }, 700); });
+    pill.addEventListener('mouseup', () => { clearTimeout(pressTimer); });
+    pill.addEventListener('mouseleave', () => { clearTimeout(pressTimer); });
+  }
+  // Restore debug panel if was open
+  if (_debugOpen) {
+    document.getElementById('debug-panel').classList.add('open');
+    renderDebugPanel();
   }
 });
 
 function toggleDebugPanel() {
   _debugOpen = !_debugOpen;
+  sessionStorage.setItem('debugOpen', _debugOpen ? '1' : '0');
   document.getElementById('debug-panel').classList.toggle('open', _debugOpen);
   if (_debugOpen) renderDebugPanel();
 }
@@ -4929,6 +4937,14 @@ function debugClearLog() {
   ErrorTracker.log.length = 0;
   DebugPerf.network.length = 0;
   renderDebugPanel();
+}
+
+function debugCopyEntry(text) {
+  navigator.clipboard.writeText(typeof text === 'string' ? text : JSON.stringify(text, null, 2)).then(() => {
+    showToast('Copied to clipboard');
+  }).catch(() => {
+    showToast('Copy failed');
+  });
 }
 
 function debugExport() {
@@ -5031,18 +5047,63 @@ function renderDebugPanel() {
       + '</div>';
 
   } else if (_debugTab === 'errors') {
-    const errs = ErrorTracker.log.slice().reverse();
-    if (!errs.length) { body.innerHTML = '<div class="debug-empty">No errors logged</div>'; return; }
-    body.innerHTML = errs.map((e, i) => {
+    const allErrs = ErrorTracker.log.slice().reverse();
+    const filtered = _debugErrFilter === 'all' ? allErrs : allErrs.filter(e => e.type === _debugErrFilter);
+    let filterHtml = '<div style="display:flex;gap:4px;margin-bottom:8px">';
+    ['all','api','js','render'].forEach(f => {
+      const cnt = f === 'all' ? allErrs.length : allErrs.filter(e=>e.type===f).length;
+      filterHtml += '<button onclick="_debugErrFilter=\'' + f + '\';renderDebugPanel()" style="padding:3px 8px;font-size:9px;border-radius:4px;border:1px solid ' + (_debugErrFilter===f?'var(--gold)':'rgba(255,255,255,0.15)') + ';background:' + (_debugErrFilter===f?'rgba(212,168,67,0.2)':'none') + ';color:' + (_debugErrFilter===f?'var(--gold)':'var(--text3)') + ';cursor:pointer;font-family:inherit;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">' + f + ' (' + cnt + ')</button>';
+    });
+    filterHtml += '</div>';
+    if (!filtered.length) { body.innerHTML = filterHtml + '<div class="debug-empty">No ' + (_debugErrFilter==='all'?'':''+_debugErrFilter+' ') + 'errors logged</div>'; return; }
+    body.innerHTML = filterHtml + filtered.map((e, i) => {
       const t = e.ts.split('T')[1].substring(0, 8);
       const plain = explainError(e);
+      const copyId = 'dbg-err-' + i;
       return '<div class="debug-row debug-expandable" onclick="this.classList.toggle(\'expanded\')">'
         + '<span class="ts">' + t + '</span><span class="tag ' + e.type + '">' + e.type + '</span>'
         + '<span class="msg">' + escHtml(e.message) + '</span>'
+        + '<span class="debug-copy-btn" onclick="event.stopPropagation();debugCopyEntry(' + JSON.stringify(JSON.stringify(e)).replace(/"/g,'&quot;') + ')">⧉</span>'
         + '<span class="debug-expand-icon">▸</span>'
         + '<div class="debug-explain">' + plain + '</div>'
         + '</div>';
     }).join('');
+
+  } else if (_debugTab === 'players') {
+    let html = '<div style="margin-bottom:8px"><input id="debug-player-search" type="text" placeholder="Search player..." value="' + escHtml(_debugPlayerSearch) + '" oninput="_debugPlayerSearch=this.value;renderDebugPanel()" style="width:100%;padding:6px 10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-family:inherit;font-size:11px;box-sizing:border-box"></div>';
+    const names = Object.keys(GOLFER_SCORES).sort();
+    const q = _debugPlayerSearch.toLowerCase();
+    const matches = q ? names.filter(n => n.toLowerCase().includes(q)) : names.slice(0, 20);
+    if (!matches.length) { body.innerHTML = html + '<div class="debug-empty">' + (q ? 'No player found for "' + escHtml(q) + '"' : 'No golfer data loaded') + '</div>'; return; }
+    html += matches.map(name => {
+      const g = GOLFER_SCORES[name];
+      const prev = PREV_SCORES[name];
+      const diff = prev !== undefined && g.score !== prev ? (g.score - prev) : null;
+      const diffStr = diff !== null ? (diff > 0 ? '<span style="color:#FF7F7F">+' + diff + '</span>' : '<span style="color:#34c759">' + diff + '</span>') : '';
+      const holesLeft = getHolesRemaining(name);
+      const inPool = ENTRIES.some(e => e.picks.includes(name));
+      return '<div class="debug-row" style="flex-wrap:wrap;gap:4px">'
+        + '<div style="display:flex;align-items:center;gap:6px;width:100%">'
+        + '<span style="font-weight:700;color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (FLAGS[name]||'') + ' ' + name + '</span>'
+        + (inPool ? '<span style="font-size:8px;background:rgba(212,168,67,0.2);color:var(--gold);padding:1px 5px;border-radius:3px;font-weight:700">POOL</span>' : '')
+        + '<span class="debug-copy-btn" onclick="debugCopyEntry(\'' + name.replace(/'/g,"\\'") + ': \'+JSON.stringify(GOLFER_SCORES[\'' + name.replace(/'/g,"\\'") + '\']))">⧉</span>'
+        + '</div>'
+        + '<div style="display:flex;gap:10px;width:100%;font-size:10px;color:var(--text3)">'
+        + '<span>Pos: <b style="color:#fff">' + g.pos + '</b></span>'
+        + '<span>Score: <b class="' + cls(g.score) + '">' + fmt(g.score) + '</b>' + (diffStr ? ' ' + diffStr : '') + '</span>'
+        + '<span>Thru: <b style="color:#fff">' + g.thru + '</b></span>'
+        + '<span>Holes left: <b style="color:#fff">' + holesLeft + '</b></span>'
+        + '</div>'
+        + '<div style="display:flex;gap:10px;width:100%;font-size:10px;color:var(--text3)">'
+        + '<span>R1:' + (g.r1||'—') + '</span><span>R2:' + (g.r2||'—') + '</span><span>R3:' + (g.r3||'—') + '</span><span>R4:' + (g.r4||'—') + '</span>'
+        + '<span>Tot:' + (g.tot||'—') + '</span>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+    if (!q) html += '<div class="debug-empty">Showing first 20 of ' + names.length + ' players. Type to search.</div>';
+    body.innerHTML = html;
+    const si = document.getElementById('debug-player-search');
+    if (si && document.activeElement !== si) { si.focus(); si.selectionStart = si.selectionEnd = si.value.length; }
 
   } else if (_debugTab === 'network') {
     const nets = DebugPerf.network.slice().reverse();
