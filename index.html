@@ -3633,20 +3633,34 @@ function renderLeaderboard() {
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
   const topMoverNames = isPreT ? new Set() : getTopMovers(players);
-  // Ensure at least 4 up arrows and 4 down arrows
-  const arrowPlayers = new Set();
+  // Ensure at least 4 up arrows and 4 down arrows — use round start, fallback to prev positions
+  const arrowPlayers = new Map(); // name -> delta
   if (!isPreT) {
-    const deltas = [];
+    const roundDeltas = [];
+    const prevDeltas = [];
     players.forEach(p => {
       if (p.score === 11 || p.score === 12) return;
-      const sP = ROUND_START_POSITIONS[p.name];
       const cP = parsePos(p.pos);
-      if (sP && cP && sP !== cP) deltas.push({ name: p.name, delta: sP - cP });
+      if (!cP) return;
+      const sP = ROUND_START_POSITIONS[p.name];
+      if (sP && sP !== cP) roundDeltas.push({ name: p.name, delta: sP - cP });
+      const pP = PREV_POSITIONS[p.name];
+      if (pP && pP !== cP) prevDeltas.push({ name: p.name, delta: pP - cP });
     });
-    const ups = deltas.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta);
-    const dns = deltas.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta);
-    ups.slice(0, Math.max(4, ups.length)).forEach(d => arrowPlayers.add(d.name));
-    dns.slice(0, Math.max(4, dns.length)).forEach(d => arrowPlayers.add(d.name));
+    // Use round deltas first
+    let ups = roundDeltas.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta);
+    let dns = roundDeltas.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta);
+    // If not enough from round start, supplement with prev-position deltas
+    if (ups.length < 4) {
+      const existing = new Set(ups.map(d => d.name));
+      prevDeltas.filter(d => d.delta > 0 && !existing.has(d.name)).sort((a, b) => b.delta - a.delta).forEach(d => { if (ups.length < 4) ups.push(d); });
+    }
+    if (dns.length < 4) {
+      const existing = new Set(dns.map(d => d.name));
+      prevDeltas.filter(d => d.delta < 0 && !existing.has(d.name)).sort((a, b) => a.delta - b.delta).forEach(d => { if (dns.length < 4) dns.push(d); });
+    }
+    ups.forEach(d => arrowPlayers.set(d.name, d.delta));
+    dns.forEach(d => arrowPlayers.set(d.name, d.delta));
   }
   let rowIdx = 0;
   players.forEach(p => {
@@ -3677,11 +3691,11 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
     const roundDelta = (startP && currP) ? startP - currP : 0;
     // Persistent arrows from round start, flash on fresh change
     let moveHtml = '';
-    const showArrow = !isPreT && startP && currP && roundDelta !== 0 && arrowPlayers.has(p.name);
-    if (showArrow) {
+    const arrowDelta = arrowPlayers.has(p.name) ? arrowPlayers.get(p.name) : 0;
+    if (!isPreT && currP && arrowDelta !== 0) {
       const justChanged = prevP && currP && currP !== prevP;
       const flashCl = justChanged ? ' pos-move-flash' : '';
-      moveHtml = roundDelta > 0 ? '<div class="pos-move up' + flashCl + '">▲' + roundDelta + '</div>' : '<div class="pos-move dn' + flashCl + '">▼' + Math.abs(roundDelta) + '</div>';
+      moveHtml = arrowDelta > 0 ? '<div class="pos-move up' + flashCl + '">▲' + arrowDelta + '</div>' : '<div class="pos-move dn' + flashCl + '">▼' + Math.abs(arrowDelta) + '</div>';
     }
     const isMover = topMoverNames.has(p.name);
     const myTeamIdxs = myPicksMap[p.name] || [];
