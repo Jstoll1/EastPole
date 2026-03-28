@@ -3220,21 +3220,20 @@ function saveRoundStartPositions(round) {
   try { localStorage.setItem('eastpole_round_start', JSON.stringify({ round: round, positions: ROUND_START_POSITIONS })); } catch(e) {}
 }
 
-function getTopMovers(players, limit) {
-  const upMovers = [], downMovers = [];
+function getTopMovers(players) {
+  let bestUp = null, bestDown = null;
   players.forEach(p => {
+    if (p.score === 11 || p.score === 12) return;
     const startP = ROUND_START_POSITIONS[p.name];
     const currP = parsePos(p.pos);
     if (!startP || !currP) return;
     const delta = startP - currP; // positive = moved up, negative = moved down
-    if (delta >= 3) upMovers.push({ name: p.name, delta });
-    else if (delta <= -3) downMovers.push({ name: p.name, delta });
+    if (delta > 0 && (!bestUp || delta > bestUp.delta)) bestUp = { name: p.name, delta };
+    if (delta < 0 && (!bestDown || delta < bestDown.delta)) bestDown = { name: p.name, delta };
   });
-  upMovers.sort((a, b) => b.delta - a.delta);
-  downMovers.sort((a, b) => a.delta - b.delta);
   const names = new Set();
-  upMovers.slice(0, limit).forEach(m => names.add(m.name));
-  downMovers.slice(0, limit).forEach(m => names.add(m.name));
+  if (bestUp) names.add(bestUp.name);
+  if (bestDown) names.add(bestDown.name);
   return names;
 }
 let lastFetchTime = 0;
@@ -3633,7 +3632,7 @@ function renderLeaderboard() {
   const estCutShow = currentRound >= 1 && currentRound <= 2 && lbSort === 'score' && lbFilter === 'all' && !lbSearch;
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
-  const topMoverNames = isPreT ? new Set() : getTopMovers(players, 5);
+  const topMoverNames = isPreT ? new Set() : getTopMovers(players);
   let rowIdx = 0;
   players.forEach(p => {
     const mc = p.thru==='MC'||p.thru==='WD'||p.score===11||p.score===12, inPool = poolNames.has(p.name);
