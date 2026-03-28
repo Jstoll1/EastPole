@@ -2722,6 +2722,29 @@ to  {
 .feed-event:nth-child(n+6) { animation-delay:0.2s; }
 @keyframes feedSlideIn { to { opacity:1; transform:translateX(0); } }
 .feed-empty { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text3); font-size:13px; text-align:center; padding:40px; }
+/* Feed filter buttons */
+.feed-filter-group { display:flex; gap:4px; }
+.feed-filter-btn {
+  background:var(--card); border:1px solid var(--border); color:var(--text3);
+  font-size:11px; font-weight:600; padding:4px 10px; border-radius:14px; cursor:pointer;
+  transition:all 0.2s;
+}
+.feed-filter-btn.active { background:var(--gold); color:#1a1a2e; border-color:var(--gold); }
+/* MC cut detail dropdown */
+.feed-cut-toggle {
+  font-size:11px; color:var(--gold); cursor:pointer; margin-top:3px;
+  display:inline-block; user-select:none;
+}
+.feed-cut-toggle:active { opacity:0.7; }
+.feed-cut-detail {
+  max-height:0; overflow:hidden; transition:max-height 0.25s ease;
+  margin-top:0;
+}
+.feed-cut-detail.open { max-height:200px; margin-top:4px; }
+.feed-cut-team {
+  font-size:11px; color:var(--text2); padding:2px 0 2px 12px;
+  border-left:2px solid var(--border);
+}
 /* ── Headline Popup ── */
 .headline-overlay {
   position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:998;
@@ -3017,6 +3040,10 @@ to  {
 <div id="feed-drawer" class="feed-drawer">
 <div class="feed-drawer-header">
 <span class="feed-drawer-title">Live Feed</span>
+<div class="feed-filter-group" id="feed-filter-group">
+<button class="feed-filter-btn active" onclick="setFeedFilter('all',this)">All</button>
+<button class="feed-filter-btn" onclick="setFeedFilter('myteam',this)">My Team</button>
+</div>
 <button class="feed-drawer-close" onclick="closeFeed()">✕</button>
 </div>
 <div id="feed-list"></div>
@@ -3740,6 +3767,8 @@ let PREV_SCORES = {}; // Track previous scores for flash animations
 let SCORE_CHANGES = {}; // Track which players changed and direction
 let FEED_EVENTS = []; // Rolling event feed
 let PREV_FEED_POSITIONS = {}; // Track positions for feed movement detection
+let _feedInitialized = false; // Suppress events on first data load
+let _feedFilter = 'all'; // 'all' or 'myteam'
 
 function feedTimeAgo(ts) {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -3749,19 +3778,29 @@ function feedTimeAgo(ts) {
   return Math.floor(s / 86400) + 'd ago';
 }
 
-function addFeedEvent(type, icon, msg) {
-  FEED_EVENTS.unshift({ type, icon, msg, ts: Date.now() });
+function addFeedEvent(type, icon, msg, meta = {}) {
+  FEED_EVENTS.unshift({ type, icon, msg, ts: Date.now(), meta });
   if (FEED_EVENTS.length > 100) FEED_EVENTS.length = 100;
 }
 
 function generateFeedEvents(freshScores) {
+  if (!_feedInitialized) {
+    // First load: seed tracking data but don't generate events
+    Object.entries(freshScores).forEach(([name, d]) => {
+      const p = parsePos(d.pos);
+      if (p) PREV_FEED_POSITIONS[name] = p;
+    });
+    _feedInitialized = true;
+    return;
+  }
   // Score changes: birdies, eagles, bogeys
   Object.entries(freshScores).forEach(([name, d]) => {
     if (d.score === 11 || d.score === 12) {
       // Detect new missed cuts
       const prev = GOLFER_SCORES[name];
       if (prev && prev.score !== 11 && d.score === 11) {
-        addFeedEvent('cut', '\u2702\uFE0F', name + ' misses the cut');
+        const affected = ENTRIES.filter(e => e.picks.includes(name)).map(e => e.team);
+        addFeedEvent('cut', '\u2702\uFE0F', name + ' misses the cut', { player: name, affectedTeams: affected });
       }
       return;
     }
@@ -3770,9 +3809,9 @@ function generateFeedEvents(freshScores) {
       const diff = d.score - prev;
       const hole = d.thru === 'F' ? '18' : d.thru;
       const holeTag = /^\d+$/.test(hole) ? ' on #' + hole : '';
-      if (diff <= -2) addFeedEvent('eagle', '\uD83E\uDD85', name + ' eagles' + holeTag + ' \u2192 ' + fmt(d.score));
-      else if (diff < 0) addFeedEvent('birdie', '\uD83D\uDC26', name + ' birdies' + holeTag + ' \u2192 ' + fmt(d.score));
-      else if (diff > 0) addFeedEvent('bogey', '\uD83D\uDCA5', name + ' bogeys' + holeTag + ' \u2192 ' + fmt(d.score));
+      if (diff <= -2) addFeedEvent('eagle', '\uD83E\uDD85', name + ' eagles' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
+      else if (diff < 0) addFeedEvent('birdie', '\uD83D\uDC26', name + ' birdies' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
+      else if (diff > 0) addFeedEvent('bogey', '\uD83D\uDCA5', name + ' bogeys' + holeTag + ' \u2192 ' + fmt(d.score), { player: name });
     }
   });
   // Position changes: big movers/fallers
@@ -3782,8 +3821,8 @@ function generateFeedEvents(freshScores) {
     const prevP = PREV_FEED_POSITIONS[name];
     if (currP && prevP) {
       const delta = prevP - currP;
-      if (delta >= 3) addFeedEvent('mover', '\uD83D\uDD25', name + ' climbs ' + delta + ' spots to ' + d.pos);
-      else if (delta <= -3) addFeedEvent('faller', '\uD83D\uDCC9', name + ' drops ' + Math.abs(delta) + ' spots to ' + d.pos);
+      if (delta >= 3) addFeedEvent('mover', '\uD83D\uDD25', name + ' climbs ' + delta + ' spots to ' + d.pos, { player: name });
+      else if (delta <= -3) addFeedEvent('faller', '\uD83D\uDCC9', name + ' drops ' + Math.abs(delta) + ' spots to ' + d.pos, { player: name });
     }
   });
   // Update position tracking
@@ -3799,27 +3838,75 @@ function generateEntryEvents(ranked, ranks) {
     const newRk = ranks[i];
     if (prevRk !== undefined && newRk !== prevRk) {
       const delta = prevRk - newRk;
-      if (delta > 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' moves up to #' + newRk);
-      else if (delta < 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' drops to #' + newRk);
+      if (delta > 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' moves up to #' + newRk, { team: e.team });
+      else if (delta < 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' drops to #' + newRk, { team: e.team });
     }
   });
 }
 
+function getMyPickNames() {
+  if (!currentUserTeams.length) return new Set();
+  return new Set(currentUserTeams.flatMap(t => t.picks));
+}
+
+function getMyTeamNames() {
+  return new Set(currentUserTeams.map(t => t.team));
+}
+
+function feedMatchesFilter(ev) {
+  if (_feedFilter === 'all') return true;
+  const myPicks = getMyPickNames();
+  const myTeams = getMyTeamNames();
+  if (ev.meta?.player && myPicks.has(ev.meta.player)) return true;
+  if (ev.meta?.team && myTeams.has(ev.meta.team)) return true;
+  if (ev.meta?.affectedTeams && ev.meta.affectedTeams.some(t => myTeams.has(t))) return true;
+  return false;
+}
+
+function toggleFeedCutDetail(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
 function renderFeed() {
   const el = document.getElementById('feed-list');
-  if (!FEED_EVENTS.length) {
-    el.innerHTML = '<div class="feed-empty">No events yet \u2014 feed updates as scores change</div>';
+  const filtered = FEED_EVENTS.filter(feedMatchesFilter);
+  if (!filtered.length) {
+    el.innerHTML = '<div class="feed-empty">' + (_feedFilter === 'myteam' ? 'No events for your teams yet' : 'No events yet \u2014 feed updates as scores change') + '</div>';
     return;
   }
-  el.innerHTML = FEED_EVENTS.map(ev =>
-    '<div class="feed-event feed-' + ev.type + '">' +
-    '<span class="feed-icon">' + ev.icon + '</span>' +
-    '<div class="feed-body"><div class="feed-msg">' + ev.msg + '</div>' +
-    '<div class="feed-time">' + feedTimeAgo(ev.ts) + '</div></div></div>'
-  ).join('');
+  el.innerHTML = filtered.map((ev, idx) => {
+    let extra = '';
+    if (ev.type === 'cut' && ev.meta?.affectedTeams?.length) {
+      const teams = ev.meta.affectedTeams;
+      const id = 'feed-cut-' + idx;
+      extra = '<div class="feed-cut-toggle" onclick="event.stopPropagation();toggleFeedCutDetail(\'' + id + '\')">' +
+        teams.length + ' entr' + (teams.length === 1 ? 'y' : 'ies') + ' affected \u25BE</div>' +
+        '<div class="feed-cut-detail" id="' + id + '">' +
+        teams.map(t => '<div class="feed-cut-team">' + t + '</div>').join('') + '</div>';
+    }
+    return '<div class="feed-event feed-' + ev.type + '">' +
+      '<span class="feed-icon">' + ev.icon + '</span>' +
+      '<div class="feed-body"><div class="feed-msg">' + ev.msg + '</div>' +
+      extra +
+      '<div class="feed-time">' + feedTimeAgo(ev.ts) + '</div></div></div>';
+  }).join('');
+}
+
+function setFeedFilter(filter, btn) {
+  _feedFilter = filter;
+  document.querySelectorAll('.feed-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  // Hide filter group if no user teams
+  const fg = document.getElementById('feed-filter-group');
+  if (fg) fg.style.display = currentUserTeams.length ? 'flex' : 'none';
+  renderFeed();
 }
 
 function openFeed() {
+  // Show/hide filter based on whether user has teams
+  const fg = document.getElementById('feed-filter-group');
+  if (fg) fg.style.display = currentUserTeams.length ? 'flex' : 'none';
   renderFeed();
   document.getElementById('feed-overlay').classList.add('open');
   document.getElementById('feed-drawer').classList.add('open');
