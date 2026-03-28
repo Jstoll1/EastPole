@@ -3704,7 +3704,14 @@ function renderLeaderboard() {
     if (diff !== 0) return diff * dir;
     return parseTeeTime(a) - parseTeeTime(b);
   });
-  else if (lbSort === 'today') players.sort(function(a,b) { return (parseTodayVal(a) - parseTodayVal(b)) * dir; });
+  else if (lbSort === 'today') players.sort(function(a,b) {
+    var aInactive = (a.score === 11 || a.score === 12 || a.thru === '—' || a.thru === 'F' || (a.thru && a.thru.includes(':')));
+    var bInactive = (b.score === 11 || b.score === 12 || b.thru === '—' || b.thru === 'F' || (b.thru && b.thru.includes(':')));
+    if (aInactive && bInactive) return 0;
+    if (aInactive) return 1;
+    if (bInactive) return -1;
+    return (parseTodayVal(a) - parseTodayVal(b)) * dir;
+  });
   else if (lbSort === 'thru') players.sort(function(a,b) { return (parseThruVal(b) - parseThruVal(a)) * dir; });
   else if (lbSort === 'tot') players.sort(function(a,b) { return ((a.tot||9999) - (b.tot||9999)) * dir; });
   if (lbFilter==='pool') players=players.filter(p=>poolNames.has(p.name));
