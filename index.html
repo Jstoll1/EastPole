@@ -3991,6 +3991,7 @@ async function toggleScorecard(idx, playerName) {
   _openScorecardIdx = idx;
   panel.innerHTML = '<div class="sc-loading">Loading scorecard…</div>';
   panel.classList.add('open');
+  panel.onclick = function() { panel.classList.remove('open'); panel.innerHTML = ''; panel.onclick = null; _openScorecardIdx = null; };
 
   // Fetch course holes and player scorecard in parallel
   await Promise.all([fetchCourseHoles(), fetchPlayerScorecard(playerName)]);
