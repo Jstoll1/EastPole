@@ -469,6 +469,23 @@ html, body  {
   background: var(--border);
   margin: 4px 12px 0;
 }
+.sc-round-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 6px 12px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+}
+.sc-round-chip { white-space: nowrap; }
+.sc-round-sep {
+  color: var(--border);
+  margin: 0 8px;
+  font-weight: 400;
+}
 
 .sc-grid  {
   padding: 0 8px 8px;
@@ -4275,16 +4292,30 @@ async function toggleScorecard(idx, playerName) {
   html += buildOwnBadge();
   html += '</div>';
 
-  // Show all rounds with hole data, separated by dividers
+  // Round-by-round summary line: R1: 67 (-3) | R2: 70 (E) ...
+  const completedRounds = rounds.map((r, i) => ({ r, i })).filter(({ r }) => r.value != null);
+  if (completedRounds.length > 0) {
+    html += '<div class="sc-round-summary">';
+    html += completedRounds.map(({ r, i }) => {
+      var dpC = '';
+      if (r.displayValue) { dpC = r.displayValue.indexOf('-') === 0 ? 'color:var(--red)' : (r.displayValue === 'E' ? '' : 'color:var(--green-bright)'); }
+      return '<span class="sc-round-chip">R' + (i + 1) + ': ' + r.value + (r.displayValue ? ' (<span style="' + dpC + '">' + r.displayValue + '</span>)' : '') + '</span>';
+    }).join('<span class="sc-round-sep">\u007C</span>');
+    html += '</div>';
+  }
+
+  // Show only one hole-by-hole card: active round (mid-round) or most recent completed
   const roundsWithData = rounds.map((r, i) => ({ round: r, idx: i })).filter(({ round }) => round.holes && round.holes.length > 0);
-  roundsWithData.forEach(({ round: r, idx: ri }, arrIdx) => {
+  const activeRound = roundsWithData.length ? roundsWithData[roundsWithData.length - 1] : null;
+  if (activeRound) {
+    const r = activeRound.round;
+    const ri = activeRound.idx;
     var dpColor = '';
     if (r.displayValue) {
       if (r.displayValue.indexOf('-') === 0) dpColor = 'color:var(--red)';
       else if (r.displayValue === 'E') dpColor = '';
       else dpColor = 'color:var(--green-bright)';
     }
-    if (arrIdx > 0) html += '<div class="sc-round-divider"></div>';
     html += '<div class="sc-round-label">R' + (ri + 1) + (r.value ? ' \u2014 ' + r.value : '') + (r.displayValue ? ' (<span style="' + dpColor + '">' + r.displayValue + '</span>)' : '') + '</div>';
     html += '<div class="sc-grid">';
 
@@ -4324,7 +4355,7 @@ async function toggleScorecard(idx, playerName) {
     html += '</div>';
 
     html += '</div>';
-  });
+  }
 
   panel.innerHTML = html;
   bindOwnBadge(panel);
