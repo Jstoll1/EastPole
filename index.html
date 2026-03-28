@@ -4213,7 +4213,13 @@ function showPickerPopup(owners, evt) {
   });
   popup.innerHTML = html;
   document.body.appendChild(popup);
-  var dismiss = function(ev) { if (!popup.contains(ev.target)) { popup.remove(); document.removeEventListener('click', dismiss, true); } };
+  var dismiss = function(ev) {
+    if (!popup.contains(ev.target)) {
+      ev.stopPropagation();
+      popup.remove();
+      document.removeEventListener('click', dismiss, true);
+    }
+  };
   setTimeout(function() { document.addEventListener('click', dismiss, true); }, 0);
 }
 
