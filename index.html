@@ -4381,7 +4381,7 @@ function initTickerTouch() {
   }
   function resume() {
     clearTimeout(_tickerResumeT);
-    _tickerResumeT = setTimeout(function() { _tickerPaused = false; }, 3000);
+    _tickerPaused = false;
   }
   // Touch: native scroll just works
   track.addEventListener('touchstart', pause, { passive: true });
