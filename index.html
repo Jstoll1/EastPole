@@ -3730,9 +3730,13 @@ if (isPreTournament) {
       console.log('📌 Saved round-start positions for Rd', completedRound + 1);
     }
   } else {
-    // Detect current round number
-    const sampleActive = activePlayers.find(g => parseInt(g.thru) > 0);
-    const currentRound = sampleActive ? [sampleActive.r4?4:0, sampleActive.r3?3:0, sampleActive.r2?2:0, sampleActive.r1?1:0].find(r=>r>0) || 1 : (ROUND_START_ROUND || 1);
+    // Detect current round number: count completed rounds from all active players, add 1 for in-progress
+    let maxCompleted = 0;
+    activePlayers.forEach(g => {
+      const cnt = [g.r1, g.r2, g.r3, g.r4].filter(r => r != null).length;
+      if (cnt > maxCompleted) maxCompleted = cnt;
+    });
+    const currentRound = anyMidRound ? (maxCompleted + 1) || 1 : maxCompleted || (ROUND_START_ROUND || 1);
     // Save start positions at the beginning of a new round
     if (ROUND_START_ROUND < currentRound) {
       saveRoundStartPositions(currentRound);
