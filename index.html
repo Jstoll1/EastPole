@@ -28,6 +28,68 @@
   --header-h: 50px;
   --nav-h: 56px;
 }
+[data-theme="light"] {
+  --bg: #f5f2eb;
+  --card: #ffffff;
+  --card2: #f0f5f0;
+  --text: #1a2e1a;
+  --text2: #5a6b5a;
+  --text3: #8a9a8a;
+  --border: #d4ddd6;
+  --green: #006747;
+  --green-light: #1a8a5c;
+  --green-bright: #006747;
+  --gold-bg: rgba(198,160,60,0.06);
+  --gold-dim: rgba(212,168,67,0.4);
+  --red: #c0392b;
+}
+[data-theme="light"] .app-header {
+  background: #006747;
+  border-bottom-color: rgba(212,168,67,0.3);
+}
+[data-theme="light"] .nav-bar {
+  background: #ffffff;
+  border-top-color: #d4ddd6;
+}
+[data-theme="light"] .nav-btn { color: #5a6b5a; }
+[data-theme="light"] .nav-btn.active { color: #006747; }
+[data-theme="light"] .nav-btn.active::after { background: #006747; }
+[data-theme="light"] .ticker-wrap {
+  background: #006747;
+}
+[data-theme="light"] .ticker-label { color: #ffffff; }
+[data-theme="light"] .ticker-content { color: rgba(255,255,255,0.9); }
+[data-theme="light"] .seg-btn { background: #f0f5f0; color: #5a6b5a; border-color: #d4ddd6; }
+[data-theme="light"] .seg-btn.active { background: #006747; color: #ffffff; border-color: #006747; }
+[data-theme="light"] .standing-row { border-bottom-color: #e8ede8; }
+[data-theme="light"] .standing-row.is-my-team { background: rgba(0,103,71,0.04); }
+[data-theme="light"] .tv-row:nth-child(odd) { background: #f8faf8; }
+[data-theme="light"] .tv-row:nth-child(even) { background: #ffffff; }
+[data-theme="light"] .tv-row.tv-mc { opacity: 0.5; }
+[data-theme="light"] .tv-row.is-my-team { background: rgba(0,103,71,0.06); }
+[data-theme="light"] .picks-panel.open { background: #f5f8f5; border-left-color: #006747; }
+[data-theme="light"] .mini-pick:nth-child(odd) { background: #f0f5f0; }
+[data-theme="light"] .mini-pick:nth-child(even) { background: #ffffff; }
+[data-theme="light"] .mini-pick.is-top { border-left-color: #006747; }
+[data-theme="light"] .feed-drawer { background: #f5f2eb; }
+[data-theme="light"] .feed-event { background: #ffffff; }
+[data-theme="light"] .sc-nine { background: #ffffff; border-color: #d4ddd6; }
+[data-theme="light"] .sc-birdie .sc-num { background: #006747; color: #fff; }
+[data-theme="light"] .sc-eagle .sc-num { background: #d4a843; color: #1a2e1a; }
+[data-theme="light"] .sc-bogey .sc-num { color: #c0392b; }
+[data-theme="light"] .headline-box { background: #ffffff; }
+[data-theme="light"] #debug-panel { background: #f5f2eb; }
+[data-theme="light"] .splash-card { background: #ffffff; }
+[data-theme="light"] .payout-box { background: #ffffff; border-color: #d4ddd6; }
+[data-theme="light"] .pos-move.up { color: #006747; }
+[data-theme="light"] .pos-move.dn { color: #c0392b; }
+[data-theme="light"] .neg { color: #006747; }
+[data-theme="light"] .pos { color: #c0392b; }
+[data-theme="light"] input, [data-theme="light"] select { background: #ffffff; color: #1a2e1a; border-color: #d4ddd6; }
+[data-theme="light"] .h2h-quick-btn { border-color: #006747; color: #006747; }
+[data-theme="light"] .feed-filter-btn { background: #f0f5f0; border-color: #d4ddd6; color: #5a6b5a; }
+[data-theme="light"] .feed-filter-btn.active { background: #006747; color: #fff; border-color: #006747; }
+[data-theme="light"] #team-dropdown { background: #ffffff; border-color: #d4ddd6; }
 
 *, *::before, *::after  {
   box-sizing: border-box;
@@ -2961,6 +3023,10 @@ to  {
 <div class="td-header">Entries</div>
 <div id="team-dropdown-list">
 </div>
+<div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+<span style="font-size:12px;color:var(--text2);font-weight:600">Theme</span>
+<button id="theme-toggle-btn" onclick="event.stopPropagation();toggleTheme()" style="background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text);cursor:pointer;font-weight:600">🌙 Dark</button>
+</div>
 <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change User</button>
 </div>
 </header>
@@ -4979,6 +5045,26 @@ function closeTeamDropdown() {
   if (caret) caret.classList.remove('open');
 }
 
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('ep-theme', next);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = next === 'light' ? '☀️ Light' : '🌙 Dark';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', next === 'light' ? '#006747' : '#06120c');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('ep-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = saved === 'light' ? '☀️ Light' : '🌙 Dark';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', saved === 'light' ? '#006747' : '#06120c');
+}
+
 function selectTeamEntry(idx) {
   activeTeamIdx = idx;
   saveUser();
@@ -5325,6 +5411,7 @@ let _debugPlayerSearch = '';
 
 // Long press Live pill to open debug (700ms hold)
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   const pill = document.querySelector('.hdr-pill');
   if (pill) {
     let pressTimer = null;
