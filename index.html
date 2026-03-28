@@ -3824,8 +3824,8 @@ function renderLeaderboard() {
   let rowIdx = 0;
   players.forEach(p => {
     const mc = p.thru==='MC'||p.thru==='WD'||p.score===11||p.score===12, inPool = poolNames.has(p.name);
-    if (!cutInserted && mc && currentRound >= 2) { rows += '<div class="cut-line-row"><div class="cut-line-label">── Cut Line ──</div></div>'; cutInserted = true; }
-    if (!estCutInserted && !cutInserted && estCutScore !== null && !mc && p.score > estCutScore) { rows += '<div class="est-cut-line-row"><div class="est-cut-line-label">── Estimated Cut Line ──</div></div>'; estCutInserted = true; }
+    if (lbSort === 'score' && !cutInserted && mc && currentRound >= 2) { rows += '<div class="cut-line-row"><div class="cut-line-label">── Cut Line ──</div></div>'; cutInserted = true; }
+    if (lbSort === 'score' && !estCutInserted && !cutInserted && estCutScore !== null && !mc && p.score > estCutScore) { rows += '<div class="est-cut-line-row"><div class="est-cut-line-label">── Estimated Cut Line ──</div></div>'; estCutInserted = true; }
     const sc = p.score, scf = fmt(sc);
     const scClass = mc ? 'mc' : sc < 0 ? 'neg' : sc > 0 ? 'pos' : 'eve';
     const flag = FLAGS[p.name] || '';
