@@ -3669,6 +3669,7 @@ function renderLeaderboard() {
   const myAllPicks = getActiveTeamPicks();
   let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d}));
   var parseTodayVal = function(p) {
+    if (p.score === 11 || p.score === 12) return 999; // MC/WD to bottom
     var d = p.todayDisplay || '—';
     if (d === '—') return 999;
     if (d === 'E') return 0;
