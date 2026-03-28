@@ -5008,13 +5008,18 @@ function selectTeamEntry(idx) {
       ptr.classList.add('refreshing', 'releasing');
       ptr.style.height = '40px';
       ptrText.textContent = 'Refreshing…';
+      var startTime = Date.now();
       fetchESPN().finally(function() {
-        refreshing = false;
-        ptr.classList.add('releasing');
-        ptr.classList.remove('refreshing');
-        ptr.style.height = '0px';
-        ptrText.textContent = 'Pull to refresh';
-        setTimeout(function() { ptr.classList.remove('releasing'); }, 300);
+        var elapsed = Date.now() - startTime;
+        var delay = Math.max(0, 1000 - elapsed);
+        setTimeout(function() {
+          refreshing = false;
+          ptr.classList.add('releasing');
+          ptr.classList.remove('refreshing');
+          ptr.style.height = '0px';
+          ptrText.textContent = 'Pull to refresh';
+          setTimeout(function() { ptr.classList.remove('releasing'); }, 300);
+        }, delay);
       });
     } else {
       ptr.classList.add('releasing');
