@@ -4982,11 +4982,25 @@ function buildH2HCell(g, side, isTop) {
   const isWD = thru === 'WD' || (gd && gd.score === 12);
   const mc = thru === 'MC';
   const holesLeft = getHolesRemaining(g.name);
+  // Calculate current round score relative to par
+  let rdTag = '';
+  if (gd && !isWD && !mc && thru !== '—' && !thru.includes(':')) {
+    const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
+    const completedRelPar = completedRounds.reduce((s, r) => s + (r - COURSE_PAR), 0);
+    const todayScore = gd.score - completedRelPar;
+    const thruNum = parseInt(thru);
+    const thruLabel = thru === 'F' ? 'F' : (thruNum > 0 ? thruNum : '');
+    if (thruLabel) {
+      const todayFmt = todayScore > 0 ? '+' + todayScore : todayScore === 0 ? 'E' : '' + todayScore;
+      const todayColor = todayScore < 0 ? '#52b788' : todayScore > 0 ? '#ff7070' : 'var(--text2)';
+      rdTag = ' <span style="color:' + todayColor + ';font-weight:700">(' + todayFmt + ')</span>';
+    }
+  }
   const detail = isWD ? 'WD' : mc ? 'MC' : (holesLeft > 0 ? holesLeft + ' holes left' : 'Complete');
   let html = '<div class="h2h-vs-cell ' + side + '">';
   html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
   html += '<div class="h2h-vs-info">';
-  html += '<div class="h2h-vs-name">' + g.name + '</div>';
+  html += '<div class="h2h-vs-name">' + g.name + rdTag + '</div>';
   html += '<div class="h2h-vs-detail">' + detail + '</div>';
   html += '</div>';
   html += '</div>';
