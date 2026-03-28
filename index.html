@@ -3419,31 +3419,18 @@ function saveRoundStartPositions(round) {
   try { localStorage.setItem('eastpole_round_start', JSON.stringify({ round: round, positions: ROUND_START_POSITIONS })); } catch(e) {}
 }
 
-function parseTodayDisplay(val) {
-  if (!val || val === '—' || val === 'E') return val === 'E' ? 0 : null;
-  const n = parseInt(String(val).replace('+', ''));
-  return isNaN(n) ? null : n;
-}
-function getTopMovers(players) {
-  // Fire = best today score(s), Ice = worst today score(s)
-  // Uses ESPN todayDisplay to match the TODAY column exactly
-  let bestScore = Infinity, worstScore = -Infinity;
-  const scores = new Map();
-  players.forEach(p => {
-    if (p.score === 11 || p.score === 12) return;
-    if (!p.thru || p.thru === '—' || p.thru === 'F' || p.thru === 'MC' || p.thru === 'WD') return;
-    if (p.thru.includes(':')) return; // tee time
-    const today = parseTodayDisplay(p.todayDisplay);
-    if (today === null) return;
-    scores.set(p.name, today);
-    if (today < bestScore) bestScore = today;
-    if (today > worstScore) worstScore = today;
+function getTopMovers(arrowMap) {
+  // Fire = biggest position gain(s), Ice = biggest position drop(s)
+  // Uses the same arrowPlayers Map that drives the position arrows
+  let bestUp = 0, bestDown = 0;
+  arrowMap.forEach(delta => {
+    if (delta > bestUp) bestUp = delta;
+    if (delta < bestDown) bestDown = delta;
   });
   const names = new Set();
-  if (scores.size === 0) return names;
-  scores.forEach((today, name) => {
-    if (today === bestScore && bestScore < worstScore) names.add(name);
-    if (today === worstScore && worstScore > bestScore) names.add(name);
+  arrowMap.forEach((delta, name) => {
+    if (delta > 0 && delta === bestUp) names.add(name);
+    if (delta < 0 && delta === bestDown) names.add(name);
   });
   return names;
 }
@@ -3885,7 +3872,6 @@ function renderLeaderboard() {
   const estCutShow = currentRound >= 1 && currentRound <= 2 && lbSort === 'score' && lbFilter === 'all' && !lbSearch;
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
-  const topMoverNames = isPreT ? new Set() : getTopMovers(players);
   // Top 5 movers up and top 5 movers down — use round start, fallback to prev positions
   const arrowPlayers = new Map(); // name -> delta
   if (!isPreT) {
@@ -3905,6 +3891,7 @@ function renderLeaderboard() {
     ups.forEach(d => arrowPlayers.set(d.name, d.delta));
     dns.forEach(d => arrowPlayers.set(d.name, d.delta));
   }
+  const topMoverNames = isPreT ? new Set() : getTopMovers(arrowPlayers);
   let rowIdx = 0;
   players.forEach(p => {
     const mc = p.thru==='MC'||p.thru==='WD'||p.score===11||p.score===12, inPool = poolNames.has(p.name);
@@ -3954,7 +3941,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + '<div class="tv-pos">' + (mc?(p.thru==='WD'||p.score===12?'WD':'MC'):p.pos) + moveHtml + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
-      + (isMover ? (function(){ var ts = parseTodayDisplay(p.todayDisplay); var tf = ts > 0 ? '+' + ts : ts === 0 ? 'E' : '' + ts; return ts !== null && ts <= 0 ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + tf + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + tf + '</span>'; })() : '')
+      + (isMover ? (roundDelta > 0 ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + roundDelta + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + Math.abs(roundDelta) + '</span>') : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
