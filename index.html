@@ -74,9 +74,6 @@
 [data-theme="light"] .mini-pick:nth-child(odd) { background: #f0f5f0; }
 [data-theme="light"] .mini-pick:nth-child(even) { background: #ffffff; }
 [data-theme="light"] .mini-pick.is-top { border-left-color: #006747; }
-[data-theme="light"] .feed-drawer { background: #f5f2eb; }
-[data-theme="light"] .feed-drawer-handle { background: rgba(0,0,0,0.15); }
-[data-theme="light"] .feed-event:active { background: rgba(0,0,0,0.04); }
 [data-theme="light"] .sc-nine { background: #ffffff; border-color: #d4ddd6; }
 [data-theme="light"] .sc-birdie .sc-num { background: #006747; color: #fff; }
 [data-theme="light"] .sc-eagle .sc-num { background: #d4a843; color: #1a2e1a; }
@@ -91,8 +88,6 @@
 [data-theme="light"] .pos { color: #c0392b; }
 [data-theme="light"] input, [data-theme="light"] select { background: #ffffff; color: #1a2e1a; border-color: #d4ddd6; }
 [data-theme="light"] .h2h-quick-btn { border-color: #006747; color: #006747; }
-[data-theme="light"] .feed-filter-btn { background: #f0f5f0; border-color: #d4ddd6; color: #5a6b5a; }
-[data-theme="light"] .feed-filter-btn.active { background: #006747; color: #fff; border-color: #006747; }
 [data-theme="light"] #team-dropdown { background: #ffffff; border-color: #d4ddd6; }
 [data-theme="light"] .tv-header-top { background: linear-gradient(180deg, #006747 0%, #004d35 100%); }
 [data-theme="light"] #view-leaderboard .tv-header-top { background: linear-gradient(180deg, #006747 0%, #004d35 100%); }
@@ -2888,90 +2883,6 @@ to  {
   font-size:12px; color:var(--gold); flex-shrink:0;
 }
 /* ── Live Feed Drawer ── */
-.feed-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:999;
-  opacity:0; pointer-events:none; transition:opacity 0.3s;
-  backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
-}
-.feed-overlay.open { opacity:1; pointer-events:auto; }
-.feed-drawer {
-  position:fixed; bottom:0; left:0; right:0;
-  height:80vh; max-height:640px;
-  background:var(--bg); border-top-left-radius:20px; border-top-right-radius:20px;
-  z-index:1000; display:flex; flex-direction:column;
-  transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);
-  box-shadow:0 -8px 40px rgba(0,0,0,0.5);
-}
-.feed-drawer.open { transform:translateY(0); }
-.feed-drawer-handle {
-  width:36px; height:4px; background:rgba(255,255,255,0.2); border-radius:2px;
-  margin:8px auto 0; flex-shrink:0;
-}
-.feed-drawer-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:12px 16px 10px; flex-shrink:0;
-}
-.feed-drawer-title { font-size:11px; font-weight:700; color:var(--text3); letter-spacing:1.2px; text-transform:uppercase; }
-.feed-drawer-close { background:none; border:none; color:var(--text3); font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; }
-.feed-filter-group { display:flex; gap:4px; }
-.feed-filter-btn {
-  background:transparent; border:1px solid var(--border); color:var(--text3);
-  font-size:10px; font-weight:700; padding:4px 12px; border-radius:14px; cursor:pointer;
-  transition:all 0.2s; letter-spacing:0.3px; text-transform:uppercase;
-}
-.feed-filter-btn.active { background:var(--gold); color:#1a1a2e; border-color:var(--gold); }
-#feed-list {
-  flex:1; overflow-y:auto; padding:4px 12px 20px; display:flex; flex-direction:column; gap:2px;
-  -webkit-overflow-scrolling:touch;
-}
-.feed-time-group { font-size:10px; font-weight:700; color:var(--text3); letter-spacing:0.8px; text-transform:uppercase; padding:12px 4px 6px; }
-.feed-event {
-  display:flex; align-items:center; gap:12px; padding:11px 12px;
-  border-radius:12px; transition:background 0.2s;
-}
-.feed-event:active { background:rgba(255,255,255,0.05); }
-.feed-icon-wrap {
-  width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; font-size:16px;
-}
-.feed-eagle .feed-icon-wrap  { background:rgba(212,168,67,0.15); }
-.feed-birdie .feed-icon-wrap { background:rgba(82,183,136,0.15); }
-.feed-bogey .feed-icon-wrap  { background:rgba(255,112,112,0.15); }
-.feed-mover .feed-icon-wrap  { background:rgba(255,152,0,0.15); }
-.feed-faller .feed-icon-wrap { background:rgba(239,83,80,0.15); }
-.feed-entry .feed-icon-wrap  { background:rgba(212,168,67,0.15); }
-.feed-cut .feed-icon-wrap    { background:rgba(153,153,153,0.15); }
-.feed-margin .feed-icon-wrap { background:rgba(255,107,53,0.15); }
-.feed-lead .feed-icon-wrap   { background:rgba(212,168,67,0.2); }
-.feed-body { flex:1; min-width:0; }
-.feed-msg { font-size:13px; color:var(--text1); line-height:1.35; font-weight:500; }
-.feed-msg strong { font-weight:700; color:var(--text1); }
-.feed-detail { font-size:11px; color:var(--text3); margin-top:1px; }
-.feed-time { font-size:10px; color:var(--text3); flex-shrink:0; align-self:center; }
-.feed-event { opacity:0; transform:translateY(8px); animation:feedSlideIn 0.3s ease forwards; }
-.feed-event:nth-child(1) { animation-delay:0s; }
-.feed-event:nth-child(2) { animation-delay:0.03s; }
-.feed-event:nth-child(3) { animation-delay:0.06s; }
-.feed-event:nth-child(4) { animation-delay:0.09s; }
-.feed-event:nth-child(5) { animation-delay:0.12s; }
-.feed-event:nth-child(n+6) { animation-delay:0.15s; }
-@keyframes feedSlideIn { to { opacity:1; transform:translateY(0); } }
-.feed-empty { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text3); font-size:13px; text-align:center; padding:40px; }
-/* MC cut detail dropdown */
-.feed-cut-toggle {
-  font-size:11px; color:var(--gold); cursor:pointer; margin-top:3px;
-  display:inline-block; user-select:none;
-}
-.feed-cut-toggle:active { opacity:0.7; }
-.feed-cut-detail {
-  max-height:0; overflow:hidden; transition:max-height 0.25s ease;
-  margin-top:0;
-}
-.feed-cut-detail.open { max-height:200px; margin-top:4px; }
-.feed-cut-team {
-  font-size:11px; color:var(--text2); padding:2px 0 2px 12px;
-  border-left:2px solid var(--border);
-}
 /* ── Headline Popup ── */
 .headline-overlay {
   position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:998;
@@ -3113,7 +3024,7 @@ to  {
 <span id="hdr-status">Loading…</span>
 </div>
 </div>
-<div class="hdr-logo-center" onclick="openFeed()" style="cursor:pointer">
+<div class="hdr-logo-center">
 <img src="https://brandlogos.net/wp-content/uploads/2024/04/masters_tournament-logo_brandlogos.net_4zhff.png" alt="Masters Tournament">
 </div>
 <div class="hdr-right">
@@ -3266,19 +3177,6 @@ to  {
 <div class="headline-source">East Pole Golf Pool</div>
 </div>
 </div>
-</div>
-<div id="feed-overlay" class="feed-overlay" onclick="closeFeed()"></div>
-<div id="feed-drawer" class="feed-drawer">
-<div class="feed-drawer-handle"></div>
-<div class="feed-drawer-header">
-<span class="feed-drawer-title">Activity</span>
-<div class="feed-filter-group" id="feed-filter-group">
-<button class="feed-filter-btn active" onclick="setFeedFilter('all',this)">All</button>
-<button class="feed-filter-btn" onclick="setFeedFilter('myteam',this)">Mine</button>
-</div>
-<button class="feed-drawer-close" onclick="closeFeed()">✕</button>
-</div>
-<div id="feed-list"></div>
 </div>
 <!-- Debug Panel (hidden, 5-tap Live pill to show) -->
 <div id="debug-panel">
@@ -3627,7 +3525,7 @@ const ownP = ownE ? Math.round(ownE.pct * 100) + '% Owned' : '';
 const thruVal = gd ? gd.thru : '';
 const holesLeft = getHolesRemaining(g.name);
 const thruDisplay = (gd && (gd.thru === 'WD' || gd.score === 12)) ? '' : (gd && gd.thru === 'F' ? '' : (thruVal ? `Thru ${thruVal}` : ''));
-return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> <div class="mini-pick-top"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> </div> <div class="mini-pick-bottom"> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${thruDisplay?`<span class="mini-pick-thru">${thruDisplay}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')}<div class="picks-panel-footer"><span>${teamHolesLeft} holes remaining</span><button class="h2h-quick-btn" onclick="event.stopPropagation();openH2HPicker(${entryIdx})">⚔️ H2H</button></div> </div>`; }); generateEntryEvents(ranked, ranks); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); document.getElementById('my-teams-container').innerHTML = heroHtml; el.innerHTML = html;
+return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> <div class="mini-pick-top"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> </div> <div class="mini-pick-bottom"> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${thruDisplay?`<span class="mini-pick-thru">${thruDisplay}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')}<div class="picks-panel-footer"><span>${teamHolesLeft} holes remaining</span><button class="h2h-quick-btn" onclick="event.stopPropagation();openH2HPicker(${entryIdx})">⚔️ H2H</button></div> </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); document.getElementById('my-teams-container').innerHTML = heroHtml; el.innerHTML = html;
   const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
   document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
   // Restore open panel after re-render
@@ -4093,7 +3991,6 @@ if (Object.keys(newChanges).length > 0) {
 } else if (!Object.keys(SCORE_CHANGES).length) {
   SCORE_CHANGES = {};
 }
-generateFeedEvents(freshScores);
 // Players in picks/FLAGS but missing from ESPN data are likely WD
 const allPickNames = new Set(); ENTRIES.forEach(e => e.picks.forEach(p => allPickNames.add(p)));
 allPickNames.forEach(name => { if (!freshScores[name] && FLAGS[name]) { freshScores[name] = { pos:'WD', score:12, thru:'WD', teeTime:'', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; console.log('⚠️ Marked', name, 'as WD (missing from ESPN data)'); }});
@@ -4166,225 +4063,7 @@ function stopAutoRefresh() { clearInterval(_autoRefresh); _autoRefresh = null; }
 let _lastStatusText = 'Loading…';
 let PREV_SCORES = {}; // Track previous scores for flash animations
 let SCORE_CHANGES = {}; // Track which players changed and direction
-let FEED_EVENTS = []; // Rolling event feed
-let PREV_FEED_POSITIONS = {}; // Track positions for feed movement detection
-let _feedInitialized = false; // Suppress events on first data load
-let _feedFilter = 'all'; // 'all' or 'myteam'
-let _playerStreaks = {}; // Track consecutive birdies per player { name: count }
-let _prevLeaderTeam = null; // Track pool leader for lead change detection
-let _prevPayoutTeams = []; // Track teams in payout positions
 
-function feedTimeAgo(ts) {
-  const s = Math.floor((Date.now() - ts) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return Math.floor(s / 60) + 'm ago';
-  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
-  return Math.floor(s / 86400) + 'd ago';
-}
-
-function addFeedEvent(type, icon, msg, meta = {}) {
-  FEED_EVENTS.unshift({ type, icon, msg, ts: Date.now(), meta });
-  if (FEED_EVENTS.length > 100) FEED_EVENTS.length = 100;
-}
-
-function generateFeedEvents(freshScores) {
-  const isInit = !_feedInitialized;
-  if (isInit) _feedInitialized = true;
-  const poolNames = new Set(ENTRIES.flatMap(e => e.picks));
-  // MC/WD events
-  Object.entries(freshScores).forEach(([name, d]) => {
-    if (d.score !== 11 && d.score !== 12) return;
-    if (!poolNames.has(name)) return; // only pool-relevant players
-    if (isInit) {
-      const affected = ENTRIES.filter(e => e.picks.includes(name)).map(e => e.team);
-      if (affected.length > 0) {
-        const label = d.score === 12 ? 'withdrew' : 'missed the cut';
-        addFeedEvent('cut', '\u2702\uFE0F', name + ' ' + label, { player: name, affectedTeams: affected, detail: affected.length + ' entr' + (affected.length === 1 ? 'y' : 'ies') + ' affected' });
-      }
-    } else {
-      const prev = GOLFER_SCORES[name];
-      if (prev && prev.score !== 11 && prev.score !== 12) {
-        const affected = ENTRIES.filter(e => e.picks.includes(name)).map(e => e.team);
-        const label = d.score === 12 ? 'withdrew' : 'missed the cut';
-        addFeedEvent('cut', '\u2702\uFE0F', name + ' ' + label, { player: name, affectedTeams: affected, detail: affected.length + ' entr' + (affected.length === 1 ? 'y' : 'ies') + ' affected' });
-      }
-    }
-  });
-  if (isInit) {
-    // First load: just show the leader
-    const active = Object.entries(freshScores).filter(([,d]) => d.score !== 11 && d.score !== 12);
-    const leader = active.sort((a,b) => a[1].score - b[1].score)[0];
-    if (leader) addFeedEvent('lead', '\uD83C\uDFC6', leader[0] + ' leads at ' + fmt(leader[1].score), { player: leader[0] });
-  } else {
-    // Score changes — only pool players to reduce noise
-    Object.entries(freshScores).forEach(([name, d]) => {
-      if (d.score === 11 || d.score === 12) return;
-      const prev = PREV_SCORES[name];
-      if (prev === undefined || d.score === prev) return;
-      const diff = d.score - prev;
-      const hole = d.thru === 'F' ? '18' : d.thru;
-      const holeTag = /^\d+$/.test(hole) ? ' on #' + hole : '';
-      const isPoolPlayer = poolNames.has(name);
-      // Eagles from anyone, birdies/bogeys only from pool players
-      if (diff <= -2) {
-        addFeedEvent('eagle', '\uD83E\uDD85', name + ' eagles' + holeTag, { player: name, detail: 'Now ' + fmt(d.score) });
-      } else if (diff < 0 && isPoolPlayer) {
-        addFeedEvent('birdie', '\uD83D\uDC26', name + ' birdies' + holeTag, { player: name, detail: 'Now ' + fmt(d.score) });
-        _playerStreaks[name] = (_playerStreaks[name] || 0) + 1;
-        if (_playerStreaks[name] >= 3) addFeedEvent('mover', '\uD83D\uDD25', name + ' \u2014 ' + _playerStreaks[name] + ' birdies in a row', { player: name });
-      } else if (diff >= 2 && isPoolPlayer) {
-        addFeedEvent('bogey', '\uD83D\uDCA3', name + ' double bogeys' + holeTag, { player: name, detail: 'Now ' + fmt(d.score) });
-      }
-      if (diff >= 0) _playerStreaks[name] = 0;
-    });
-    // Big position movers — only pool players, only 5+ spots
-    Object.entries(freshScores).forEach(([name, d]) => {
-      if (d.score === 11 || d.score === 12 || !poolNames.has(name)) return;
-      const currP = parsePos(d.pos);
-      const prevP = PREV_FEED_POSITIONS[name];
-      if (currP && prevP) {
-        const delta = prevP - currP;
-        if (delta >= 5) addFeedEvent('mover', '\uD83D\uDE80', name + ' climbs ' + delta + ' spots', { player: name, detail: 'Now ' + d.pos });
-        else if (delta <= -5) addFeedEvent('faller', '\uD83D\uDCC9', name + ' drops ' + Math.abs(delta) + ' spots', { player: name, detail: 'Now ' + d.pos });
-      }
-    });
-    // Low round alerts
-    Object.entries(freshScores).forEach(([name, d]) => {
-      if (d.score === 11 || d.score === 12) return;
-      const prevD = GOLFER_SCORES[name];
-      if (d.thru === 'F' && prevD && /^\d+$/.test(prevD.thru)) {
-        const roundScores = [d.r1, d.r2, d.r3, d.r4].filter(r => r != null);
-        const lastRound = roundScores[roundScores.length - 1];
-        if (lastRound && lastRound <= COURSE_PAR - 4) {
-          addFeedEvent('eagle', '\uD83C\uDFAF', name + ' fires a ' + lastRound, { player: name, detail: (lastRound - COURSE_PAR) + ' \u2014 round of the day candidate' });
-        }
-      }
-    });
-  }
-  Object.entries(freshScores).forEach(([name, d]) => {
-    const p = parsePos(d.pos);
-    if (p) PREV_FEED_POSITIONS[name] = p;
-  });
-}
-
-function generateEntryEvents(ranked, ranks) {
-  const payoutCount = typeof POOL_CONFIG !== 'undefined' ? POOL_CONFIG.payouts.length : 3;
-  const isFirstRender = Object.keys(PREV_RANKS).length === 0;
-  const newLeader = ranked.length ? ranked[0].team : null;
-  const currPayoutTeams = ranked.slice(0, payoutCount).map((e, i) => ({ team: e.team, rank: ranks[i] }));
-  if (!isFirstRender) {
-    // Lead change — the big one
-    if (_prevLeaderTeam && newLeader && newLeader !== _prevLeaderTeam) {
-      addFeedEvent('lead', '\uD83D\uDCA5', newLeader + ' takes the lead', { team: newLeader, detail: 'Overtakes ' + _prevLeaderTeam });
-    }
-    // Payout line movement — money events only
-    if (_prevPayoutTeams.length) {
-      currPayoutTeams.forEach(({ team, rank }) => {
-        const wasPaying = _prevPayoutTeams.some(p => p.team === team);
-        if (!wasPaying && rank <= payoutCount) {
-          const payoutLabel = typeof POOL_CONFIG !== 'undefined' ? POOL_CONFIG.payouts[rank - 1]?.place || ('#' + rank) : '#' + rank;
-          addFeedEvent('entry', '\uD83D\uDCB0', team + ' moves into the money', { team, detail: payoutLabel });
-        }
-      });
-      _prevPayoutTeams.forEach(({ team }) => {
-        const stillPaying = currPayoutTeams.some(p => p.team === team);
-        if (!stillPaying) {
-          addFeedEvent('faller', '\uD83D\uDCC9', team + ' falls out of the money', { team });
-        }
-      });
-    }
-    // Margin tracker (max once per 5min)
-    if (ranked.length >= 2) {
-      const topScore = ranked[0].total;
-      const thirdScore = ranked.length >= payoutCount ? ranked[payoutCount - 1].total : ranked[ranked.length - 1].total;
-      const margin = thirdScore - topScore;
-      if (margin <= 2 && margin >= 0) {
-        const recentMargin = FEED_EVENTS.find(ev => ev.type === 'margin' && (Date.now() - ev.ts) < 300000);
-        if (!recentMargin) {
-          addFeedEvent('margin', '\u26A1', 'Top ' + Math.min(payoutCount, ranked.length) + ' separated by ' + (margin === 0 ? 'ZERO' : margin) + ' stroke' + (margin !== 1 ? 's' : ''), {});
-        }
-      }
-    }
-  }
-  _prevLeaderTeam = newLeader;
-  _prevPayoutTeams = currPayoutTeams;
-}
-
-function getMyPickNames() {
-  if (!currentUserTeams.length) return new Set();
-  return new Set(currentUserTeams.flatMap(t => t.picks));
-}
-
-function getMyTeamNames() {
-  return new Set(currentUserTeams.map(t => t.team));
-}
-
-function feedMatchesFilter(ev) {
-  if (_feedFilter === 'all') return true;
-  // Margin alerts are relevant to everyone
-  if (ev.type === 'margin') return true;
-  const myPicks = getMyPickNames();
-  const myTeams = getMyTeamNames();
-  if (ev.meta?.player && myPicks.has(ev.meta.player)) return true;
-  if (ev.meta?.team && myTeams.has(ev.meta.team)) return true;
-  if (ev.meta?.affectedTeams && ev.meta.affectedTeams.some(t => myTeams.has(t))) return true;
-  return false;
-}
-
-function toggleFeedCutDetail(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.toggle('open');
-}
-
-function renderFeed() {
-  const el = document.getElementById('feed-list');
-  const filtered = FEED_EVENTS.filter(feedMatchesFilter);
-  if (!filtered.length) {
-    el.innerHTML = '<div class="feed-empty">' + (_feedFilter === 'myteam' ? 'No activity for your teams yet' : 'Waiting for scores\u2026') + '</div>';
-    return;
-  }
-  // Group events by time buckets
-  let html = '';
-  let lastBucket = '';
-  filtered.forEach((ev, idx) => {
-    const age = Date.now() - ev.ts;
-    const bucket = age < 120000 ? 'Just Now' : age < 600000 ? 'Recent' : age < 3600000 ? 'Earlier' : 'Older';
-    if (bucket !== lastBucket) {
-      html += '<div class="feed-time-group">' + bucket + '</div>';
-      lastBucket = bucket;
-    }
-    const detail = ev.meta?.detail ? '<div class="feed-detail">' + ev.meta.detail + '</div>' : '';
-    html += '<div class="feed-event feed-' + ev.type + '">' +
-      '<div class="feed-icon-wrap">' + ev.icon + '</div>' +
-      '<div class="feed-body"><div class="feed-msg">' + ev.msg + '</div>' + detail + '</div>' +
-      '<span class="feed-time">' + feedTimeAgo(ev.ts) + '</span></div>';
-  });
-  el.innerHTML = html;
-}
-
-function setFeedFilter(filter, btn) {
-  _feedFilter = filter;
-  document.querySelectorAll('.feed-filter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  // Hide filter group if no user teams
-  const fg = document.getElementById('feed-filter-group');
-  if (fg) fg.style.display = currentUserTeams.length ? 'flex' : 'none';
-  renderFeed();
-}
-
-function openFeed() {
-  // Show/hide filter based on whether user has teams
-  const fg = document.getElementById('feed-filter-group');
-  if (fg) fg.style.display = currentUserTeams.length ? 'flex' : 'none';
-  renderFeed();
-  document.getElementById('feed-overlay').classList.add('open');
-  document.getElementById('feed-drawer').classList.add('open');
-}
-
-function closeFeed() {
-  document.getElementById('feed-overlay').classList.remove('open');
-  document.getElementById('feed-drawer').classList.remove('open');
-}
 
 function startAgeTimer() {
   setInterval(() => { if (!lastFetchTime) return;
