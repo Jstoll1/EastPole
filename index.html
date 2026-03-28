@@ -2700,13 +2700,14 @@ to  {
 }
 .h2h-vs-cell.right { flex-direction: row-reverse; }
 .h2h-vs-score {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 900;
   flex-shrink: 0;
 }
 .h2h-vs-info {
   min-width: 0;
   overflow: hidden;
+  flex: 1;
 }
 .h2h-vs-cell.right .h2h-vs-info { text-align: right; }
 .h2h-vs-name {
@@ -2716,12 +2717,19 @@ to  {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.3;
 }
+.h2h-vs-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+}
+.h2h-vs-cell.right .h2h-vs-meta { justify-content: flex-end; }
 .h2h-vs-detail {
   font-size: 9px;
   color: var(--text3);
   font-weight: 600;
-  margin-top: 1px;
 }
 .h2h-panel-wrap {
   animation: h2hSlideIn 0.3s ease;
@@ -5091,8 +5099,8 @@ function buildH2HCell(g, side, isTop) {
   let html = '<div class="h2h-vs-cell ' + side + '">';
   html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
   html += '<div class="h2h-vs-info">';
-  html += '<div class="h2h-vs-name">' + g.name + rdTag + '</div>';
-  html += '<div class="h2h-vs-detail">' + detail + '</div>';
+  html += '<div class="h2h-vs-name">' + g.name + '</div>';
+  html += '<div class="h2h-vs-meta">' + (rdTag ? '<span>' + rdTag.trim() + '</span>' : '') + '<span class="h2h-vs-detail">' + detail + '</span></div>';
   html += '</div>';
   html += '</div>';
   return html;
