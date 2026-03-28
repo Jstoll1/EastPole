@@ -3505,7 +3505,8 @@ function renderLeaderboard() {
   const completedRoundCount = maxCompletedRounds;
   const activePlaying = players.filter(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'WD' && p.score !== 11 && p.score !== 12);
   const anyStillPlaying = activePlaying.some(p => /^\d+$/.test(p.thru) && parseInt(p.thru) >= 1 && parseInt(p.thru) < 18);
-  const currentRound = samplePlayer ? (anyStillPlaying ? (completedRoundCount + 1) || 1 : completedRoundCount) : 0;
+  const anyHaveTeeTime = activePlaying.some(p => p.thru && p.thru.includes(':'));
+  const currentRound = samplePlayer ? (anyStillPlaying ? (completedRoundCount + 1) || 1 : anyHaveTeeTime ? completedRoundCount + 1 : completedRoundCount) : 0;
   console.log('🏌️ Round detection:', { completedRoundCount, anyStillPlaying, currentRound, sampleThru: samplePlayer?.thru, sampleR1: samplePlayer?.r1 });
   const isPreT = currentRound === 0;
   if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
@@ -3514,6 +3515,7 @@ function renderLeaderboard() {
   const tvTitle = document.getElementById('lb-round-title');
   if (tvTitle) {
     if (anyStillPlaying) { tvTitle.textContent = roundLabels[currentRound] || 'FIRST ROUND'; }
+    else if (anyHaveTeeTime && currentRound > 0) { tvTitle.textContent = roundLabels[currentRound] || 'ROUND ' + currentRound; }
     else if (currentRound > 0) { tvTitle.textContent = endOfRoundLabels[currentRound] || roundLabels[currentRound]; }
     else { tvTitle.textContent = roundLabels[0]; }
   }
@@ -3546,7 +3548,7 @@ function renderLeaderboard() {
     else if (p.teeTime) { teeStr = p.teeTime; }
     const isTeeTime = p.thru && p.thru.includes(':');
 const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.startHole === 10 && p.thru !== 'MC' && p.thru !== 'F' && parseInt(p.thru) > 0 ? '*' : ''));
-    const todayDisp = preT ? '—' : (p.todayDisplay || '—');
+    const todayDisp = preT ? '—' : (isTeeTime ? '—' : (p.todayDisplay || '—'));
     const todayVal = todayDisp === 'E' || todayDisp === '—' ? 0 : parseInt(todayDisp.replace('+','')) || 0;
     const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
     const r1Disp = p.r1 ? p.r1 : '--';
@@ -3720,8 +3722,19 @@ if (isPreTournament) {
   const activePlayers = Object.values(freshScores).filter(g => g.score !== 11 && g.score !== 12);
   // Check if ANY player is actively mid-round (thru 1-17)
   const anyMidRound = activePlayers.some(g => /^\d+$/.test(g.thru) && parseInt(g.thru) >= 1 && parseInt(g.thru) <= 17);
-  const allDone = !anyMidRound && activePlayers.length > 0 && activePlayers.every(g => g.thru === 'F' || g.thru === '18' || (g.thru && g.thru.includes(':')) || g.thru === 'MC' || g.thru === 'WD');
-  if (allDone) {
+  const anyTeeTime = activePlayers.some(g => g.thru && g.thru.includes(':'));
+  const allDone = !anyMidRound && !anyTeeTime && activePlayers.length > 0 && activePlayers.every(g => g.thru === 'F' || g.thru === '18' || g.thru === 'MC' || g.thru === 'WD');
+  if (anyTeeTime && !anyMidRound) {
+    // Players have tee times for next round — round is upcoming
+    let maxComp = 0;
+    activePlayers.forEach(g => { const cnt = [g.r1,g.r2,g.r3,g.r4].filter(r=>r!=null).length; if(cnt>maxComp) maxComp=cnt; });
+    const nextRound = maxComp + 1;
+    setApiStatus('live', 'Rd ' + nextRound + ' Tee Times');
+    if (ROUND_START_ROUND < nextRound) {
+      saveRoundStartPositions(nextRound);
+      console.log('📌 Saved round-start positions for Rd', nextRound);
+    }
+  } else if (allDone) {
     const completedRound = [activePlayers[0]?.r4 ? 4 : 0, activePlayers[0]?.r3 ? 3 : 0, activePlayers[0]?.r2 ? 2 : 0, activePlayers[0]?.r1 ? 1 : 0].find(r => r > 0) || 1;
     setApiStatus('between', 'End of Rd ' + completedRound);
     // Save end-of-round positions as start for next round
