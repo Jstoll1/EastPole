@@ -1328,7 +1328,6 @@ html, body  {
 .tv-today.neg { color: var(--gold); }
 .tv-today.pos { color: var(--red); }
 .tv-today.eve { color: var(--text2); }
-.tv-today.done { color: var(--text2); }
 
 .tv-thru  {
   width: 52px;
@@ -1337,8 +1336,9 @@ html, body  {
   text-align: center;
   white-space: nowrap;
   flex-shrink: 0;
-  color: var(--text2);
+  color: var(--text3);
 }
+.tv-thru.done { color: var(--text2); }
 
 .tv-rnd  {
   width: 26px;
@@ -3921,8 +3921,8 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : (roundDone && la
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
       + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?(p.thru==='WD'||p.score===12?'WD':'MC'):(scoreChange ? '<span class="score-pulse">' + scf + '</span>' : scf)) + '</div>'
-      + '<div class="tv-today ' + todayCls + (roundDone || isTeeTime ? ' done' : '') + '">' + todayDisp + '</div>'
-      + '<div class="tv-thru">' + thruDisp + '</div>'
+      + '<div class="tv-today ' + todayCls + '">' + todayDisp + '</div>'
+      + '<div class="tv-thru' + (roundDone || isTeeTime ? ' done' : '') + '">' + thruDisp + '</div>'
       + '</div>'
       + '<div class="sc-panel" id="sc-panel-' + ri + '"></div>';
   });
