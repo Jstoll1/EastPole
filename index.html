@@ -3255,6 +3255,30 @@ to  {
 <div id="toast">
 </div>
 <script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  TOURNAMENT CONFIG — Change these values for each new week  ║
+// ╠══════════════════════════════════════════════════════════════╣
+// ║                                                              ║
+// ║  1. ENTRIES        → Line ~3460  (team picks array)          ║
+// ║  2. FLAGS          → Line ~3461  (player → flag emoji map)   ║
+// ║  3. PREV_WINNER    → Line ~3472  (defending champion name)   ║
+// ║  4. getDefaultPars → Line ~4419  (18 hole pars for course)   ║
+// ║  5. POOL_CONFIG    → Line ~5170  (buy-in, payouts)           ║
+// ║  6. HEADLINES      → Line ~4620  (rotating headline stories) ║
+// ║                                                              ║
+// ║  HTML (search & replace):                                    ║
+// ║  7. Splash title   → "Houston Open" in splash-title          ║
+// ║  8. Splash logo    → img src in logo-capsule                 ║
+// ║  9. Header logo    → img src in hdr-logo-center              ║
+// ║  10. Standings sub → "Houston Open 2026" in tv-sub           ║
+// ║  11. Brand subtext → "Houston Open Golf Pool"                ║
+// ║                                                              ║
+// ║  AUTO-DETECTED (no change needed):                           ║
+// ║  • EVENT_ID   — from ESPN API                                ║
+// ║  • COURSE_PAR — from ESPN course data + getDefaultPars()     ║
+// ║  • Tournament name in header — from ESPN API                 ║
+// ╚══════════════════════════════════════════════════════════════╝
+
 // ── Error Tracker ──────────────────────────────────────────
 const ErrorTracker = (() => {
   const log = [];
