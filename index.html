@@ -3586,7 +3586,8 @@ const ownP = ownE ? Math.round(ownE.pct * 100) + '% Owned' : '';
 const thruVal = gd ? gd.thru : '';
 const holesLeft = getHolesRemaining(g.name);
 const stLastRound = (function(){ if(!gd) return null; const rs = [gd.r1,gd.r2,gd.r3,gd.r4]; for(let i=rs.length-1;i>=0;i--){ if(rs[i]&&rs[i]>50) return rs[i]; } return null; })();
-const thruDisplay = (gd && (gd.thru === 'WD' || gd.score === 12)) ? '' : (gd && gd.thru === 'F' ? (stLastRound ? `Shot ${stLastRound}` : '') : (thruVal ? `Thru ${thruVal}` : ''));
+const stRoundDone = gd && (gd.thru === 'F' || gd.thru === '18');
+const thruDisplay = (gd && (gd.thru === 'WD' || gd.score === 12)) ? '' : (stRoundDone ? (stLastRound ? `Shot ${stLastRound}` : '') : (thruVal ? `Thru ${thruVal}` : ''));
 return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> <div class="mini-pick-top"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> </div> <div class="mini-pick-bottom"> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${thruDisplay?`<span class="mini-pick-thru">${thruDisplay}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')}<div class="picks-panel-footer"><span>${teamHolesLeft} holes remaining</span><button class="h2h-quick-btn" onclick="event.stopPropagation();openH2HPicker(${entryIdx})">⚔️ H2H</button></div> </div>`; }); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); document.getElementById('my-teams-container').innerHTML = heroHtml; el.innerHTML = html;
   const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
   document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
@@ -3877,7 +3878,8 @@ function renderLeaderboard() {
     else if (p.teeTime) { teeStr = p.teeTime; }
     const isTeeTime = p.thru && p.thru.includes(':');
     const lastRoundScore = (function(){ const rs = [p.r1,p.r2,p.r3,p.r4]; for(let i=rs.length-1;i>=0;i--){ if(rs[i]&&rs[i]>50) return rs[i]; } return null; })();
-const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : (p.thru === 'F' && lastRoundScore ? lastRoundScore : p.thru + (p.startHole === 10 && p.thru !== 'MC' && p.thru !== 'F' && parseInt(p.thru) > 0 ? '*' : '')));
+    const roundDone = p.thru === 'F' || p.thru === '18';
+const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : (roundDone && lastRoundScore ? lastRoundScore : p.thru + (p.startHole === 10 && p.thru !== 'MC' && !roundDone && parseInt(p.thru) > 0 ? '*' : '')));
     const todayDisp = preT ? '—' : (isTeeTime && anyStillPlaying ? '—' : (p.todayDisplay || '—'));
     const todayVal = todayDisp === 'E' || todayDisp === '—' ? 0 : parseInt(todayDisp.replace('+','')) || 0;
     const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
@@ -3972,7 +3974,8 @@ function renderOwnership() {
     const todayVal = todayDisp === 'E' || todayDisp === '—' ? 0 : parseInt(todayDisp.replace('+', '')) || 0;
     const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
     const ownLastRound = (function(){ const rs = [gd?.r1,gd?.r2,gd?.r3,gd?.r4]; for(let i=rs.length-1;i>=0;i--){ if(rs[i]&&rs[i]>50) return rs[i]; } return null; })();
-    const thruDisp = gd?.thru === 'F' && ownLastRound ? String(ownLastRound) : (gd?.thru || '—');
+    const ownRoundDone = gd?.thru === 'F' || gd?.thru === '18';
+    const thruDisp = ownRoundDone && ownLastRound ? String(ownLastRound) : (gd?.thru || '—');
 
     let valueTag = '';
 
@@ -4006,7 +4009,7 @@ function renderOwnership() {
       '<div class="own-bar-bg"><div class="own-bar" style="width:' + (d.pct / maxPct * 100).toFixed(1) + '%"></div></div>' +
       '<div class="own-sub">' +
         '<span>' + d.entries + ' of ' + ENTRIES.length + ' entries' + (todayDisp !== '—' ? ' · Today: <span class="own-today ' + todayCls + '">' + todayDisp + '</span>' : '') + '</span>' +
-        '<span class="own-thru">' + (thruDisp !== '—' && thruDisp !== 'MC' && thruDisp !== 'WD' ? (gd?.thru === 'F' && ownLastRound ? 'Shot ' + thruDisp : 'Thru ' + thruDisp) : '') + '</span>' +
+        '<span class="own-thru">' + (thruDisp !== '—' && thruDisp !== 'MC' && thruDisp !== 'WD' ? (ownRoundDone && ownLastRound ? 'Shot ' + thruDisp : 'Thru ' + thruDisp) : '') + '</span>' +
       '</div>' +
       detailHtml +
     '</div>';
