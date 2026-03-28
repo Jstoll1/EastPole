@@ -4910,19 +4910,34 @@ function renderH2HInline() {
   }
   html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmtTeam(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
   html += '</div>';
-  // Momentum indicator — compare today's round performance
-  const todayA = cA.top4.reduce((s, g) => { const gd = GOLFER_SCORES[g.name]; const t = gd ? parseInt(gd.todayDisplay) : NaN; return s + (isNaN(t) || t > 80 ? 0 : t - 72); }, 0);
-  const todayB = cB.top4.reduce((s, g) => { const gd = GOLFER_SCORES[g.name]; const t = gd ? parseInt(gd.todayDisplay) : NaN; return s + (isNaN(t) || t > 80 ? 0 : t - 72); }, 0);
+  // Momentum indicator — compare today's round performance (only active golfers)
+  function todayRelPar(top4) {
+    let sum = 0, count = 0;
+    top4.forEach(g => {
+      const gd = GOLFER_SCORES[g.name];
+      if (!gd) return;
+      const thru = gd.thru;
+      // Only count golfers actually on course or finished today (not tee times, not —)
+      if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru.includes(':')) return;
+      const t = parseInt(gd.todayDisplay);
+      if (isNaN(t) || t > 80) return;
+      sum += t - 72; count++;
+    });
+    return { sum, count };
+  }
+  const momA = todayRelPar(cA.top4);
+  const momB = todayRelPar(cB.top4);
   const totalHolesLeft = cA.picks.reduce((s, p) => s + getHolesRemaining(p), 0) + cB.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
-  if (totalHolesLeft > 0 && (todayA !== 0 || todayB !== 0)) {
-    const momDiff = todayA - todayB;
+  if (totalHolesLeft > 0 && (momA.count > 0 || momB.count > 0)) {
+    const fmtPar = v => (v > 0 ? '+' + v : v === 0 ? 'E' : '' + v);
+    const momDiff = momA.sum - momB.sum;
     let momHtml = '';
     if (momDiff < 0) {
-      momHtml = '<span style="color:#52b788">▲ ' + cA.team + '</span> gaining today <span style="color:var(--text2)">(' + (todayA >= 0 ? '+' : '') + todayA + ' vs ' + (todayB >= 0 ? '+' : '') + todayB + ')</span>';
+      momHtml = '<span style="color:#52b788">▲ ' + cA.team + '</span> gaining today <span style="color:var(--text2)">(' + fmtPar(momA.sum) + ' vs ' + fmtPar(momB.sum) + ')</span>';
     } else if (momDiff > 0) {
-      momHtml = '<span style="color:#52b788">▲ ' + cB.team + '</span> gaining today <span style="color:var(--text2)">(' + (todayB >= 0 ? '+' : '') + todayB + ' vs ' + (todayA >= 0 ? '+' : '') + todayA + ')</span>';
+      momHtml = '<span style="color:#52b788">▲ ' + cB.team + '</span> gaining today <span style="color:var(--text2)">(' + fmtPar(momB.sum) + ' vs ' + fmtPar(momA.sum) + ')</span>';
     } else {
-      momHtml = 'Even today <span style="color:var(--text2)">(' + (todayA >= 0 ? '+' : '') + todayA + ' each)</span>';
+      momHtml = 'Even today <span style="color:var(--text2)">(' + fmtPar(momA.sum) + ' each)</span>';
     }
     html += '<div class="h2h-momentum">' + momHtml + '</div>';
   }
