@@ -3705,11 +3705,16 @@ function renderLeaderboard() {
     return parseTeeTime(a) - parseTeeTime(b);
   });
   else if (lbSort === 'today') players.sort(function(a,b) {
-    var aInactive = (a.score === 11 || a.score === 12 || a.thru === '—' || a.thru === 'F' || (a.thru && a.thru.includes(':')));
-    var bInactive = (b.score === 11 || b.score === 12 || b.thru === '—' || b.thru === 'F' || (b.thru && b.thru.includes(':')));
-    if (aInactive && bInactive) return 0;
-    if (aInactive) return 1;
-    if (bInactive) return -1;
+    // 0 = active mid-round, 1 = waiting/finished (tee time, F, —), 2 = MC/WD
+    function todayTier(p) {
+      if (p.score === 11 || p.score === 12) return 2;
+      if (p.thru === '—' || p.thru === 'F' || (p.thru && p.thru.includes(':'))) return 1;
+      return 0;
+    }
+    var ta = todayTier(a), tb = todayTier(b);
+    if (ta !== tb) return ta - tb;
+    if (ta === 2) return 0; // MC/WD don't sort among themselves
+    if (ta === 1) return a.score - b.score; // waiting: sort by tournament score
     return (parseTodayVal(a) - parseTodayVal(b)) * dir;
   });
   else if (lbSort === 'thru') players.sort(function(a,b) { return (parseThruVal(b) - parseThruVal(a)) * dir; });
