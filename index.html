@@ -3844,7 +3844,7 @@ function renderLeaderboard() {
   const estCutShow = currentRound >= 1 && currentRound <= 2 && lbSort === 'score' && lbFilter === 'all' && !lbSearch;
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
-  // Top 5 movers up and top 5 movers down — use round start, fallback to prev positions
+  // Top 10 movers up and top 10 movers down — use round start, fallback to prev positions
   const arrowPlayers = new Map(); // name -> delta
   if (!isPreT) {
     const allDeltas = new Map();
@@ -3858,8 +3858,8 @@ function renderLeaderboard() {
       if (pP && pP !== cP) allDeltas.set(p.name, pP - cP);
     });
     const sorted = [...allDeltas.entries()].map(([name, delta]) => ({ name, delta }));
-    const ups = sorted.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 5);
-    const dns = sorted.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 5);
+    const ups = sorted.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 10);
+    const dns = sorted.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 10);
     ups.forEach(d => arrowPlayers.set(d.name, d.delta));
     dns.forEach(d => arrowPlayers.set(d.name, d.delta));
   }
