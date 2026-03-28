@@ -3420,23 +3420,24 @@ function saveRoundStartPositions(round) {
 }
 
 function getTopMovers(players) {
-  let bestUpDelta = 0, bestDownDelta = 0;
-  const deltas = new Map();
+  // Fire = best today score(s), Ice = worst today score(s)
+  // Only considers players actively mid-round
+  let bestScore = Infinity, worstScore = -Infinity;
+  const scores = new Map();
   players.forEach(p => {
     if (p.score === 11 || p.score === 12) return;
-    const currP = parsePos(p.pos);
-    if (!currP) return;
-    const refP = ROUND_START_POSITIONS[p.name] || PREV_POSITIONS[p.name];
-    if (!refP || refP === currP) return;
-    const delta = refP - currP;
-    deltas.set(p.name, delta);
-    if (delta > bestUpDelta) bestUpDelta = delta;
-    if (delta < bestDownDelta) bestDownDelta = delta;
+    const today = golferTodayScore(p);
+    if (today === null) return;
+    scores.set(p.name, today);
+    if (today < bestScore) bestScore = today;
+    if (today > worstScore) worstScore = today;
   });
   const names = new Set();
-  deltas.forEach((delta, name) => {
-    if (delta > 0 && delta === bestUpDelta) names.add(name);
-    if (delta < 0 && delta === bestDownDelta) names.add(name);
+  if (scores.size === 0) return names;
+  // Only award if there's meaningful separation (don't fire+ice same score)
+  scores.forEach((today, name) => {
+    if (today === bestScore && bestScore < worstScore) names.add(name);
+    if (today === worstScore && worstScore > bestScore) names.add(name);
   });
   return names;
 }
@@ -3947,7 +3948,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + '<div class="tv-pos">' + (mc?(p.thru==='WD'||p.score===12?'WD':'MC'):p.pos) + moveHtml + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
-      + (isMover ? (roundDelta >= 0 ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + roundDelta + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + Math.abs(roundDelta) + '</span>') : '')
+      + (isMover ? (function(){ var ts = golferTodayScore(p); var tf = ts > 0 ? '+' + ts : ts === 0 ? 'E' : '' + ts; return ts !== null && ts <= 0 ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + tf + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + tf + '</span>'; })() : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
