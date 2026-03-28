@@ -4930,12 +4930,12 @@ function buildH2HCell(g, side, isTop) {
   const isWD = thru === 'WD' || (gd && gd.score === 12);
   const mc = thru === 'MC';
   const holesLeft = getHolesRemaining(g.name);
-  const status = isWD ? 'WD' : mc ? 'MC' : (thru === 'F' ? 'F' : (thru === '—' ? '—' : thru + ' thru'));
+  const detail = isWD ? 'WD' : mc ? 'MC' : (holesLeft > 0 ? holesLeft + ' holes left' : 'Complete');
   let html = '<div class="h2h-vs-cell ' + side + '">';
   html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
   html += '<div class="h2h-vs-info">';
   html += '<div class="h2h-vs-name">' + g.name + '</div>';
-  html += '<div class="h2h-vs-detail">' + status + ' · ' + holesLeft + 'h left</div>';
+  html += '<div class="h2h-vs-detail">' + detail + '</div>';
   html += '</div>';
   html += '</div>';
   return html;
