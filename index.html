@@ -67,6 +67,9 @@
 [data-theme="light"] .tv-row:nth-child(even) { background: #ffffff; }
 [data-theme="light"] .tv-row.tv-mc { opacity: 0.5; }
 [data-theme="light"] .tv-row.is-my-team { background: rgba(0,103,71,0.06); }
+[data-theme="light"] .standing-row.panel-open { background: rgba(0,103,71,0.08); border-left-color: #006747; border-bottom-color: transparent; }
+[data-theme="light"] .standing-row.panel-open .s-team { color: #006747; }
+[data-theme="light"] .standing-row.panel-open .s-rank { color: #006747; }
 [data-theme="light"] .picks-panel.open { background: #f5f8f5; border-left-color: #006747; }
 [data-theme="light"] .mini-pick:nth-child(odd) { background: #f0f5f0; }
 [data-theme="light"] .mini-pick:nth-child(even) { background: #ffffff; }
@@ -837,6 +840,15 @@ html, body  {
   border-bottom: 1px solid #0d1f12;
 }
 
+.standing-row.panel-open {
+  background: rgba(13,31,18,0.8);
+  border-left: 3px solid var(--gold);
+  border-bottom-color: transparent;
+  border-radius: 8px 8px 0 0;
+  margin-top: 4px;
+}
+.standing-row.panel-open .s-team { color: var(--gold); }
+.standing-row.panel-open .s-rank { color: var(--gold); }
 .picks-panel.open  {
   display: block;
   background: rgba(13,31,18,0.5);
@@ -3580,8 +3592,7 @@ return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"
     if (restoreIdx >= 0) {
       const panel = document.getElementById('panel-' + restoreIdx);
       const arr = document.getElementById('arr-' + restoreIdx);
-
-      if (panel) panel.classList.add('open');
+      if (panel) { panel.classList.add('open'); const sRow = panel.previousElementSibling; if (sRow) sRow.classList.add('panel-open'); }
       if (arr) arr.textContent = '⌄';
     }
   }
@@ -3592,9 +3603,17 @@ let _openPanelTeam = null; // Track open panel by team name
 function togglePanel(row, i) {
   const panel = document.getElementById('panel-'+i);
   const arr = document.getElementById('arr-'+i);
+  // Close any other open panel first
+  const prevOpen = document.querySelector('.picks-panel.open');
+  if (prevOpen && prevOpen !== panel) {
+    prevOpen.classList.remove('open');
+    const prevRow = prevOpen.previousElementSibling;
+    if (prevRow) { prevRow.classList.remove('panel-open'); const prevArr = prevRow.querySelector('.s-arrow'); if (prevArr) prevArr.textContent = '›'; }
+  }
   const open = panel.classList.toggle('open');
   arr.textContent = open ? '⌄' : '›';
-  // Track by team name so we can restore after re-render
+  const standingRow = panel.previousElementSibling;
+  if (standingRow) { if (open) standingRow.classList.add('panel-open'); else standingRow.classList.remove('panel-open'); }
   if (open) {
     const ranked = getRanked();
     _openPanelTeam = ranked[i] ? ranked[i].team : null;
