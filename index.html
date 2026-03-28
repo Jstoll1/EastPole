@@ -4902,16 +4902,20 @@ function renderH2HInline() {
   if (pctLeft > 12) html += '<span class="h2h-bar-label left">WIN</span>';
   if (pctRight > 12) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
-  // Score summary: total + current round
+  // Score summary: total + current round (only active golfers mid-round)
   function teamRoundScore(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
       const gd = GOLFER_SCORES[g.name];
       if (!gd || gd.score > 10) return;
+      const thru = gd.thru;
+      if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru.includes(':')) return;
+      const thruNum = parseInt(thru);
+      if (isNaN(thruNum) || thruNum < 1) return;
       const completed = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
       const completedRel = completed.reduce((s, r) => s + (r - COURSE_PAR), 0);
       const today = gd.score - completedRel;
-      if (today !== 0 || (gd.thru && gd.thru !== '—' && !gd.thru.includes(':'))) { sum += today; count++; }
+      sum += today; count++;
     });
     return { sum, count };
   }
