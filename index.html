@@ -98,12 +98,19 @@ html, body  {
 
 .hdr-logo-center  {
   flex: 1;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+  position: relative;
+  z-index: 2;
 }
 
 .hdr-logo-center img  {
   height: 38px;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  pointer-events: none;
 }
 
 .hdr-right  {
@@ -938,15 +945,24 @@ html, body  {
 }
 .ticker-track {
   flex: 1;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   position: relative;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
 }
+.ticker-track::-webkit-scrollbar { display: none; }
+.ticker-track.dragging { cursor: grabbing; }
 .ticker-content {
   display: flex;
   gap: 0;
   white-space: nowrap;
-  animation: tickerScroll 30s linear infinite;
   width: max-content;
+  pointer-events: none;
 }
 .ticker-item {
   display: inline-flex;
@@ -968,10 +984,6 @@ html, body  {
 }
 .ticker-item-score.sc-red { color: #FF7F7F; }
 .ticker-item-score.sc-green { color: var(--gold); }
-@keyframes tickerScroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
 
 .tv-title  {
   font-size: 12px;
@@ -3732,9 +3744,11 @@ function generateFeedEvents(freshScores) {
     const prev = PREV_SCORES[name];
     if (prev !== undefined && d.score !== prev) {
       const diff = d.score - prev;
-      if (diff <= -2) addFeedEvent('eagle', '\uD83E\uDD85', name + ' eagles \u2192 ' + fmt(d.score));
-      else if (diff < 0) addFeedEvent('birdie', '\uD83D\uDC26', name + ' birdies \u2192 ' + fmt(d.score));
-      else if (diff > 0) addFeedEvent('bogey', '\uD83D\uDCA5', name + ' bogeys \u2192 ' + fmt(d.score));
+      const hole = d.thru === 'F' ? '18' : d.thru;
+      const holeTag = /^\d+$/.test(hole) ? ' on #' + hole : '';
+      if (diff <= -2) addFeedEvent('eagle', '\uD83E\uDD85', name + ' eagles' + holeTag + ' \u2192 ' + fmt(d.score));
+      else if (diff < 0) addFeedEvent('birdie', '\uD83D\uDC26', name + ' birdies' + holeTag + ' \u2192 ' + fmt(d.score));
+      else if (diff > 0) addFeedEvent('bogey', '\uD83D\uDCA5', name + ' bogeys' + holeTag + ' \u2192 ' + fmt(d.score));
     }
   });
   // Position changes: big movers/fallers
@@ -4323,6 +4337,8 @@ function buildTeamBlock(calc) {
 function renderTicker() {
   const el = document.getElementById('ticker-content');
   if (!el) return;
+  const track = document.querySelector('.ticker-track');
+  const prevScroll = track ? track.scrollLeft : 0;
   const ranked = getRanked();
   const items = ranked.map((e, i) => {
     const scf = fmt(e.total);
@@ -4332,8 +4348,64 @@ function renderTicker() {
     return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> <span${nameStyle}>${e.team}</span> <span class="ticker-item-score ${scc}">${scf}</span>${money}</span>`;
   }).join('');
   el.innerHTML = items + items;
-  const duration = Math.max(20, ranked.length * 2.5);
-  el.style.animationDuration = duration + 's';
+  if (track) track.scrollLeft = prevScroll;
+  if (!_tickerInterval) { startTickerScroll(); initTickerTouch(); }
+}
+
+// Ticker auto-scroll with native touch scrolling
+let _tickerInterval = null, _tickerPaused = false, _tickerResumeT = null;
+
+function startTickerScroll() {
+  if (_tickerInterval) return;
+  const track = document.querySelector('.ticker-track');
+  if (!track) return;
+  _tickerInterval = setInterval(function() {
+    if (_tickerPaused) return;
+    const content = document.getElementById('ticker-content');
+    if (!content) return;
+    const half = content.scrollWidth / 2;
+    track.scrollLeft += 1;
+    // Seamless loop: when past halfway, jump back
+    if (track.scrollLeft >= half) track.scrollLeft -= half;
+  }, 30);
+}
+
+let _tickerMouseDrag = false, _tickerMouseX = 0, _tickerMouseScroll = 0;
+
+function initTickerTouch() {
+  const track = document.querySelector('.ticker-track');
+  if (!track) return;
+  function pause() {
+    _tickerPaused = true;
+    clearTimeout(_tickerResumeT);
+  }
+  function resume() {
+    clearTimeout(_tickerResumeT);
+    _tickerResumeT = setTimeout(function() { _tickerPaused = false; }, 3000);
+  }
+  // Touch: native scroll just works
+  track.addEventListener('touchstart', pause, { passive: true });
+  track.addEventListener('touchend', resume, { passive: true });
+  // Mouse: drag to scroll
+  track.addEventListener('mousedown', function(e) {
+    _tickerMouseDrag = true;
+    _tickerMouseX = e.clientX;
+    _tickerMouseScroll = track.scrollLeft;
+    track.classList.add('dragging');
+    pause();
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', function(e) {
+    if (!_tickerMouseDrag) return;
+    var dx = e.clientX - _tickerMouseX;
+    track.scrollLeft = _tickerMouseScroll - dx;
+  });
+  window.addEventListener('mouseup', function() {
+    if (!_tickerMouseDrag) return;
+    _tickerMouseDrag = false;
+    track.classList.remove('dragging');
+    resume();
+  });
 }
 
 function renderAll() { _renderCount++; renderStandings(); renderLeaderboard(); renderOwnership(); renderTicker(); if (compareMode && cmpSelections.length === 2) renderH2HInline(); if (_debugOpen) renderDebugPanel(); }
@@ -4599,6 +4671,7 @@ function renderReactions(msgEl, reactions, msgKey) {
     const isMineReact = users.includes(chatDisplayName);
     const btn = document.createElement('button');
     btn.className = 'chat-react-btn' + (isMineReact ? ' mine-react' : '');
+    btn.title = users.join(', ');
     btn.innerHTML = `${emoji}<span class="react-count">${users.length}</span>`;
     btn.onclick = () => toggleReaction(msgKey, emoji);
     container.appendChild(btn);
