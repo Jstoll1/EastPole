@@ -3699,32 +3699,22 @@ function renderLeaderboard() {
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
   const topMoverNames = isPreT ? new Set() : getTopMovers(players);
-  // Ensure at least 4 up arrows and 4 down arrows — use round start, fallback to prev positions
+  // Top 5 movers up and top 5 movers down — use round start, fallback to prev positions
   const arrowPlayers = new Map(); // name -> delta
   if (!isPreT) {
-    const roundDeltas = [];
-    const prevDeltas = [];
+    const allDeltas = new Map();
     players.forEach(p => {
       if (p.score === 11 || p.score === 12) return;
       const cP = parsePos(p.pos);
       if (!cP) return;
       const sP = ROUND_START_POSITIONS[p.name];
-      if (sP && sP !== cP) roundDeltas.push({ name: p.name, delta: sP - cP });
+      if (sP && sP !== cP) { allDeltas.set(p.name, sP - cP); return; }
       const pP = PREV_POSITIONS[p.name];
-      if (pP && pP !== cP) prevDeltas.push({ name: p.name, delta: pP - cP });
+      if (pP && pP !== cP) allDeltas.set(p.name, pP - cP);
     });
-    // Use round deltas first
-    let ups = roundDeltas.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta);
-    let dns = roundDeltas.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta);
-    // If not enough from round start, supplement with prev-position deltas
-    if (ups.length < 4) {
-      const existing = new Set(ups.map(d => d.name));
-      prevDeltas.filter(d => d.delta > 0 && !existing.has(d.name)).sort((a, b) => b.delta - a.delta).forEach(d => { if (ups.length < 4) ups.push(d); });
-    }
-    if (dns.length < 4) {
-      const existing = new Set(dns.map(d => d.name));
-      prevDeltas.filter(d => d.delta < 0 && !existing.has(d.name)).sort((a, b) => a.delta - b.delta).forEach(d => { if (dns.length < 4) dns.push(d); });
-    }
+    const sorted = [...allDeltas.entries()].map(([name, delta]) => ({ name, delta }));
+    const ups = sorted.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 5);
+    const dns = sorted.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 5);
     ups.forEach(d => arrowPlayers.set(d.name, d.delta));
     dns.forEach(d => arrowPlayers.set(d.name, d.delta));
   }
