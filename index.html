@@ -3674,10 +3674,14 @@ function renderLeaderboard() {
   let players = Object.entries(GOLFER_SCORES).map(([name,d])=>({name,...d}));
   var parseTodayVal = function(p) {
     if (p.score === 11 || p.score === 12) return 999; // MC/WD to bottom
-    var d = p.todayDisplay || '—';
-    if (d === '—') return 999;
-    if (d === 'E') return 0;
-    return parseInt(d.replace('+','')) || 0;
+    if (p.thru === '—') return 999; // pre-tournament
+    if (p.thru && p.thru.includes(':')) return 999; // tee time, not started
+    if (p.thru === 'F') return 999; // finished, between rounds
+    // Calculate today relative to par from tournament score minus completed rounds
+    var gd = p;
+    var completed = [gd.r1, gd.r2, gd.r3, gd.r4].filter(function(r) { return r != null && r > 50; });
+    var completedRel = completed.reduce(function(s, r) { return s + (r - COURSE_PAR); }, 0);
+    return gd.score - completedRel;
   };
   var parseThruVal = function(p) {
     if (p.thru === '—') return -1;
