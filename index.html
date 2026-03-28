@@ -4998,7 +4998,7 @@ function buildH2HCell(g, side, isTop) {
   }
   const detail = isWD ? 'WD' : mc ? 'MC' : (holesLeft > 0 ? holesLeft + ' holes left' : 'Complete');
   let html = '<div class="h2h-vs-cell ' + side + '">';
-  html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
+  html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '<div style="font-size:7px;font-weight:700;color:var(--text3);letter-spacing:0.5px">TOT</div></div>';
   html += '<div class="h2h-vs-info">';
   html += '<div class="h2h-vs-name">' + g.name + rdTag + '</div>';
   html += '<div class="h2h-vs-detail">' + detail + '</div>';
