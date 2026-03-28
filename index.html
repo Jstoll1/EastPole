@@ -472,13 +472,12 @@ html, body  {
 .sc-round-summary {
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-wrap: wrap;
   gap: 0;
-  padding: 6px 12px 2px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text2);
+  padding: 4px 12px 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
 }
 .sc-round-chip { white-space: nowrap; }
 .sc-round-sep {
@@ -4298,9 +4297,9 @@ async function toggleScorecard(idx, playerName) {
   html += buildOwnBadge();
   html += '</div>';
 
-  // Round-by-round summary line: R1: 67 (-3) | R2: 70 (E) ...
-  const completedRounds = rounds.map((r, i) => ({ r, i })).filter(({ r }) => r.value != null);
-  if (completedRounds.length > 0) {
+  // Round-by-round summary: R1: 68 (-2) | R2: 63 (-7)  — only fully completed rounds
+  const completedRounds = rounds.map((r, i) => ({ r, i })).filter(({ r }) => r.value != null && r.value > 50);
+  if (completedRounds.length > 1) {
     html += '<div class="sc-round-summary">';
     html += completedRounds.map(({ r, i }) => {
       var dpC = '';
