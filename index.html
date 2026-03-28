@@ -3256,7 +3256,7 @@ function getCountryCode(name) { return FLAG_TO_CODE[FLAGS[name]] || ''; }
 
 const COURSE_PAR = 72;
 const PREV_WINNER = 'Min Woo Lee';
-const gs = n => GOLFER_SCORES[n] ? GOLFER_SCORES[n].score : 11;
+const gs = n => { if (GOLFER_SCORES[n]) return GOLFER_SCORES[n].score; if (Object.keys(GOLFER_SCORES).length > 0) console.warn('⚠️ Player not found in GOLFER_SCORES:', n); return 11; };
 const fmt = s => s === 11 ? 'MC' : s === 12 ? 'WD' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
 const fmtTeam = s => s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
 const cls = s => s < 0 ? 'neg' : s > 0 ? 'pos' : 'eve';
@@ -3358,7 +3358,7 @@ const matches = ENTRIES.filter(e=>e.email.toLowerCase().includes(q)); if (!match
 const ranked = getRanked(); el.innerHTML = matches.map((e,mi)=>{ const calc = calcEntry(e);
 const rank = ranked.findIndex(r=>r.email===e.email&&r.team===e.team)+1;
 const sc=calc.total, scf=fmt(sc), scc=cls(sc); return ` <div class="team-card"> <h2>${e.team}</h2> <div class="tc-email">${e.email}</div> <div class="tc-stats"> <div class="tc-stat"><div class="tc-val ${scc}">${scf}</div><div class="tc-lbl">Score</div></div> <div class="tc-stat"><div class="tc-val">#${rank}</div><div class="tc-lbl">Pool Rank</div></div> <div class="tc-stat"><div class="tc-val">${matches.length>1?mi+1+'/'+matches.length:'—'}</div><div class="tc-lbl">Entry</div></div> </div> </div> <div class="picks-card" style="margin-bottom:16px"> ${calc.scores.map((g,j)=>{ const isTop=j<4, gd=GOLFER_SCORES[g.name];
-const pos=gd?gd.pos:'—', thru=gd?gd.thru:''; return `<div class="pick-row"> <div class="pick-n">${j+1}</div> <div class="pick-info"> <div class="pick-name">${g.name}${isTop?'<span class="pick-badge">TOP 4</span>':''}</div> <div class="pick-pos">${pos}${pos!=='MC'?' · Thru '+thru:' · Missed Cut'}</div> </div> <div class="pick-score ${cls(g.score)}">${fmt(g.score)}</div> </div>`; }).join('')} </div>`; }).join('');}
+const pos=gd?(gd.thru==='WD'||gd.score===12?'WD':gd.pos):'—', thru=gd?gd.thru:''; const pickStatus=pos==='WD'?' · Withdrawn':pos==='MC'?' · Missed Cut':(' · Thru '+thru); return `<div class="pick-row"> <div class="pick-n">${j+1}</div> <div class="pick-info"> <div class="pick-name">${g.name}${isTop?'<span class="pick-badge">TOP 4</span>':''}</div> <div class="pick-pos">${pos}${pickStatus}</div> </div> <div class="pick-score ${cls(g.score)}">${fmt(g.score)}</div> </div>`; }).join('')} </div>`; }).join('');}
 
 let lbFilter='all';
 let lbSearch='';
@@ -3576,9 +3576,10 @@ const sc = gd?.score;
 const pos = gd?.pos || '—';
 const scf = sc!==undefined ? fmt(sc) : '—';
 const scc = sc!==undefined ? cls(sc) : 'eve';
-const mc = gd?.thru === 'MC';
+const mc = gd?.thru === 'MC' || gd?.score === 11;
+const isWD = gd?.thru === 'WD' || gd?.score === 12;
 const flag = FLAGS[d.player] || '';
-const posStr = mc ? 'MC' : (pos !== '—' ? pos : ''); return `<div class="own-row"> <div class="own-hdr"> <div style="display:flex;align-items:baseline;gap:6px;min-width:0"> <span class="own-name">${flag} ${d.player}</span> ${posStr ? `<span style="font-size:10px;color:var(--text3);font-weight:600;flex-shrink:0">${posStr}</span>` : ''} </div> <div class="own-right"> <span class="own-score-tag ${scc}">${scf}</span> <span class="own-pct">${(d.pct*100).toFixed(0)}%</span> </div> </div> <div class="own-bar-bg"><div class="own-bar" style="width:${(d.pct/maxPct*100).toFixed(1)}%"></div></div> <div class="own-sub">${d.entries} of ${ENTRIES.length} entries · ${d.entries===ENTRIES.length?'Everyone':'Unique pick'}</div> </div>`; }).join('');}
+const posStr = isWD ? 'WD' : mc ? 'MC' : (pos !== '—' ? pos : ''); return `<div class="own-row"> <div class="own-hdr"> <div style="display:flex;align-items:baseline;gap:6px;min-width:0"> <span class="own-name">${flag} ${d.player}</span> ${posStr ? `<span style="font-size:10px;color:var(--text3);font-weight:600;flex-shrink:0">${posStr}</span>` : ''} </div> <div class="own-right"> <span class="own-score-tag ${scc}">${scf}</span> <span class="own-pct">${(d.pct*100).toFixed(0)}%</span> </div> </div> <div class="own-bar-bg"><div class="own-bar" style="width:${(d.pct/maxPct*100).toFixed(1)}%"></div></div> <div class="own-sub">${d.entries} of ${ENTRIES.length} entries · ${d.entries===ENTRIES.length?'Everyone':'Unique pick'}</div> </div>`; }).join('');}
 
 function computeOwnership() { if (!ENTRIES.length) return [];
 const counts = {}; ENTRIES.forEach(e => e.picks.forEach(p => { counts[p] = (counts[p]||0) + 1; })); return Object.entries(counts) .map(([player, entries]) => ({ player, entries, pct: entries / ENTRIES.length })) .sort((a,b) => b.pct - a.pct);}
@@ -3686,7 +3687,7 @@ if (isPreTournament) {
   const activePlayers = Object.values(freshScores).filter(g => g.score !== 11 && g.score !== 12);
   // Check if ANY player is actively mid-round (thru 1-17)
   const anyMidRound = activePlayers.some(g => /^\d+$/.test(g.thru) && parseInt(g.thru) >= 1 && parseInt(g.thru) <= 17);
-  const allDone = !anyMidRound && activePlayers.length > 0 && activePlayers.every(g => g.thru === 'F' || g.thru === '18' || g.thru.includes(':') || g.thru === 'MC' || g.thru === 'WD');
+  const allDone = !anyMidRound && activePlayers.length > 0 && activePlayers.every(g => g.thru === 'F' || g.thru === '18' || (g.thru && g.thru.includes(':')) || g.thru === 'MC' || g.thru === 'WD');
   if (allDone) {
     const completedRound = [activePlayers[0]?.r4 ? 4 : 0, activePlayers[0]?.r3 ? 3 : 0, activePlayers[0]?.r2 ? 2 : 0, activePlayers[0]?.r1 ? 1 : 0].find(r => r > 0) || 1;
     setApiStatus('between', 'End of Rd ' + completedRound);
@@ -4254,7 +4255,7 @@ function getHolesRemaining(playerName) {
 
   // When thru=F or 18 or tee time (between rounds), this round IS already counted in completedRounds.
   // When mid-round, the current round is NOT yet in completedRounds.
-  const isMidRound = gd.thru !== 'F' && gd.thru !== '18' && gd.thru !== '—' && gd.thru !== 'MC' && !isTeeTime;
+  const isMidRound = gd.thru !== 'F' && gd.thru !== '18' && gd.thru !== '—' && gd.thru !== 'MC' && gd.thru !== 'WD' && !isTeeTime;
   const totalPlayed = isMidRound
     ? (completedRounds * 18) + holesThisRound
     : completedRounds * 18;
