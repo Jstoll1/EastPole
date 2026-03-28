@@ -3901,7 +3901,7 @@ function renderLeaderboard() {
     ups.forEach(d => arrowPlayers.set(d.name, d.delta));
     dns.forEach(d => arrowPlayers.set(d.name, d.delta));
   }
-  const topMoverNames = isPreT ? new Set() : getTopMovers(arrowPlayers);
+  const topMoverNames = isPreT ? new Map() : getTopMovers(arrowPlayers);
   let rowIdx = 0;
   players.forEach(p => {
     const mc = p.thru==='MC'||p.thru==='WD'||p.score===11||p.score===12, inPool = poolNames.has(p.name);
