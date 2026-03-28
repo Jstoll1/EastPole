@@ -78,7 +78,6 @@
 [data-theme="light"] .sc-birdie .sc-num { background: #006747; color: #fff; }
 [data-theme="light"] .sc-eagle .sc-num { background: #d4a843; color: #1a2e1a; }
 [data-theme="light"] .sc-bogey .sc-num { color: #c0392b; }
-[data-theme="light"] .headline-box { background: #ffffff; }
 [data-theme="light"] #debug-panel { background: #f5f2eb; }
 [data-theme="light"] .splash-card { background: #ffffff; }
 [data-theme="light"] .payout-box { background: #ffffff; border-color: #d4ddd6; }
@@ -2950,32 +2949,6 @@ to  {
 }
 /* ── Live Feed Drawer ── */
 /* ── Headline Popup ── */
-.headline-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:998;
-  display:flex; align-items:center; justify-content:center;
-  opacity:0; pointer-events:none; transition:opacity 0.3s ease;
-}
-.headline-overlay.show { opacity:1; pointer-events:auto; }
-.headline-box {
-  background:var(--card); border:1px solid rgba(212,168,67,0.3); border-radius:14px;
-  max-width:340px; width:90%; overflow:hidden;
-  box-shadow:0 8px 40px rgba(0,0,0,0.5);
-  transform:scale(0.95); transition:transform 0.3s ease;
-}
-.headline-overlay.show .headline-box { transform:scale(1); }
-.headline-img {
-  width:100%; height:200px; object-fit:cover; display:block;
-}
-.headline-body {
-  padding:16px 18px 20px;
-}
-.headline-text {
-  font-size:15px; font-weight:700; color:var(--text1); line-height:1.45;
-}
-.headline-source {
-  font-size:10px; color:var(--text3); margin-top:8px; text-transform:uppercase;
-  letter-spacing:0.8px; font-weight:600;
-}
 /* ── Debug Panel ── */
 #debug-panel {
   display:none; position:fixed; bottom:0; left:0; right:0;
@@ -3236,12 +3209,6 @@ to  {
 </div>
 </div>
 <div id="chat-overlay" class="chat-overlay" onclick="toggleChatDrawer()"></div>
-<div id="headline-overlay" class="headline-overlay" onclick="closeHeadline()">
-<div class="headline-box" onclick="event.stopPropagation()">
-<img class="headline-img" id="headline-img" src="" alt="">
-<div class="headline-body">
-<div class="headline-text" id="headline-text"></div>
-<div class="headline-source">East Pole Golf Pool</div>
 </div>
 </div>
 </div>
@@ -3276,7 +3243,6 @@ to  {
 // ║  3. PREV_WINNER    → Line ~3472  (defending champion name)   ║
 // ║  4. getDefaultPars → Line ~4419  (18 hole pars for course)   ║
 // ║  5. POOL_CONFIG    → Line ~5170  (buy-in, payouts)           ║
-// ║  6. HEADLINES      → Line ~4620  (rotating headline stories) ║
 // ║                                                              ║
 // ║  HTML (search & replace):                                    ║
 // ║  7. Splash title   → "Houston Open" in splash-title          ║
@@ -3482,7 +3448,7 @@ function hideOnboarding() {
   el.style.opacity = '0';
   setTimeout(() => { el.style.display = 'none';
   el.style.opacity = '';
-  showHeadline();
+
 }, 300);}
 
 function enterApp() {
@@ -3499,7 +3465,7 @@ function dismissSplashBrowse() {
   splash.classList.add('hidden');
   hideOnboarding();
   setTimeout(() => { splash.style.display = 'none';
-  showHeadline();
+
 }, 500);}
 
 const ENTRIES = [ { team: "Jake Test", name: "Jake", email: "jhs797@gmail.com", tb: -8, picks: ["Sam Burns", "Michael Thorbjornsen", "Sungjae Im", "Aaron Rai", "Christiaan Bezuidenhout", "Gary Woodland"] }, { team: "Loves2splooge69_A", name: "Tyler D", email: "tdewitt815@gmail.com", tb: -16, picks: ["Chris Gotterup", "Ben Griffin", "Sungjae Im", "Max Greyserman", "Nicolas Echavarria", "Tom Kim"] }, { team: "Loves2splooge69_B", name: "Tyler D", email: "tdewitt815@gmail.com", tb: -18, picks: ["Min Woo Lee", "Shane Lowry", "Alex Smalley", "Tony Finau", "J.T. Poston", "Seonghyeon Kim"] }, { team: "Monkey fist pump", name: "Tyler Conlan", email: "tycon0612@gmail.com", tb: -15, picks: ["Brooks Koepka", "Marco Penge", "Sahith Theegala", "Jordan L. Smith", "Hao-Tong Li", "Tom Kim"] }, { team: "Monkey fist pump 2", name: "Tyler Conlan", email: "tycon0612@gmail.com", tb: -18, picks: ["Chris Gotterup", "Adam Scott", "Sungjae Im", "Will Zalatoris", "Nicolas Echavarria", "Gary Woodland"] }, { team: "Shark's Gonna Shark",name: "Jake", email: "jhs797@gmail.com", tb: -12, picks: ["Jake Knapp", "Shane Lowry", "Patrick Rodgers", "Aaron Rai", "Hao-Tong Li", "David Lipsky"] }];
@@ -4498,49 +4464,6 @@ async function toggleScorecard(idx, playerName) {
   bindOwnBadge(panel);
 }
 
-let _headlineShown = false;
-
-const HEADLINES = [
-  {
-    img: 'https://s.hdnux.com/photos/01/65/50/51/30837334/3/960x0.webp',
-    text: '41-Year Old Gary Woodland fires a 63 to take 3-shot lead at Houston Open'
-  },
-  {
-    img: 'https://cf-images.us-east-1.prod.boltdns.net/v1/static/6082840763001/9fa04ca4-6b20-4bfb-b1d2-59c773d4e71d/613b229b-b8da-4206-a9ea-5f80fd8ffea2/1920x1080/match/image.jpg',
-    text: 'Nicolai Højgaard fires a 62 — lowest round of the week — to surge into 2nd at -10'
-  },
-  {
-    img: 'https://res.cloudinary.com/pgatour-prod/w_854,h_480,c_fill,f_auto,q_auto/pgatour/news/editorial/2026/03/27/brooks_cutline.jpg',
-    text: 'Masters hopefuls Rickie Fowler and Brooks Koepka both miss the cut at Memorial Park'
-  },
-  {
-    img: 'https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2025/06/1200/675/jason-day-.jpg?ve=1&tl=1',
-    text: 'Jason Day lurks at -9 heading into the weekend — can the Aussie chase down Woodland?'
-  },
-  {
-    img: 'https://s.yimg.com/ny/api/res/1.2/UqtolTIZDrxTMvfvJg9y.Q--/YXBwaWQ9aGlnaGxhbmRlcjt3PTk2MDtoPTY0MDtjZj13ZWJw/https://media.zenfs.com/en/usa_today_sports_golfweek_articles_635/bbcb2441181eae0be741314ffd6ab3a1',
-    text: 'Woodland celebrates birdie on No. 3 — the 2019 US Open champ is rolling back the clock at Memorial Park'
-  }
-];
-
-function showHeadline() {
-  if (_headlineShown) return;
-  // Don't show headlines when a round is actively being played
-  if (document.querySelector('.live-dot.on')) return;
-  _headlineShown = true;
-  var h = HEADLINES[Math.floor(Math.random() * HEADLINES.length)];
-  document.getElementById('headline-img').src = h.img;
-  document.getElementById('headline-img').alt = h.text;
-  document.getElementById('headline-text').textContent = h.text;
-  setTimeout(function() {
-    document.getElementById('headline-overlay').classList.add('show');
-  }, 400);
-}
-
-function closeHeadline() {
-  document.getElementById('headline-overlay').classList.remove('show');
-}
-
 function switchTab(name,btn) {
   const alreadyActive = btn.classList.contains('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -4555,7 +4478,7 @@ function switchTab(name,btn) {
     updateLbSeg();
     renderLeaderboard();
     document.getElementById('view-leaderboard').scrollTo({ top: 0, behavior: 'smooth' });
-    showHeadline();
+  
   }
 }
 
