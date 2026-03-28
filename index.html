@@ -2451,78 +2451,86 @@ to  {
 .h2h-matchups {
   margin: 16px 14px 0;
 }
-.h2h-team-block {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  overflow: hidden;
+.h2h-team-holes {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  margin-left: 8px;
 }
-.h2h-team-hdr {
+.h2h-vs-label {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 16px 14px 0;
+}
+.h2h-vs-hdr {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
+  margin: 8px 14px 0;
+  gap: 28px;
 }
-.h2h-team-name {
-  font-size: 13px;
+.h2h-vs-team {
+  flex: 1;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.h2h-team-total {
-  font-size: 18px;
-  font-weight: 900;
-}
-.h2h-golfer-row {
+.h2h-vs-team.right { text-align: right; }
+.h2h-vs-row {
   display: flex;
   align-items: center;
-  padding: 8px 14px;
+  margin: 0 14px;
+  padding: 6px 0;
   border-bottom: 1px solid rgba(26,51,38,0.4);
-  gap: 8px;
+  gap: 4px;
 }
-.h2h-golfer-row:last-child { border-bottom: none; }
-.h2h-golfer-row.is-top { background: rgba(82,183,136,0.04); }
-.h2h-golfer-row.is-bench { opacity: 0.45; }
-.h2h-golfer-star {
-  width: 14px;
+.h2h-vs-row:last-child { border-bottom: none; }
+.h2h-vs-row.is-top { background: rgba(82,183,136,0.04); border-radius: 6px; padding: 6px 4px; }
+.h2h-vs-row.is-bench { opacity: 0.45; }
+.h2h-vs-rank {
+  width: 20px;
+  text-align: center;
   font-size: 10px;
+  font-weight: 800;
   color: var(--gold);
   flex-shrink: 0;
-  text-align: center;
 }
-.h2h-golfer-info {
+.h2h-vs-cell {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
 }
-.h2h-golfer-name {
-  font-size: 12px;
+.h2h-vs-cell.right { flex-direction: row-reverse; }
+.h2h-vs-score {
+  font-size: 13px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.h2h-vs-info {
+  min-width: 0;
+  overflow: hidden;
+}
+.h2h-vs-cell.right .h2h-vs-info { text-align: right; }
+.h2h-vs-name {
+  font-size: 11px;
   font-weight: 700;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.h2h-golfer-detail {
-  font-size: 10px;
+.h2h-vs-detail {
+  font-size: 9px;
   color: var(--text3);
   font-weight: 600;
   margin-top: 1px;
-}
-.h2h-golfer-score {
-  font-size: 14px;
-  font-weight: 900;
-  flex-shrink: 0;
-  min-width: 36px;
-  text-align: right;
-}
-.h2h-golfer-thru {
-  font-size: 10px;
-  color: var(--text3);
-  font-weight: 700;
-  flex-shrink: 0;
-  min-width: 32px;
-  text-align: right;
 }
 .h2h-panel-wrap {
   animation: h2hSlideIn 0.3s ease;
@@ -4382,38 +4390,45 @@ function renderH2HInline() {
   }
   html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmtTeam(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
   html += '</div></div>';
+  // Side-by-side matchup table
+  const holesA = cA.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
+  const holesB = cB.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
   html += '<div class="h2h-matchups">';
-  html += buildTeamBlock(cA);
-  html += buildTeamBlock(cB);
+  html += '<div class="h2h-vs-label">Head to Head</div>';
+  html += '<div class="h2h-vs-hdr">';
+  html += '<div class="h2h-vs-team left">' + cA.team + '<span class="h2h-team-holes">' + holesA + 'h left</span></div>';
+  html += '<div class="h2h-vs-team right">' + cB.team + '<span class="h2h-team-holes">' + holesB + 'h left</span></div>';
+  html += '</div>';
+  const maxLen = Math.max(cA.scores.length, cB.scores.length);
+  for (let r = 0; r < maxLen; r++) {
+    const isTop = r < 4;
+    const gA = cA.scores[r];
+    const gB = cB.scores[r];
+    html += '<div class="h2h-vs-row ' + (isTop ? 'is-top' : 'is-bench') + '">';
+    html += buildH2HCell(gA, 'left', isTop);
+    html += '<div class="h2h-vs-rank">' + (isTop ? '★' : (r + 1)) + '</div>';
+    html += buildH2HCell(gB, 'right', isTop);
+    html += '</div>';
+  }
   html += '</div></div>';
 
   container.innerHTML = html;
 }
 
-function buildTeamBlock(calc) {
-  let html = '<div class="h2h-team-block">';
-  html += '<div class="h2h-team-hdr">';
-  html += '<div class="h2h-team-name">' + calc.team + '</div>';
-  html += '<div class="h2h-team-total ' + cls(calc.total) + '">' + fmtTeam(calc.total) + '</div>';
+function buildH2HCell(g, side, isTop) {
+  if (!g) return '<div class="h2h-vs-cell ' + side + '"></div>';
+  const gd = GOLFER_SCORES[g.name];
+  const thru = gd ? gd.thru : '—';
+  const isWD = thru === 'WD' || (gd && gd.score === 12);
+  const mc = thru === 'MC';
+  const holesLeft = getHolesRemaining(g.name);
+  const status = isWD ? 'WD' : mc ? 'MC' : (thru === 'F' ? 'F' : (thru === '—' ? '—' : thru + ' thru'));
+  let html = '<div class="h2h-vs-cell ' + side + '">';
+  html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
+  html += '<div class="h2h-vs-info">';
+  html += '<div class="h2h-vs-name">' + g.name + '</div>';
+  html += '<div class="h2h-vs-detail">' + status + ' · ' + holesLeft + 'h left</div>';
   html += '</div>';
-  calc.scores.forEach(function(g, j) {
-    const isTop = j < 4;
-    const gd = GOLFER_SCORES[g.name];
-    const pos = gd ? gd.pos : '—';
-    const thru = gd ? gd.thru : '—';
-    const mc = thru === 'MC';
-    const flag = FLAGS[g.name] || '';
-    const thruDisp = mc ? 'MC' : (thru === 'F' ? 'F' : (thru === '—' ? '—' : 'Thru ' + thru));
-    html += '<div class="h2h-golfer-row ' + (isTop ? 'is-top' : 'is-bench') + '">';
-    html += '<div class="h2h-golfer-star">' + (isTop ? '★' : '') + '</div>';
-    html += '<div class="h2h-golfer-info">';
-    html += '<div class="h2h-golfer-name">' + flag + ' ' + g.name + '</div>';
-    html += '<div class="h2h-golfer-detail">' + pos + (pos !== '—' && !mc ? ' · ' + thruDisp : (mc ? ' · Missed Cut' : '')) + '</div>';
-    html += '</div>';
-    html += '<div class="h2h-golfer-thru">' + thruDisp + '</div>';
-    html += '<div class="h2h-golfer-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
-    html += '</div>';
-  });
   html += '</div>';
   return html;
 }
