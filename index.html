@@ -4708,8 +4708,11 @@ function switchTab(name,btn) {
   btn.classList.add('active');
   if (name === 'leaderboard') {
     if (alreadyActive) {
+      lbSort = 'score'; lbSortAsc = true; lbFilter = 'all';
       const search = document.getElementById('lb-search');
-      if (search) { search.value = ''; filterLeaderboardSearch(); }
+      if (search) search.value = '';
+      lbSearch = '';
+      renderLeaderboard();
       document.getElementById('view-leaderboard').scrollTo({ top: 0, behavior: 'smooth' });
     }
     showHeadline();
