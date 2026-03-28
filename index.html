@@ -3420,19 +3420,28 @@ function saveRoundStartPositions(round) {
 }
 
 function getTopMovers(players) {
-  let bestUp = null, bestDown = null;
+  let bestUpDelta = 0, bestDownDelta = 0;
   players.forEach(p => {
     if (p.score === 11 || p.score === 12) return;
     const startP = ROUND_START_POSITIONS[p.name];
     const currP = parsePos(p.pos);
     if (!startP || !currP) return;
-    const delta = startP - currP; // positive = moved up, negative = moved down
-    if (delta > 0 && (!bestUp || delta > bestUp.delta)) bestUp = { name: p.name, delta };
-    if (delta < 0 && (!bestDown || delta < bestDown.delta)) bestDown = { name: p.name, delta };
+    const delta = startP - currP;
+    if (delta > 0 && delta > bestUpDelta) bestUpDelta = delta;
+    if (delta < 0 && delta < bestDownDelta) bestDownDelta = delta;
   });
   const names = new Set();
-  if (bestUp) names.add(bestUp.name);
-  if (bestDown) names.add(bestDown.name);
+  if (bestUpDelta > 0 || bestDownDelta < 0) {
+    players.forEach(p => {
+      if (p.score === 11 || p.score === 12) return;
+      const startP = ROUND_START_POSITIONS[p.name];
+      const currP = parsePos(p.pos);
+      if (!startP || !currP) return;
+      const delta = startP - currP;
+      if (delta > 0 && delta === bestUpDelta) names.add(p.name);
+      if (delta < 0 && delta === bestDownDelta) names.add(p.name);
+    });
+  }
   return names;
 }
 let lastFetchTime = 0;
