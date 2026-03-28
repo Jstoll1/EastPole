@@ -3678,7 +3678,9 @@ Object.entries(freshScores).forEach(([n,d]) => {
   }
 });
 generateFeedEvents(freshScores);
-if(!freshScores['Aaron Rai']) ErrorTracker.api('Aaron Rai NOT in ESPN data', {totalComps:comps.length, sampleNames:comps.slice(0,5).map(c=>c.athlete?.displayName)});
+// Players in picks/FLAGS but missing from ESPN data are likely WD
+const allPickNames = new Set(); ENTRIES.forEach(e => e.picks.forEach(p => allPickNames.add(p)));
+allPickNames.forEach(name => { if (!freshScores[name] && FLAGS[name]) { freshScores[name] = { pos:'WD', score:12, thru:'WD', teeTime:'', startHole:1, tot:null, todayDisplay:'—', r1:null, r2:null, r3:null, r4:null }; console.log('⚠️ Marked', name, 'as WD (missing from ESPN data)'); }});
 GOLFER_SCORES = freshScores; ATHLETE_IDS = freshAthleteIds; lastFetchTime = Date.now();
 // Determine round status: live, between rounds, or pre-tournament
 if (isPreTournament) {
