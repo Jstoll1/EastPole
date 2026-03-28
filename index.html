@@ -2026,66 +2026,65 @@ to  {
   color: #300505;
 }
 
-.my-pos-card  {
-  margin: 10px 14px 4px;
-  background: linear-gradient(135deg, rgba(212,168,67,0.11), rgba(212,168,67,0.03));
-  border: 1px solid rgba(212,168,67,0.32);
-  border-radius: 14px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.my-pos-rank  {
-  font-size: 30px;
-  font-weight: 900;
-  color: var(--gold);
-  width: 42px;
-  flex-shrink: 0;
-  text-align: center;
-  line-height: 1;
-}
-
-.my-pos-info  {
-  flex: 1;
-  min-width: 0;
-}
-
-.my-pos-team  {
-  font-size: 13px;
-  font-weight: 800;
-  color: #fff;
-  white-space: nowrap;
+.my-teams-block {
+  margin: 8px 14px 6px;
+  background: linear-gradient(135deg, rgba(212,168,67,0.08), rgba(212,168,67,0.02));
+  border: 1px solid rgba(212,168,67,0.25);
+  border-radius: 10px;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
-
-.my-pos-detail  {
-  font-size: 10px;
-  color: var(--text2);
-  margin-top: 3px;
-}
-
-.my-pos-score  {
-  font-size: 26px;
-  font-weight: 900;
-  flex-shrink: 0;
-}
-
-.my-pos-move  {
+.my-teams-label {
   font-size: 9px;
   font-weight: 800;
-  margin-top: 3px;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+  padding: 6px 12px 0;
 }
-
-.my-pos-move.up  {
+.my-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  gap: 8px;
+  cursor: pointer;
+}
+.my-row-rank {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--gold);
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.my-row-team {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.my-row-payout {
+  font-size: 11px;
+  font-weight: 800;
   color: #52b788;
+  flex-shrink: 0;
 }
-
-.my-pos-move.dn  {
-  color: var(--red);
+.my-row-score {
+  font-size: 16px;
+  font-weight: 900;
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: right;
 }
+.my-row-move {
+  font-size: 9px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.my-row-move.up { color: #52b788; }
+.my-row-move.dn { color: var(--red); }
 
 .s-name  {
   font-size: 10px;
@@ -3329,17 +3328,19 @@ if (currentUserEmail && currentUserTeams.length > 0) {
 
 let heroHtml = ''; if (currentUserEmail && currentUserTeams.length > 0) {
   const teamsToShow = activeTeamIdx >= 0 ? [currentUserTeams[activeTeamIdx]].filter(Boolean) : currentUserTeams;
+  let rows = '';
   teamsToShow.forEach(activeTeam => {
     const myIdx = ranked.findIndex(e => e.email === activeTeam.email && e.team === activeTeam.team);
     if (myIdx >= 0) { const myEntry = ranked[myIdx];
     const myRank = ranks[myIdx];
-    const gap = myEntry.total - ranked[0].total;
-    const gapStr = gap === 0 ? 'Leading the pool' : `${fmt(gap)} behind leader`;
     const scc = cls(myEntry.total);
     const prevRk = PREV_RANKS[myEntry.team];
-    let moveHtml = ''; if (prevRk && prevRk !== myRank) { const d = prevRk - myRank; moveHtml = d > 0 ? `<div class="my-pos-move up">▲${d} spot${d>1?'s':''}</div>` : `<div class="my-pos-move dn">▼${Math.abs(d)} spot${Math.abs(d)>1?'s':''}</div>`; }
-    heroHtml += `<div class="my-pos-card" style="cursor:pointer" onclick="setUser('${myEntry.email}',${currentUserTeams.indexOf(activeTeam)})"> <div class="my-pos-rank">${myRank}</div> <div class="my-pos-info"> <div class="my-pos-team">${myEntry.team}</div> <div class="my-pos-detail">${gapStr}</div> ${moveHtml} </div> <div class="my-pos-score ${scc}">${fmtTeam(myEntry.total)}</div> </div>`; }
+    let moveHtml = ''; if (prevRk && prevRk !== myRank) { const d = prevRk - myRank; moveHtml = d > 0 ? `<span class="my-row-move up">▲${d}</span>` : `<span class="my-row-move dn">▼${Math.abs(d)}</span>`; }
+    const pIdx = POOL_CONFIG.payouts.findIndex((p, pi) => myRank === pi + 1);
+    const payoutHtml = pIdx >= 0 ? `<span class="my-row-payout">$${POOL_CONFIG.payouts[pIdx].amount}</span>` : '';
+    rows += `<div class="my-row" onclick="setUser('${myEntry.email}',${currentUserTeams.indexOf(activeTeam)})"> <div class="my-row-rank">${myRank}</div> <div class="my-row-team">${myEntry.team}</div> ${moveHtml} ${payoutHtml} <div class="my-row-score ${scc}">${fmtTeam(myEntry.total)}</div> </div>`; }
   });
+  if (rows) heroHtml = `<div class="my-teams-block"><div class="my-teams-label">YOUR TEAMS</div>${rows}</div>`;
 }
 
 let html = ''; ranked.forEach((e, i) => { const rank = ranks[i];
