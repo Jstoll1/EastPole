@@ -4917,8 +4917,10 @@ function renderH2HInline() {
       const gd = GOLFER_SCORES[g.name];
       if (!gd) return;
       const thru = gd.thru;
-      // Only count golfers actually on course or finished today (not tee times, not —)
-      if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru.includes(':')) return;
+      // Only count golfers actively mid-round (numeric thru 1-18)
+      if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru.includes(':')) return;
+      const thruNum = parseInt(thru);
+      if (isNaN(thruNum) || thruNum < 1) return;
       const t = parseInt(gd.todayDisplay);
       if (isNaN(t) || t > 80) return;
       sum += t - 72; count++;
