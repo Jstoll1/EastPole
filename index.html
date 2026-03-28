@@ -3548,7 +3548,7 @@ function renderLeaderboard() {
     else if (p.teeTime) { teeStr = p.teeTime; }
     const isTeeTime = p.thru && p.thru.includes(':');
 const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.startHole === 10 && p.thru !== 'MC' && p.thru !== 'F' && parseInt(p.thru) > 0 ? '*' : ''));
-    const todayDisp = preT ? '—' : (isTeeTime ? '—' : (p.todayDisplay || '—'));
+    const todayDisp = preT ? '—' : (isTeeTime && anyStillPlaying ? '—' : (p.todayDisplay || '—'));
     const todayVal = todayDisp === 'E' || todayDisp === '—' ? 0 : parseInt(todayDisp.replace('+','')) || 0;
     const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
     const r1Disp = p.r1 ? p.r1 : '--';
