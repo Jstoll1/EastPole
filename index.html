@@ -3502,7 +3502,7 @@ function renderLeaderboard() {
   const topMoverNames = isPreT ? new Set() : getTopMovers(players, 5);
   let rowIdx = 0;
   players.forEach(p => {
-    const mc = p.thru==='MC', inPool = poolNames.has(p.name);
+    const mc = p.thru==='MC'||p.thru==='WD'||p.score===11||p.score===12, inPool = poolNames.has(p.name);
     if (!cutInserted && mc && currentRound >= 2) { rows += '<div class="cut-line-row"><div class="cut-line-label">── Cut Line ──</div></div>'; cutInserted = true; }
     if (!estCutInserted && !cutInserted && estCutScore !== null && !mc && p.score > estCutScore) { rows += '<div class="est-cut-line-row"><div class="est-cut-line-label">── Estimated Cut Line ──</div></div>'; estCutInserted = true; }
     const sc = p.score, scf = fmt(sc);
@@ -3540,14 +3540,14 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
     const scoreChange = SCORE_CHANGES[p.name] || '';
     const flashCls = scoreChange === 'birdie' ? ' birdie-flash' : scoreChange === 'bogey' ? ' bogey-flash' : scoreChange === 'eagle' ? ' eagle-flash' : '';
     rows += '<div class="tv-row' + (mc?' tv-mc':'') + (isMyPick?' is-my-team':'') + (isPrevWinner?' tv-prev-winner':'') + flashCls + '" onclick="toggleScorecard(' + ri + ',\'' + escapedName + '\')" style="cursor:pointer">'
-      + '<div class="tv-pos">' + (mc?'MC':p.pos) + (isMover ? '' : moveHtml) + '</div>'
+      + '<div class="tv-pos">' + (mc?(p.thru==='WD'||p.score===12?'WD':'MC'):p.pos) + (isMover ? '' : moveHtml) + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
       + (isMover ? (roundDelta >= 0 ? '<span class="top-mover"><span class="mover-arrow">↑</span>' + roundDelta + '</span>' : '<span class="top-mover down"><span class="mover-arrow">↓</span>' + Math.abs(roundDelta) + '</span>') : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
-      + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?'MC':(scoreChange ? '<span class="score-pulse">' + scf + '</span>' : scf)) + '</div>'
+      + '<div class="tv-score ' + scClass + '">' + (preT?'—':mc?(p.thru==='WD'||p.score===12?'WD':'MC'):(scoreChange ? '<span class="score-pulse">' + scf + '</span>' : scf)) + '</div>'
       + '<div class="tv-today ' + todayCls + '">' + todayDisp + '</div>'
       + '<div class="tv-thru">' + thruDisp + '</div>'
       + '</div>'
