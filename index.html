@@ -3464,7 +3464,7 @@ const FLAG_TO_CODE = {'🇺🇸':'USA','🇦🇺':'AUS','🇰🇷':'KOR','🇨�
 
 function getCountryCode(name) { return FLAG_TO_CODE[FLAGS[name]] || ''; }
 
-const COURSE_PAR = 72;
+let COURSE_PAR = 72;
 const PREV_WINNER = 'Min Woo Lee';
 const gs = n => { if (GOLFER_SCORES[n]) return GOLFER_SCORES[n].score; if (Object.keys(GOLFER_SCORES).length > 0) console.warn('⚠️ Player not found in GOLFER_SCORES:', n); return 11; };
 const fmt = s => s === 11 ? 'MC' : s === 12 ? 'WD' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
@@ -4133,7 +4133,7 @@ function generateFeedEvents(freshScores) {
         const prevThru = prevD ? parseInt(prevD.thru) : 0;
         // Only fire once when crossing thresholds (thru 9 or 14)
         if (todayScore && todayScore <= 65 && (thruNum >= 14 && (!prevThru || prevThru < 14))) {
-          const parDiff = todayScore - 72;
+          const parDiff = todayScore - COURSE_PAR;
           if (parDiff <= -5) addFeedEvent('mover', '\u26F3', name + ' is ' + parDiff + ' today through ' + thruNum + ' holes', { player: name });
         }
       }
@@ -4305,7 +4305,9 @@ async function fetchCourseHoles() {
     const holes = data.events?.[0]?.courses?.[0]?.holes;
     if (holes && holes.length) {
       COURSE_HOLES = holes.map(h => ({ number: h.number, par: h.shotsToPar, yardage: h.totalYards }));
-      console.log('✅ Course holes loaded:', COURSE_HOLES.length, 'holes');
+      const totalPar = COURSE_HOLES.reduce((s, h) => s + h.par, 0);
+      if (totalPar >= 60 && totalPar <= 80) COURSE_PAR = totalPar;
+      console.log('✅ Course holes loaded:', COURSE_HOLES.length, 'holes, par', COURSE_PAR);
     }
   } catch(e) { ErrorTracker.api('Course holes fetch failed', { error: e.message }); console.error('❌ Course holes fetch error:', e.message); }
 }
@@ -4925,7 +4927,7 @@ function renderH2HInline() {
       const totalScore = gd.score; // relative to par for tournament
       if (typeof totalScore !== 'number' || totalScore > 10) return;
       const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
-      const completedRelPar = completedRounds.reduce((s, r) => s + (r - 72), 0);
+      const completedRelPar = completedRounds.reduce((s, r) => s + (r - COURSE_PAR), 0);
       const todayScore = totalScore - completedRelPar;
       sum += todayScore; count++;
     });
