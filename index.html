@@ -3419,14 +3419,21 @@ function saveRoundStartPositions(round) {
   try { localStorage.setItem('eastpole_round_start', JSON.stringify({ round: round, positions: ROUND_START_POSITIONS })); } catch(e) {}
 }
 
+function parseTodayDisplay(val) {
+  if (!val || val === '—' || val === 'E') return val === 'E' ? 0 : null;
+  const n = parseInt(String(val).replace('+', ''));
+  return isNaN(n) ? null : n;
+}
 function getTopMovers(players) {
   // Fire = best today score(s), Ice = worst today score(s)
-  // Only considers players actively mid-round
+  // Uses ESPN todayDisplay to match the TODAY column exactly
   let bestScore = Infinity, worstScore = -Infinity;
   const scores = new Map();
   players.forEach(p => {
     if (p.score === 11 || p.score === 12) return;
-    const today = golferTodayScore(p);
+    if (!p.thru || p.thru === '—' || p.thru === 'F' || p.thru === 'MC' || p.thru === 'WD') return;
+    if (p.thru.includes(':')) return; // tee time
+    const today = parseTodayDisplay(p.todayDisplay);
     if (today === null) return;
     scores.set(p.name, today);
     if (today < bestScore) bestScore = today;
@@ -3434,7 +3441,6 @@ function getTopMovers(players) {
   });
   const names = new Set();
   if (scores.size === 0) return names;
-  // Only award if there's meaningful separation (don't fire+ice same score)
   scores.forEach((today, name) => {
     if (today === bestScore && bestScore < worstScore) names.add(name);
     if (today === worstScore && worstScore > bestScore) names.add(name);
@@ -3948,7 +3954,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + '<div class="tv-pos">' + (mc?(p.thru==='WD'||p.score===12?'WD':'MC'):p.pos) + moveHtml + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
-      + (isMover ? (function(){ var ts = golferTodayScore(p); var tf = ts > 0 ? '+' + ts : ts === 0 ? 'E' : '' + ts; return ts !== null && ts <= 0 ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + tf + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + tf + '</span>'; })() : '')
+      + (isMover ? (function(){ var ts = parseTodayDisplay(p.todayDisplay); var tf = ts > 0 ? '+' + ts : ts === 0 ? 'E' : '' + ts; return ts !== null && ts <= 0 ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + tf + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + tf + '</span>'; })() : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
