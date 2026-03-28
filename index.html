@@ -1465,15 +1465,6 @@ html, body  {
 }
 .own-detail-team .own-team-name { font-weight: 600; }
 .own-detail-team .own-team-rank { font-size: 10px; color: var(--text3); }
-.own-value-tag {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 4px;
-  margin-left: 6px;
-}
-.own-value-tag.gem { background: rgba(82,183,136,0.15); color: #52b788; }
-.own-value-tag.bust { background: rgba(255,112,112,0.15); color: #ff7070; }
 .own-search {
   margin: 10px 14px 0;
   background: var(--card);
@@ -3960,14 +3951,6 @@ function renderOwnership() {
   const maxPct = OWNERSHIP_DATA[0].pct;
   if (ownFilter === 'least') data = [...data].sort((a, b) => a.pct - b.pct);
   const myPicks = currentUserTeams.length ? new Set(currentUserTeams.flatMap(t => t.picks)) : new Set();
-  // Compute rank percentile for value tags
-  const ranked = Object.entries(GOLFER_SCORES)
-    .filter(([, g]) => g.score !== 11 && g.score !== 12)
-    .sort((a, b) => a[1].score - b[1].score);
-  const totalActive = ranked.length;
-  const rankMap = {};
-  ranked.forEach(([name], i) => { rankMap[name] = (i + 1) / totalActive; });
-
   document.getElementById('ownership-list').innerHTML = data.map(d => {
     const gd = gdMap[d.player];
     const sc = gd?.score;
@@ -3988,13 +3971,7 @@ function renderOwnership() {
     const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
     const thruDisp = gd?.thru || '—';
 
-    // Value tag: low ownership + good score = gem, high ownership + bad score = bust
     let valueTag = '';
-    if (!mc && !isWD && rankMap[d.player] !== undefined) {
-      const rankPct = rankMap[d.player]; // 0 = best, 1 = worst
-      if (d.pct <= 0.3 && rankPct <= 0.25) valueTag = '<span class="own-value-tag gem">GEM</span>';
-      else if (d.pct >= 0.5 && rankPct >= 0.75) valueTag = '<span class="own-value-tag bust">BUST</span>';
-    }
 
     // Teams that own this player
     const teams = ENTRIES.filter(e => e.picks.includes(d.player));
