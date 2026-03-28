@@ -4902,15 +4902,35 @@ function renderH2HInline() {
   if (pctLeft > 12) html += '<span class="h2h-bar-label left">WIN</span>';
   if (pctRight > 12) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
+  // Score summary: total + current round
+  function teamRoundScore(top4) {
+    let sum = 0, count = 0;
+    top4.forEach(g => {
+      const gd = GOLFER_SCORES[g.name];
+      if (!gd || gd.score > 10) return;
+      const completed = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
+      const completedRel = completed.reduce((s, r) => s + (r - COURSE_PAR), 0);
+      const today = gd.score - completedRel;
+      if (today !== 0 || (gd.thru && gd.thru !== '—' && !gd.thru.includes(':'))) { sum += today; count++; }
+    });
+    return { sum, count };
+  }
+  const rdA = teamRoundScore(cA.top4);
+  const rdB = teamRoundScore(cB.top4);
+  const fmtRd = v => (v > 0 ? '+' + v : v === 0 ? 'E' : '' + v);
   html += '<div class="h2h-score-summary">';
-  html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmtTeam(cA.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
+  html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmtTeam(cA.total) + '</div><div class="h2h-score-lbl">Total</div>';
+  if (rdA.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdA.sum < 0 ? '#52b788' : rdA.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdA.sum) + '</div>';
+  html += '</div>';
   if (cA.total === cB.total) {
     html += '<div class="h2h-tied-badge">TIED</div>';
   } else {
     const gap = Math.abs(cA.total - cB.total);
     html += '<div style="text-align:center;color:var(--text3);font-size:10px;font-weight:700">' + gap + ' stroke' + (gap > 1 ? 's' : '') + '</div>';
   }
-  html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmtTeam(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
+  html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmtTeam(cB.total) + '</div><div class="h2h-score-lbl">Total</div>';
+  if (rdB.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdB.sum < 0 ? '#52b788' : rdB.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdB.sum) + '</div>';
+  html += '</div>';
   html += '</div>';
   // Momentum indicator — compare today's round performance (only active golfers)
   function todayRelPar(top4) {
@@ -4956,8 +4976,8 @@ function renderH2HInline() {
   html += '<div class="h2h-matchups">';
   html += '<div class="h2h-vs-label">Head to Head</div>';
   html += '<div class="h2h-vs-hdr">';
-  html += '<div class="h2h-vs-team left">' + cA.team + '<span class="h2h-team-holes">' + holesA + 'h left</span></div>';
-  html += '<div class="h2h-vs-team right">' + cB.team + '<span class="h2h-team-holes">' + holesB + 'h left</span></div>';
+  html += '<div class="h2h-vs-team left"><span style="font-size:7px;color:var(--text3);font-weight:700;letter-spacing:0.5px">TOT</span> ' + cA.team + '<span class="h2h-team-holes">' + holesA + 'h left</span></div>';
+  html += '<div class="h2h-vs-team right">' + cB.team + '<span class="h2h-team-holes">' + holesB + 'h left</span> <span style="font-size:7px;color:var(--text3);font-weight:700;letter-spacing:0.5px">TOT</span></div>';
   html += '</div>';
   const maxLen = Math.max(cA.scores.length, cB.scores.length);
   for (let r = 0; r < maxLen; r++) {
@@ -4998,7 +5018,7 @@ function buildH2HCell(g, side, isTop) {
   }
   const detail = isWD ? 'WD' : mc ? 'MC' : (holesLeft > 0 ? holesLeft + ' holes left' : 'Complete');
   let html = '<div class="h2h-vs-cell ' + side + '">';
-  html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '<div style="font-size:7px;font-weight:700;color:var(--text3);letter-spacing:0.5px">TOT</div></div>';
+  html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
   html += '<div class="h2h-vs-info">';
   html += '<div class="h2h-vs-name">' + g.name + rdTag + '</div>';
   html += '<div class="h2h-vs-detail">' + detail + '</div>';
