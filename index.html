@@ -4375,6 +4375,17 @@ function startTickerScroll() {
 }
 
 let _tickerMouseDrag = false, _tickerMouseX = 0, _tickerMouseScroll = 0;
+let _tickerVelocity = 0, _tickerLastX = 0, _tickerLastTime = 0, _tickerMomentumRAF = null;
+
+function tickerMomentum(track) {
+  if (Math.abs(_tickerVelocity) < 0.5) { _tickerPaused = false; return; }
+  track.scrollLeft += _tickerVelocity;
+  var half = track.scrollWidth / 2;
+  if (track.scrollLeft >= half) track.scrollLeft -= half;
+  if (track.scrollLeft < 0) track.scrollLeft += half;
+  _tickerVelocity *= 0.95;
+  _tickerMomentumRAF = requestAnimationFrame(function() { tickerMomentum(track); });
+}
 
 function initTickerTouch() {
   const track = document.querySelector('.ticker-track');
@@ -4382,33 +4393,46 @@ function initTickerTouch() {
   function pause() {
     _tickerPaused = true;
     clearTimeout(_tickerResumeT);
+    if (_tickerMomentumRAF) { cancelAnimationFrame(_tickerMomentumRAF); _tickerMomentumRAF = null; }
   }
   function resume() {
     clearTimeout(_tickerResumeT);
     _tickerPaused = false;
   }
-  // Touch: native scroll just works
+  // Touch: native scroll + pause/resume
   track.addEventListener('touchstart', pause, { passive: true });
-  track.addEventListener('touchend', resume, { passive: true });
-  // Mouse: drag to scroll
+  track.addEventListener('touchend', function() { clearTimeout(_tickerResumeT); _tickerPaused = false; }, { passive: true });
+  // Mouse: drag to scroll with momentum
   track.addEventListener('mousedown', function(e) {
     _tickerMouseDrag = true;
     _tickerMouseX = e.clientX;
+    _tickerLastX = e.clientX;
+    _tickerLastTime = Date.now();
     _tickerMouseScroll = track.scrollLeft;
+    _tickerVelocity = 0;
     track.classList.add('dragging');
     pause();
     e.preventDefault();
   });
   window.addEventListener('mousemove', function(e) {
     if (!_tickerMouseDrag) return;
+    var now = Date.now();
+    var dt = now - _tickerLastTime || 1;
     var dx = e.clientX - _tickerMouseX;
+    _tickerVelocity = (_tickerLastX - e.clientX) / dt * 16;
+    _tickerLastX = e.clientX;
+    _tickerLastTime = now;
     track.scrollLeft = _tickerMouseScroll - dx;
   });
   window.addEventListener('mouseup', function() {
     if (!_tickerMouseDrag) return;
     _tickerMouseDrag = false;
     track.classList.remove('dragging');
-    resume();
+    if (Math.abs(_tickerVelocity) > 1) {
+      tickerMomentum(track);
+    } else {
+      _tickerPaused = false;
+    }
   });
 }
 
