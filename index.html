@@ -4921,9 +4921,13 @@ function renderH2HInline() {
       if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru.includes(':')) return;
       const thruNum = parseInt(thru);
       if (isNaN(thruNum) || thruNum < 1) return;
-      const t = parseInt(gd.todayDisplay);
-      if (isNaN(t) || t > 80) return;
-      sum += t - 72; count++;
+      // Calculate today's score: tournament total minus completed rounds
+      const totalScore = gd.score; // relative to par for tournament
+      if (typeof totalScore !== 'number' || totalScore > 10) return;
+      const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
+      const completedRelPar = completedRounds.reduce((s, r) => s + (r - 72), 0);
+      const todayScore = totalScore - completedRelPar;
+      sum += todayScore; count++;
     });
     return { sum, count };
   }
