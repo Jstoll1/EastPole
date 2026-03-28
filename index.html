@@ -3690,6 +3690,24 @@ function getActiveTeamPicks() {
   if (activeTeamIdx >= 0 && currentUserTeams[activeTeamIdx]) { return new Set(currentUserTeams[activeTeamIdx].picks);
 } return new Set(currentUserTeams.flatMap(t => t.picks));}
 
+function golferTodayScore(gd) {
+  if (!gd || gd.score > 10) return null;
+  const thru = gd.thru;
+  if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru.includes(':')) return null;
+  const thruNum = parseInt(thru);
+  if (isNaN(thruNum) || thruNum < 1) return null;
+  const rounds = [gd.r1, gd.r2, gd.r3, gd.r4];
+  let completedRel = 0;
+  for (let i = 0; i < rounds.length; i++) {
+    const r = rounds[i];
+    if (r == null || r <= 50) break;
+    const next = rounds[i + 1];
+    if (next != null && next > 0) { completedRel += r - COURSE_PAR; continue; }
+    break;
+  }
+  return gd.score - completedRel;
+}
+
 function renderLeaderboard() {
   _openScorecardIdx = null;
   const poolNames = new Set(ENTRIES.flatMap(e=>e.picks));
@@ -3701,11 +3719,8 @@ function renderLeaderboard() {
     if (p.thru === '—') return 999; // pre-tournament
     if (p.thru && p.thru.includes(':')) return 999; // tee time, not started
     if (p.thru === 'F') return 999; // finished, between rounds
-    // Calculate today relative to par from tournament score minus completed rounds
-    var gd = p;
-    var completed = [gd.r1, gd.r2, gd.r3, gd.r4].filter(function(r) { return r != null && r > 50; });
-    var completedRel = completed.reduce(function(s, r) { return s + (r - COURSE_PAR); }, 0);
-    return gd.score - completedRel;
+    var val = golferTodayScore(p);
+    return val !== null ? val : 999;
   };
   var parseThruVal = function(p) {
     if (p.thru === '—') return -1;
@@ -4969,15 +4984,8 @@ function renderH2HInline() {
   function teamRoundScore(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
-      const gd = GOLFER_SCORES[g.name];
-      if (!gd || gd.score > 10) return;
-      const thru = gd.thru;
-      if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru.includes(':')) return;
-      const thruNum = parseInt(thru);
-      if (isNaN(thruNum) || thruNum < 1) return;
-      const completed = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
-      const completedRel = completed.reduce((s, r) => s + (r - COURSE_PAR), 0);
-      const today = gd.score - completedRel;
+      const today = golferTodayScore(GOLFER_SCORES[g.name]);
+      if (today === null) return;
       sum += today; count++;
     });
     return { sum, count };
@@ -5005,18 +5013,9 @@ function renderH2HInline() {
     top4.forEach(g => {
       const gd = GOLFER_SCORES[g.name];
       if (!gd) return;
-      const thru = gd.thru;
-      // Only count golfers actively mid-round (numeric thru 1-18)
-      if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru.includes(':')) return;
-      const thruNum = parseInt(thru);
-      if (isNaN(thruNum) || thruNum < 1) return;
-      // Calculate today's score: tournament total minus completed rounds
-      const totalScore = gd.score; // relative to par for tournament
-      if (typeof totalScore !== 'number' || totalScore > 10) return;
-      const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
-      const completedRelPar = completedRounds.reduce((s, r) => s + (r - COURSE_PAR), 0);
-      const todayScore = totalScore - completedRelPar;
-      sum += todayScore; count++;
+      const today = golferTodayScore(gd);
+      if (today === null) return;
+      sum += today; count++;
     });
     return { sum, count };
   }
@@ -5071,17 +5070,11 @@ function buildH2HCell(g, side, isTop) {
   const holesLeft = getHolesRemaining(g.name);
   // Calculate current round score relative to par
   let rdTag = '';
-  if (gd && !isWD && !mc && thru !== '—' && !thru.includes(':')) {
-    const completedRounds = [gd.r1, gd.r2, gd.r3, gd.r4].filter(r => r != null && r > 50);
-    const completedRelPar = completedRounds.reduce((s, r) => s + (r - COURSE_PAR), 0);
-    const todayScore = gd.score - completedRelPar;
-    const thruNum = parseInt(thru);
-    const thruLabel = thru === 'F' ? 'F' : (thruNum > 0 ? thruNum : '');
-    if (thruLabel) {
-      const todayFmt = todayScore > 0 ? '+' + todayScore : todayScore === 0 ? 'E' : '' + todayScore;
-      const todayColor = todayScore < 0 ? '#52b788' : todayScore > 0 ? '#ff7070' : 'var(--text2)';
-      rdTag = ' <span style="color:' + todayColor + ';font-weight:700">(' + todayFmt + ')</span>';
-    }
+  const todayScore = golferTodayScore(gd);
+  if (todayScore !== null) {
+    const todayFmt = todayScore > 0 ? '+' + todayScore : todayScore === 0 ? 'E' : '' + todayScore;
+    const todayColor = todayScore < 0 ? '#52b788' : todayScore > 0 ? '#ff7070' : 'var(--text2)';
+    rdTag = ' <span style="color:' + todayColor + ';font-weight:700">(' + todayFmt + ')</span>';
   }
   const detail = isWD ? 'WD' : mc ? 'MC' : (holesLeft > 0 ? holesLeft + ' holes left' : 'Complete');
   let html = '<div class="h2h-vs-cell ' + side + '">';
