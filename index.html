@@ -3420,19 +3420,29 @@ function saveRoundStartPositions(round) {
 }
 
 function getTopMovers(arrowMap) {
-  // Fire = biggest position gain(s), Ice = biggest position drop(s)
-  // Uses the same arrowPlayers Map that drives the position arrows
-  let bestUp = 0, bestDown = 0;
-  arrowMap.forEach(delta => {
-    if (delta > bestUp) bestUp = delta;
-    if (delta < bestDown) bestDown = delta;
-  });
-  const names = new Set();
+  // Returns Map of name -> tier (3=biggest, 2=second, 1=third)
+  // Separate tiers for up (fire) and down (ice)
+  const ups = [], dns = [];
   arrowMap.forEach((delta, name) => {
-    if (delta > 0 && delta === bestUp) names.add(name);
-    if (delta < 0 && delta === bestDown) names.add(name);
+    if (delta > 0) ups.push({ name, delta });
+    if (delta < 0) dns.push({ name, delta: Math.abs(delta) });
   });
-  return names;
+  ups.sort((a, b) => b.delta - a.delta);
+  dns.sort((a, b) => b.delta - a.delta);
+  const result = new Map();
+  function assignTiers(list, sign) {
+    if (!list.length) return;
+    let tier = 3, prevDelta = null;
+    list.forEach(item => {
+      if (prevDelta !== null && item.delta < prevDelta) tier--;
+      if (tier < 1) return;
+      result.set(item.name, { tier, sign });
+      prevDelta = item.delta;
+    });
+  }
+  assignTiers(ups, 'up');
+  assignTiers(dns, 'down');
+  return result;
 }
 let lastFetchTime = 0;
 let ATHLETE_IDS = {};
@@ -3928,7 +3938,8 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       const flashCl = justChanged ? ' pos-move-flash' : '';
       moveHtml = arrowDelta > 0 ? '<div class="pos-move up' + flashCl + '">▲' + arrowDelta + '</div>' : '<div class="pos-move dn' + flashCl + '">▼' + Math.abs(arrowDelta) + '</div>';
     }
-    const isMover = topMoverNames.has(p.name);
+    const moverInfo = topMoverNames.get(p.name);
+    const isMover = !!moverInfo;
     const myTeamIdxs = myPicksMap[p.name] || [];
     const pills = myTeamIdxs.map(i => '<span class="team-pill ' + (PILL_CLASSES[i]||'') + '">' + pillLabel(i) + '</span>').join('');
     const isMyPick = myTeamIdxs.length > 0;
@@ -3941,7 +3952,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + '<div class="tv-pos">' + (mc?(p.thru==='WD'||p.score===12?'WD':'MC'):p.pos) + moveHtml + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
-      + (isMover ? (roundDelta > 0 ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + roundDelta + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + Math.abs(roundDelta) + '</span>') : '')
+      + (isMover ? (function(){ var icons = moverInfo.sign === 'up' ? '\uD83D\uDD25'.repeat(moverInfo.tier) : '\uD83E\uDDCA'.repeat(moverInfo.tier); var cls = moverInfo.sign === 'up' ? '' : ' down'; return '<span class="top-mover' + cls + '"><span class="mover-arrow">' + icons + '</span>' + Math.abs(roundDelta) + '</span>'; })() : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
