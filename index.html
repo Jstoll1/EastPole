@@ -3011,9 +3011,9 @@ to  {
 <div id="chat-overlay" class="chat-overlay" onclick="toggleChatDrawer()"></div>
 <div id="headline-overlay" class="headline-overlay" onclick="closeHeadline()">
 <div class="headline-box" onclick="event.stopPropagation()">
-<img class="headline-img" src="https://s.hdnux.com/photos/01/65/50/51/30837334/3/960x0.webp" alt="Gary Woodland">
+<img class="headline-img" id="headline-img" src="" alt="">
 <div class="headline-body">
-<div class="headline-text">41-Year Old Gary Woodland leads Houston Open after Second Round</div>
+<div class="headline-text" id="headline-text"></div>
 <div class="headline-source">East Pole Golf Pool</div>
 </div>
 </div>
@@ -4136,9 +4136,36 @@ async function toggleScorecard(idx, playerName) {
 
 let _headlineShown = false;
 
+const HEADLINES = [
+  {
+    img: 'https://s.hdnux.com/photos/01/65/50/51/30837334/3/960x0.webp',
+    text: '41-Year Old Gary Woodland fires a 63 to take 3-shot lead at Houston Open'
+  },
+  {
+    img: 'https://cf-images.us-east-1.prod.boltdns.net/v1/static/6082840763001/9fa04ca4-6b20-4bfb-b1d2-59c773d4e71d/613b229b-b8da-4206-a9ea-5f80fd8ffea2/1920x1080/match/image.jpg',
+    text: 'Nicolai Højgaard fires a 62 — lowest round of the week — to surge into 2nd at -10'
+  },
+  {
+    img: 'https://res.cloudinary.com/pgatour-prod/w_854,h_480,c_fill,f_auto,q_auto/pgatour/news/editorial/2026/03/27/brooks_cutline.jpg',
+    text: 'Masters hopefuls Rickie Fowler and Brooks Koepka both miss the cut at Memorial Park'
+  },
+  {
+    img: 'https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2025/06/1200/675/jason-day-.jpg?ve=1&tl=1',
+    text: 'Jason Day lurks at -9 heading into the weekend — can the Aussie chase down Woodland?'
+  },
+  {
+    img: 'https://s.yimg.com/ny/api/res/1.2/UqtolTIZDrxTMvfvJg9y.Q--/YXBwaWQ9aGlnaGxhbmRlcjt3PTk2MDtoPTY0MDtjZj13ZWJw/https://media.zenfs.com/en/usa_today_sports_golfweek_articles_635/bbcb2441181eae0be741314ffd6ab3a1',
+    text: 'Woodland celebrates birdie on No. 3 — the 2019 US Open champ is rolling back the clock at Memorial Park'
+  }
+];
+
 function showHeadline() {
   if (_headlineShown) return;
   _headlineShown = true;
+  var h = HEADLINES[Math.floor(Math.random() * HEADLINES.length)];
+  document.getElementById('headline-img').src = h.img;
+  document.getElementById('headline-img').alt = h.text;
+  document.getElementById('headline-text').textContent = h.text;
   setTimeout(function() {
     document.getElementById('headline-overlay').classList.add('show');
   }, 400);
