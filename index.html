@@ -2588,6 +2588,17 @@ to  {
   letter-spacing: 1px;
   margin-top: 2px;
 }
+.h2h-momentum {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+  padding: 6px 12px;
+  margin: 6px 0 0;
+  background: rgba(82,183,136,0.06);
+  border: 1px solid rgba(82,183,136,0.15);
+  border-radius: 8px;
+}
 .h2h-tied-badge {
   background: rgba(212,168,67,0.15);
   color: var(--gold);
@@ -4898,7 +4909,24 @@ function renderH2HInline() {
     html += '<div style="text-align:center;color:var(--text3);font-size:10px;font-weight:700">' + gap + ' stroke' + (gap > 1 ? 's' : '') + '</div>';
   }
   html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmtTeam(cB.total) + '</div><div class="h2h-score-lbl">Best 4 Total</div></div>';
-  html += '</div></div>';
+  html += '</div>';
+  // Momentum indicator — compare today's round performance
+  const todayA = cA.top4.reduce((s, g) => { const gd = GOLFER_SCORES[g.name]; const t = gd ? parseInt(gd.todayDisplay) : NaN; return s + (isNaN(t) || t > 80 ? 0 : t - 72); }, 0);
+  const todayB = cB.top4.reduce((s, g) => { const gd = GOLFER_SCORES[g.name]; const t = gd ? parseInt(gd.todayDisplay) : NaN; return s + (isNaN(t) || t > 80 ? 0 : t - 72); }, 0);
+  const totalHolesLeft = cA.picks.reduce((s, p) => s + getHolesRemaining(p), 0) + cB.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
+  if (totalHolesLeft > 0 && (todayA !== 0 || todayB !== 0)) {
+    const momDiff = todayA - todayB;
+    let momHtml = '';
+    if (momDiff < 0) {
+      momHtml = '<span style="color:#52b788">▲ ' + cA.team + '</span> gaining today <span style="color:var(--text2)">(' + (todayA >= 0 ? '+' : '') + todayA + ' vs ' + (todayB >= 0 ? '+' : '') + todayB + ')</span>';
+    } else if (momDiff > 0) {
+      momHtml = '<span style="color:#52b788">▲ ' + cB.team + '</span> gaining today <span style="color:var(--text2)">(' + (todayB >= 0 ? '+' : '') + todayB + ' vs ' + (todayA >= 0 ? '+' : '') + todayA + ')</span>';
+    } else {
+      momHtml = 'Even today <span style="color:var(--text2)">(' + (todayA >= 0 ? '+' : '') + todayA + ' each)</span>';
+    }
+    html += '<div class="h2h-momentum">' + momHtml + '</div>';
+  }
+  html += '</div>';
   // Side-by-side matchup table
   const holesA = cA.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
   const holesB = cB.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
