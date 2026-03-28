@@ -2109,6 +2109,13 @@ to  {
 .pos-move.dn  {
   color: #ff7070;
 }
+.pos-move-flash {
+  animation: arrowFlash 1.5s ease-out;
+}
+@keyframes arrowFlash {
+  0%, 20% { transform: scale(1.6); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
 
 /* Top mover badge — Masters broadcast style */
 .top-mover {
@@ -3563,11 +3570,15 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
     const totDisp = p.tot || '--';
     const prevP = PREV_POSITIONS[p.name];
     const currP = parsePos(p.pos);
-    let moveHtml = '';
-    if (!isPreT && prevP && currP && currP !== prevP) { const d = prevP - currP; moveHtml = d > 0 ? '<div class="pos-move up">▲' + d + '</div>' : '<div class="pos-move dn">▼' + Math.abs(d) + '</div>'; }
-    // Top mover badge
     const startP = ROUND_START_POSITIONS[p.name];
-    const roundDelta = (startP && currP) ? startP - currP : 0; // positive = up, negative = down
+    const roundDelta = (startP && currP) ? startP - currP : 0;
+    // Persistent arrows from round start, flash on fresh change
+    let moveHtml = '';
+    if (!isPreT && startP && currP && roundDelta !== 0) {
+      const justChanged = prevP && currP && currP !== prevP;
+      const flashCl = justChanged ? ' pos-move-flash' : '';
+      moveHtml = roundDelta > 0 ? '<div class="pos-move up' + flashCl + '">▲' + roundDelta + '</div>' : '<div class="pos-move dn' + flashCl + '">▼' + Math.abs(roundDelta) + '</div>';
+    }
     const isMover = topMoverNames.has(p.name);
     const myTeamIdxs = myPicksMap[p.name] || [];
     const pills = myTeamIdxs.map(i => '<span class="team-pill ' + (PILL_CLASSES[i]||'') + '">' + pillLabel(i) + '</span>').join('');
