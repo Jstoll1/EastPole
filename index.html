@@ -4346,6 +4346,8 @@ const HEADLINES = [
 
 function showHeadline() {
   if (_headlineShown) return;
+  // Don't show headlines when a round is actively being played
+  if (document.querySelector('.live-dot.on')) return;
   _headlineShown = true;
   var h = HEADLINES[Math.floor(Math.random() * HEADLINES.length)];
   document.getElementById('headline-img').src = h.img;
