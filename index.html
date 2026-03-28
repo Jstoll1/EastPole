@@ -1014,7 +1014,7 @@ html, body  {
   letter-spacing: 0.8px;
   text-transform: uppercase;
   position: sticky;
-  top: calc(var(--header-h) + var(--safe-top) + 2px + 28px);
+  top: 0;
   z-index: 5;
 }
 
@@ -3540,6 +3540,9 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
       + '<div class="sc-panel" id="sc-panel-' + ri + '"></div>';
   });
   document.getElementById('leaderboard-list').innerHTML = colHdr + rows;
+  const _stickyH = document.querySelector('.lb-sticky-hdr');
+  const _colH = document.querySelector('#leaderboard-list .tv-col-hdr');
+  if (_stickyH && _colH) _colH.style.top = _stickyH.offsetHeight + 'px';
 }
 
 let ownFilter='most';
