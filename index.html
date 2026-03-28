@@ -3895,53 +3895,57 @@ function generateFeedEvents(freshScores) {
 
 function generateEntryEvents(ranked, ranks) {
   const payoutCount = typeof POOL_CONFIG !== 'undefined' ? POOL_CONFIG.payouts.length : 3;
-  ranked.forEach((e, i) => {
-    const prevRk = PREV_RANKS[e.team];
-    const newRk = ranks[i];
-    if (prevRk !== undefined && newRk !== prevRk) {
-      const delta = prevRk - newRk;
-      if (delta > 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' moves up to #' + newRk, { team: e.team });
-      else if (delta < 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' drops to #' + newRk, { team: e.team });
-    }
-  });
-  // Lead change detection
+  const isFirstRender = Object.keys(PREV_RANKS).length === 0;
   const newLeader = ranked.length ? ranked[0].team : null;
-  if (_prevLeaderTeam && newLeader && newLeader !== _prevLeaderTeam) {
-    addFeedEvent('entry', '\uD83D\uDCA5', newLeader + ' takes the lead from ' + _prevLeaderTeam, { team: newLeader });
-  }
-  _prevLeaderTeam = newLeader;
-  // Payout line movement
   const currPayoutTeams = ranked.slice(0, payoutCount).map((e, i) => ({ team: e.team, rank: ranks[i] }));
-  if (_prevPayoutTeams.length) {
-    currPayoutTeams.forEach(({ team, rank }) => {
-      const wasPaying = _prevPayoutTeams.some(p => p.team === team);
-      if (!wasPaying && rank <= payoutCount) {
-        const payoutLabel = typeof POOL_CONFIG !== 'undefined' ? POOL_CONFIG.payouts[rank - 1]?.place || ('#' + rank) : '#' + rank;
-        addFeedEvent('entry', '\uD83D\uDCB0', team + ' moves into the money (' + payoutLabel + ')', { team });
+  if (!isFirstRender) {
+    // Rank change events
+    ranked.forEach((e, i) => {
+      const prevRk = PREV_RANKS[e.team];
+      const newRk = ranks[i];
+      if (prevRk !== undefined && newRk !== prevRk) {
+        const delta = prevRk - newRk;
+        if (delta > 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' moves up to #' + newRk, { team: e.team });
+        else if (delta < 0) addFeedEvent('entry', '\uD83C\uDFC6', e.team + ' drops to #' + newRk, { team: e.team });
       }
     });
-    _prevPayoutTeams.forEach(({ team }) => {
-      const stillPaying = currPayoutTeams.some(p => p.team === team);
-      if (!stillPaying) {
-        addFeedEvent('entry', '\uD83D\uDCC9', team + ' drops out of the money', { team });
-      }
-    });
-  }
-  _prevPayoutTeams = currPayoutTeams;
-  // Margin tracker: alert when race is tight
-  if (ranked.length >= 2 && _prevLeaderTeam) {
-    const topScore = ranked[0].total;
-    const thirdScore = ranked.length >= payoutCount ? ranked[payoutCount - 1].total : ranked[ranked.length - 1].total;
-    const margin = thirdScore - topScore;
-    if (margin <= 2 && margin >= 0) {
-      // Only fire occasionally — check if we already have a recent margin event
-      const recentMargin = FEED_EVENTS.find(ev => ev.type === 'margin' && (Date.now() - ev.ts) < 300000);
-      if (!recentMargin) {
-        const spots = Math.min(payoutCount, ranked.length);
-        addFeedEvent('margin', '\u26A1', 'Only ' + margin + ' stroke' + (margin !== 1 ? 's' : '') + ' separate' + (margin === 1 ? 's' : '') + ' the top ' + spots, {});
+    // Lead change detection
+    if (_prevLeaderTeam && newLeader && newLeader !== _prevLeaderTeam) {
+      addFeedEvent('entry', '\uD83D\uDCA5', newLeader + ' takes the lead from ' + _prevLeaderTeam, { team: newLeader });
+    }
+    // Payout line movement
+    if (_prevPayoutTeams.length) {
+      currPayoutTeams.forEach(({ team, rank }) => {
+        const wasPaying = _prevPayoutTeams.some(p => p.team === team);
+        if (!wasPaying && rank <= payoutCount) {
+          const payoutLabel = typeof POOL_CONFIG !== 'undefined' ? POOL_CONFIG.payouts[rank - 1]?.place || ('#' + rank) : '#' + rank;
+          addFeedEvent('entry', '\uD83D\uDCB0', team + ' moves into the money (' + payoutLabel + ')', { team });
+        }
+      });
+      _prevPayoutTeams.forEach(({ team }) => {
+        const stillPaying = currPayoutTeams.some(p => p.team === team);
+        if (!stillPaying) {
+          addFeedEvent('entry', '\uD83D\uDCC9', team + ' drops out of the money', { team });
+        }
+      });
+    }
+    // Margin tracker: alert when race is tight (max once per 5min)
+    if (ranked.length >= 2) {
+      const topScore = ranked[0].total;
+      const thirdScore = ranked.length >= payoutCount ? ranked[payoutCount - 1].total : ranked[ranked.length - 1].total;
+      const margin = thirdScore - topScore;
+      if (margin <= 2 && margin >= 0) {
+        const recentMargin = FEED_EVENTS.find(ev => ev.type === 'margin' && (Date.now() - ev.ts) < 300000);
+        if (!recentMargin) {
+          const spots = Math.min(payoutCount, ranked.length);
+          addFeedEvent('margin', '\u26A1', 'Only ' + margin + ' stroke' + (margin !== 1 ? 's' : '') + ' separate' + (margin === 1 ? 's' : '') + ' the top ' + spots, {});
+        }
       }
     }
   }
+  // Always seed tracking data
+  _prevLeaderTeam = newLeader;
+  _prevPayoutTeams = currPayoutTeams;
 }
 
 function getMyPickNames() {
