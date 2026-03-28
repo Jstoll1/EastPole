@@ -4743,6 +4743,7 @@ function switchTab(name,btn) {
     const search = document.getElementById('lb-search');
     if (search) search.value = '';
     lbSearch = '';
+    updateLbSeg();
     renderLeaderboard();
     document.getElementById('view-leaderboard').scrollTo({ top: 0, behavior: 'smooth' });
     showHeadline();
