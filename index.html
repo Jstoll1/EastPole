@@ -3505,7 +3505,7 @@ function renderLeaderboard() {
   const completedRoundCount = maxCompletedRounds;
   const activePlaying = players.filter(p => p.thru !== '—' && p.thru !== 'MC' && p.thru !== 'WD' && p.score !== 11 && p.score !== 12);
   const anyStillPlaying = activePlaying.some(p => /^\d+$/.test(p.thru) && parseInt(p.thru) >= 1 && parseInt(p.thru) < 18);
-  const currentRound = samplePlayer ? (anyStillPlaying ? completedRoundCount || 1 : completedRoundCount) : 0;
+  const currentRound = samplePlayer ? (anyStillPlaying ? (completedRoundCount + 1) || 1 : completedRoundCount) : 0;
   console.log('🏌️ Round detection:', { completedRoundCount, anyStillPlaying, currentRound, sampleThru: samplePlayer?.thru, sampleR1: samplePlayer?.r1 });
   const isPreT = currentRound === 0;
   if (isPreT) { const wIdx = players.findIndex(p=>p.name===PREV_WINNER); if (wIdx > 0) { const [w] = players.splice(wIdx,1); players.unshift(w); } }
