@@ -3924,7 +3924,8 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : p.thru + (p.star
     const prevP = PREV_POSITIONS[p.name];
     const currP = parsePos(p.pos);
     const startP = ROUND_START_POSITIONS[p.name];
-    const roundDelta = (startP && currP) ? startP - currP : 0;
+    const refP = startP || prevP;
+    const roundDelta = (refP && currP) ? refP - currP : 0;
     // Persistent arrows from round start, flash on fresh change
     let moveHtml = '';
     const arrowDelta = arrowPlayers.has(p.name) ? arrowPlayers.get(p.name) : 0;
