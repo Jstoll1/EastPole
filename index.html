@@ -464,6 +464,11 @@ html, body  {
   text-transform: uppercase;
   padding: 8px 12px 4px;
 }
+.sc-round-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 12px 0;
+}
 
 .sc-grid  {
   padding: 0 8px 8px;
@@ -4259,34 +4264,23 @@ async function toggleScorecard(idx, playerName) {
   html += buildOwnBadge();
   html += '</div>';
 
-  // Only show the most recent round with hole data
-  const activeRound = [...rounds].reverse().find(r => r.holes && r.holes.length > 0);
-  const activeRounds = activeRound ? [activeRound] : [];
-  const activeRi = activeRound ? rounds.indexOf(activeRound) : 0;
-  activeRounds.forEach((r) => {
-    const ri = activeRi;
-    if (!r.holes || r.holes.length === 0) return;
-    const front = r.holes.filter(h => h.hole >= 1 && h.hole <= 9);
-    const back = r.holes.filter(h => h.hole >= 10 && h.hole <= 18);
-    const frontPars = front.map(h => h.par || getHolePar(h.hole));
-    const backPars = back.map(h => h.par || getHolePar(h.hole));
-    const frontOut = front.reduce((s, h) => s + (h.strokes || 0), 0);
-    const backIn = back.reduce((s, h) => s + (h.strokes || 0), 0);
-
+  // Show all rounds with hole data, separated by dividers
+  const roundsWithData = rounds.map((r, i) => ({ round: r, idx: i })).filter(({ round }) => round.holes && round.holes.length > 0);
+  roundsWithData.forEach(({ round: r, idx: ri }, arrIdx) => {
     var dpColor = '';
     if (r.displayValue) {
       if (r.displayValue.indexOf('-') === 0) dpColor = 'color:var(--red)';
       else if (r.displayValue === 'E') dpColor = '';
       else dpColor = 'color:var(--green-bright)';
     }
-    html += '<div class="sc-round-label">R' + (ri + 1) + (r.value ? ' — ' + r.value : '') + (r.displayValue ? ' (<span style="' + dpColor + '">' + r.displayValue + '</span>)' : '') + '</div>';
+    if (arrIdx > 0) html += '<div class="sc-round-divider"></div>';
+    html += '<div class="sc-round-label">R' + (ri + 1) + (r.value ? ' \u2014 ' + r.value : '') + (r.displayValue ? ' (<span style="' + dpColor + '">' + r.displayValue + '</span>)' : '') + '</div>';
     html += '<div class="sc-grid">';
 
-    // Build lookup of hole data by hole number
     var holeMap = {};
     r.holes.forEach(function(h) { holeMap[h.hole] = h; });
 
-    // Front 9 (holes 1-9)
+    // Front 9
     html += '<div class="sc-nine">';
     html += '<div class="sc-nine-label">OUT</div>';
     html += '<div class="sc-row sc-row-hdr">';
@@ -4297,28 +4291,26 @@ async function toggleScorecard(idx, playerName) {
       var hd = holeMap[hn];
       var par = getHolePar(hn);
       var scCls = hd && hd.strokes ? scorecardClass(hd.strokes, par) : '';
-      html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '–') + '</span></div>';
+      html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '\u2013') + '</span></div>';
     }
     html += '</div>';
     html += '</div>';
 
-    // Back 9 (holes 10-18) — always show, dashes for unplayed holes
-    {
-      html += '<div class="sc-nine">';
-      html += '<div class="sc-nine-label">IN</div>';
-      html += '<div class="sc-row sc-row-hdr">';
-      for (var hn = 10; hn <= 18; hn++) { html += '<div class="sc-cell">' + hn + '</div>'; }
-      html += '</div>';
-      html += '<div class="sc-row sc-row-score">';
-      for (var hn = 10; hn <= 18; hn++) {
-        var hd = holeMap[hn];
-        var par = getHolePar(hn);
-        var scCls = hd && hd.strokes ? scorecardClass(hd.strokes, par) : '';
-        html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '–') + '</span></div>';
-      }
-      html += '</div>';
-      html += '</div>';
+    // Back 9
+    html += '<div class="sc-nine">';
+    html += '<div class="sc-nine-label">IN</div>';
+    html += '<div class="sc-row sc-row-hdr">';
+    for (var hn = 10; hn <= 18; hn++) { html += '<div class="sc-cell">' + hn + '</div>'; }
+    html += '</div>';
+    html += '<div class="sc-row sc-row-score">';
+    for (var hn = 10; hn <= 18; hn++) {
+      var hd = holeMap[hn];
+      var par = getHolePar(hn);
+      var scCls = hd && hd.strokes ? scorecardClass(hd.strokes, par) : '';
+      html += '<div class="sc-cell ' + scCls + '"><span class="sc-num">' + (hd && hd.strokes ? hd.strokes : '\u2013') + '</span></div>';
     }
+    html += '</div>';
+    html += '</div>';
 
     html += '</div>';
   });
