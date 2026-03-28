@@ -3464,7 +3464,7 @@ const FLAG_TO_CODE = {'🇺🇸':'USA','🇦🇺':'AUS','🇰🇷':'KOR','🇨�
 
 function getCountryCode(name) { return FLAG_TO_CODE[FLAGS[name]] || ''; }
 
-let COURSE_PAR = 72;
+let COURSE_PAR = getDefaultPars().reduce((s, p) => s + p, 0);
 const PREV_WINNER = 'Min Woo Lee';
 const gs = n => { if (GOLFER_SCORES[n]) return GOLFER_SCORES[n].score; if (Object.keys(GOLFER_SCORES).length > 0) console.warn('⚠️ Player not found in GOLFER_SCORES:', n); return 11; };
 const fmt = s => s === 11 ? 'MC' : s === 12 ? 'WD' : s < 0 ? `${s}` : s > 0 ? `+${s}` : 'E';
