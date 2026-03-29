@@ -5024,11 +5024,18 @@ function renderH2HInline() {
   if (pctLeft > 12) html += '<span class="h2h-bar-label left">WIN</span>';
   if (pctRight > 12) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
-  // Score summary: total + current round (only active golfers mid-round)
+  // Score summary: total + current round (all golfers who played today)
   function teamRoundScore(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
-      const today = golferTodayScore(GOLFER_SCORES[g.name]);
+      const gd = GOLFER_SCORES[g.name];
+      if (!gd) return;
+      let today = golferTodayScore(gd);
+      // Include finished golfers using todayDisplay
+      if (today === null && gd.todayDisplay && gd.todayDisplay !== '—') {
+        const td = gd.todayDisplay;
+        today = td === 'E' ? 0 : parseInt(td.replace('+', '')) || null;
+      }
       if (today === null) return;
       sum += today; count++;
     });
@@ -5051,13 +5058,17 @@ function renderH2HInline() {
   if (rdB.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdB.sum < 0 ? '#52b788' : rdB.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdB.sum) + '</div>';
   html += '</div>';
   html += '</div>';
-  // Momentum indicator — compare today's round performance (only active golfers)
+  // Momentum indicator — compare today's round performance (all golfers who played today)
   function todayRelPar(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
       const gd = GOLFER_SCORES[g.name];
       if (!gd) return;
-      const today = golferTodayScore(gd);
+      let today = golferTodayScore(gd);
+      if (today === null && gd.todayDisplay && gd.todayDisplay !== '—') {
+        const td = gd.todayDisplay;
+        today = td === 'E' ? 0 : parseInt(td.replace('+', '')) || null;
+      }
       if (today === null) return;
       sum += today; count++;
     });
