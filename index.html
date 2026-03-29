@@ -4961,41 +4961,36 @@ function calcWinProbability(entryA, entryB) {
   const cB = calcEntry(entryB);
   const diff = cA.total - cB.total; // negative = A is winning
 
-  // Holes remaining per golfer across each team's top 4
-  const holesA = cA.top4.map(g => getHolesRemaining(g.name));
-  const holesB = cB.top4.map(g => getHolesRemaining(g.name));
-  const totalHolesA = holesA.reduce((s, h) => s + h, 0);
-  const totalHolesB = holesB.reduce((s, h) => s + h, 0);
+  // Identify shared golfers in top 4 — their remaining holes don't affect the gap
+  const namesA = new Set(cA.top4.map(g => g.name));
+  const namesB = new Set(cB.top4.map(g => g.name));
+  const shared = new Set([...namesA].filter(n => namesB.has(n)));
 
-  // Tournament truly over for both teams
-  if (totalHolesA + totalHolesB === 0) {
+  // Only count holes from non-shared golfers (shared golfers cancel out)
+  const indepHolesA = cA.top4.filter(g => !shared.has(g.name)).map(g => getHolesRemaining(g.name));
+  const indepHolesB = cB.top4.filter(g => !shared.has(g.name)).map(g => getHolesRemaining(g.name));
+  const totalIndepA = indepHolesA.reduce((s, h) => s + h, 0);
+  const totalIndepB = indepHolesB.reduce((s, h) => s + h, 0);
+
+  // If no independent holes remain, the gap is locked
+  if (totalIndepA + totalIndepB === 0) {
     if (diff < 0) return { pctA: 100, pctB: 0 };
     if (diff > 0) return { pctA: 0, pctB: 100 };
     return { pctA: 50, pctB: 50 };
   }
 
-  // Variance model — built from individual golfer variance, not team-level.
-  //
-  // PGA Tour empirical std dev ≈ 1.1 strokes per hole per golfer.
-  // Per-golfer variance over their remaining holes = (1.1)^2 * holesRemaining.
-  //
-  // Each team's score = sum of best 4 of 6. Since the top 4 can change as
-  // scores shift, there's extra variance from golfer substitution. We apply
-  // a dampening factor of 0.65 (best-4 selection reduces raw variance by ~35%).
-  //
-  // Team variance = sum of each contributing golfer's variance * dampening.
-  // Diff variance = teamVarA + teamVarB (independent teams).
-  // sigma = sqrt(diffVar).
+  // Variance model — PGA Tour std dev ≈ 1.1 strokes per hole per golfer
+  // Only non-shared golfers contribute to variance in the gap
   const STROKE_VAR = 1.1 * 1.1; // 1.21 per hole per golfer
   const BEST4_DAMPEN = 0.65;
-  const teamVarA = holesA.reduce((s, h) => s + STROKE_VAR * h, 0) * BEST4_DAMPEN;
-  const teamVarB = holesB.reduce((s, h) => s + STROKE_VAR * h, 0) * BEST4_DAMPEN;
+  const teamVarA = indepHolesA.reduce((s, h) => s + STROKE_VAR * h, 0) * BEST4_DAMPEN;
+  const teamVarB = indepHolesB.reduce((s, h) => s + STROKE_VAR * h, 0) * BEST4_DAMPEN;
   const sigma = Math.sqrt(Math.max(teamVarA + teamVarB, 1));
 
   const z = -diff / sigma;
   const pA = normalCDF(z) * 100;
 
-  // Clamp [1, 99] while holes remain — never show a lock while golf is being played
+  // Clamp [1, 99] while independent holes remain
   const clampedA = Math.max(1, Math.min(99, Math.round(pA)));
   return { pctA: clampedA, pctB: 100 - clampedA };
 }
