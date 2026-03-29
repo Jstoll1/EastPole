@@ -3088,7 +3088,7 @@ to  {
 <button class="td-change-btn" onclick="event.stopPropagation();closeTeamDropdown();showOnboarding()">Change User</button>
 </div>
 </header>
-<div class="ticker-wrap" ondblclick="if(EVENT_ID){window.open('https://www.espn.com/golf/leaderboard?tournamentId='+EVENT_ID,'_blank')}">
+<div class="ticker-wrap" ondblclick="toggleTickerMode()">
 <div class="ticker-label">LIVE</div>
 <div class="ticker-track"><div class="ticker-content" id="ticker-content"></div></div>
 </div>
@@ -4853,19 +4853,43 @@ function buildH2HCell(g, side, isTop) {
   return html;
 }
 
+let _tickerMode = 'entries'; // 'entries' or 'golfers'
+
+function toggleTickerMode() {
+  _tickerMode = _tickerMode === 'entries' ? 'golfers' : 'entries';
+  const label = document.querySelector('.ticker-label');
+  if (label) label.textContent = _tickerMode === 'entries' ? 'LIVE' : 'PGA';
+  const track = document.querySelector('.ticker-track');
+  if (track) track.scrollLeft = 0;
+  renderTicker();
+}
+
 function renderTicker() {
   const el = document.getElementById('ticker-content');
   if (!el) return;
   const track = document.querySelector('.ticker-track');
   const prevScroll = track ? track.scrollLeft : 0;
-  const ranked = getRanked();
-  const items = ranked.map((e, i) => {
-    const scf = fmtTeam(e.total);
-    const scc = cls(e.total);
-    const money = i < 3 ? ' 💰' : '';
-    const nameStyle = i < 3 ? ' style="color:var(--gold)"' : '';
-    return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> <span${nameStyle}>${e.team}</span> <span class="ticker-item-score ${scc}">${scf}</span>${money}</span>`;
-  }).join('');
+  let items;
+  if (_tickerMode === 'golfers') {
+    const players = Object.entries(GOLFER_SCORES).map(([name, d]) => ({ name, ...d }));
+    players.sort((a, b) => a.score - b.score);
+    const active = players.filter(p => p.score < 11);
+    items = active.map(p => {
+      const scf = fmt(p.score);
+      const scc = cls(p.score);
+      const flag = FLAGS[p.name] || '';
+      return `<span class="ticker-item"><span class="ticker-item-rank">${p.pos}</span> <span>${flag} ${p.name}</span> <span class="ticker-item-score ${scc}">${scf}</span></span>`;
+    }).join('');
+  } else {
+    const ranked = getRanked();
+    items = ranked.map((e, i) => {
+      const scf = fmtTeam(e.total);
+      const scc = cls(e.total);
+      const money = i < 3 ? ' 💰' : '';
+      const nameStyle = i < 3 ? ' style="color:var(--gold)"' : '';
+      return `<span class="ticker-item"><span class="ticker-item-rank">${i+1}.</span> <span${nameStyle}>${e.team}</span> <span class="ticker-item-score ${scc}">${scf}</span>${money}</span>`;
+    }).join('');
+  }
   el.innerHTML = items + items;
   if (track) track.scrollLeft = prevScroll;
   if (!_tickerInterval) { startTickerScroll(); initTickerTouch(); }
