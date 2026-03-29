@@ -3426,9 +3426,8 @@ let GOLFER_SCORES = {};
 let allTeamEmails = [];
 let PREV_POSITIONS = {};
 let PREV_RANKS = {};
-let ROUND_START_POSITIONS = {};
+let ROUND_START_POSITIONS = {}; // kept for backward compat, no longer used for arrows
 let ROUND_START_ROUND = 0;
-let SESSION_START_POSITIONS = {}; // first-seen positions this session (never overwritten)
 
 // ── Activity Tracker ──────────────────────────────────────
 const ACTIVITY_LOG = []; // {cat:'golf'|'entry', icon, text, time}
@@ -4029,27 +4028,37 @@ function renderLeaderboard() {
   const estCutShow = currentRound >= 1 && currentRound <= 2 && lbSort === 'score' && lbFilter === 'all' && !lbSearch;
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
-  // Top 10 movers up and top 10 movers down — use round start, fallback to prev positions
+  // Position arrows: calculate start-of-round positions from completed round scores
+  // No localStorage needed — purely derived from current ESPN data
   const arrowPlayers = new Map(); // name -> delta
   if (!isPreT) {
-    const allDeltas = new Map();
+    // Build pre-round score for all active (non-MC/WD) players
+    const preRoundData = [];
     players.forEach(p => {
       if (p.score === 11 || p.score === 12) return;
-      // Only show arrows for players actively on the course (thru is a number 1-18)
-      if (!p.thru || p.thru === 'F' || p.thru === '18' || p.thru === '—' || p.thru.includes(':')) return;
-      const thruNum = parseInt(p.thru);
-      if (isNaN(thruNum) || thruNum < 1 || !/^\d+$/.test(p.thru)) return;
-      const cP = parsePos(p.pos);
-      if (!cP) return;
-      // Best baseline: round-start (from end of prev round) > session-start (first load) > prev fetch
-      const sP = ROUND_START_POSITIONS[p.name] || SESSION_START_POSITIONS[p.name] || PREV_POSITIONS[p.name];
-      if (sP && sP !== cP) allDeltas.set(p.name, sP - cP);
+      const rounds = [p.r1, p.r2, p.r3, p.r4];
+      let completedRel = 0;
+      for (let i = 0; i < rounds.length; i++) {
+        if (rounds[i] == null || rounds[i] <= 50) break;
+        completedRel += rounds[i] - COURSE_PAR;
+      }
+      preRoundData.push({ name: p.name, preScore: completedRel, currentPos: parsePos(p.pos), thru: p.thru });
     });
-    const sorted = [...allDeltas.entries()].map(([name, delta]) => ({ name, delta }));
-    const ups = sorted.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta);
-    const dns = sorted.filter(d => d.delta < 0).sort((a, b) => a.delta - b.delta);
-    ups.forEach(d => arrowPlayers.set(d.name, d.delta));
-    dns.forEach(d => arrowPlayers.set(d.name, d.delta));
+    // Sort by pre-round score to get start-of-round ranking
+    preRoundData.sort((a, b) => a.preScore - b.preScore);
+    let rank = 1;
+    for (let i = 0; i < preRoundData.length; i++) {
+      if (i > 0 && preRoundData[i].preScore > preRoundData[i-1].preScore) rank = i + 1;
+      preRoundData[i].startPos = rank;
+    }
+    // Deltas only for actively playing golfers (thru 1-17)
+    preRoundData.forEach(d => {
+      if (!d.currentPos || !d.thru) return;
+      if (d.thru === 'F' || d.thru === '18' || d.thru === '—' || d.thru.includes(':')) return;
+      if (!/^\d+$/.test(d.thru) || parseInt(d.thru) < 1) return;
+      const delta = d.startPos - d.currentPos;
+      if (delta !== 0) arrowPlayers.set(d.name, delta);
+    });
   }
   const topMoverNames = isPreT ? new Map() : getTopMovers(arrowPlayers);
   let rowIdx = 0;
@@ -4274,7 +4283,7 @@ async function fetchESPN() {
   const tournBanner = document.getElementById('lb-tournament-name');
   if (tournBanner) tournBanner.textContent = shortName;
   Object.entries(GOLFER_SCORES).forEach(([n,d]) => { const p = parsePos(d.pos);
-  if (p) { PREV_POSITIONS[n] = p; if (!SESSION_START_POSITIONS[n]) SESSION_START_POSITIONS[n] = p; }
+  if (p) PREV_POSITIONS[n] = p;
   if (d.score !== 11 && d.score !== 12) PREV_SCORES[n] = d.score;
 });
 const freshScores = {}; const freshAthleteIds = {}; comps.forEach(c=>{ const name=c.athlete?.displayName; if(!name) return;
@@ -5067,7 +5076,12 @@ function buildH2HCell(g, side, isTop) {
   const holesLeft = getHolesRemaining(g.name);
   // Calculate current round score relative to par
   let rdTag = '';
-  const todayScore = golferTodayScore(gd);
+  let todayScore = golferTodayScore(gd);
+  // For finished golfers, use todayDisplay from ESPN
+  if (todayScore === null && gd && gd.todayDisplay && gd.todayDisplay !== '—') {
+    const td = gd.todayDisplay;
+    todayScore = td === 'E' ? 0 : parseInt(td.replace('+', '')) || null;
+  }
   if (todayScore !== null) {
     const todayFmt = todayScore > 0 ? '+' + todayScore : todayScore === 0 ? 'E' : '' + todayScore;
     const todayColor = todayScore < 0 ? '#52b788' : todayScore > 0 ? '#ff7070' : 'var(--text2)';
