@@ -4710,10 +4710,14 @@ function switchTab(name,btn) {
     const search = document.getElementById('lb-search');
     if (search) search.value = '';
     lbSearch = '';
+    _tickerMode = _tickerMode === 'entries' ? 'golfers' : 'entries';
+    const label = document.querySelector('.ticker-label');
+    if (label) label.textContent = _tickerMode === 'entries' ? 'LIVE' : 'PGA';
+    renderTicker();
     updateLbSeg();
     renderLeaderboard();
     document.getElementById('view-leaderboard').scrollTo({ top: 0, behavior: 'smooth' });
-  
+
   }
 }
 
