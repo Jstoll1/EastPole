@@ -4294,7 +4294,7 @@ const scheduled=state==='STATUS_SCHEDULED';
 const dispVal=(c.status?.displayValue||'').toUpperCase();
 const stateDesc=(c.status?.type?.description||'').toUpperCase();
 const posName=(c.status?.position?.displayName||'').toUpperCase();
-if(name==='Aaron Rai') ErrorTracker.api('FOUND Aaron Rai', {state:state,dispVal:dispVal,stateDesc:stateDesc,posName:posName,thru:c.status?.thru,displayValue:c.status?.displayValue,fullStatus:JSON.stringify(c.status)});
+if(name==='Aaron Rai') { ErrorTracker.api('FOUND Aaron Rai', {state:state,dispVal:dispVal,stateDesc:stateDesc,posName:posName,thru:c.status?.thru,displayValue:c.status?.displayValue,fullStatus:JSON.stringify(c.status)}); console.log('🔍 ESPN competitor keys:', Object.keys(c)); console.log('🔍 ESPN competitor.status keys:', Object.keys(c.status||{})); console.log('🔍 ESPN competitor.status.position:', JSON.stringify(c.status?.position)); console.log('🔍 ESPN competitor full:', JSON.stringify(c, null, 2).substring(0, 3000)); }
 const wd=state.includes('WD')||state.includes('WITHDRAW')||dispVal==='WD'||stateDesc.includes('WITHDRAW')||posName==='WD'||false;
 const mc=!wd&&(state.includes('CUT')||false);
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
