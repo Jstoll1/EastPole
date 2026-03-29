@@ -4040,6 +4040,9 @@ function renderLeaderboard() {
     const allDeltas = new Map();
     players.forEach(p => {
       if (p.score === 11 || p.score === 12) return;
+      // Only show arrows for players actively on the course (thru is a number 1-18)
+      const thruNum = parseInt(p.thru);
+      if (isNaN(thruNum) || thruNum < 1) return;
       const cP = parsePos(p.pos);
       if (!cP) return;
       const sP = ROUND_START_POSITIONS[p.name];
