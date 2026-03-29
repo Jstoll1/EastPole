@@ -5134,14 +5134,15 @@ function buildH2HCell(g, side, isTop) {
   if (todayScore !== null) {
     const todayFmt = todayScore > 0 ? '+' + todayScore : todayScore === 0 ? 'E' : '' + todayScore;
     const todayColor = todayScore < 0 ? '#52b788' : todayScore > 0 ? '#ff7070' : 'var(--text2)';
-    rdTag = ' <span style="color:' + todayColor + ';font-weight:700">(' + todayFmt + ')</span>';
+    rdTag = '<span style="color:' + todayColor + ';font-weight:700">(' + todayFmt + ')</span>';
   }
-  const detail = isWD ? 'WD' : mc ? 'MC' : (holesLeft > 0 ? holesLeft + ' holes left' : 'Complete');
+  const holesTag = holesLeft > 0 ? ' <span style="color:#e57373;font-size:10px;font-weight:600">' + holesLeft + 'h left</span>' : '';
+  const statusTag = isWD ? ' <span style="color:var(--text3);font-size:10px">WD</span>' : mc ? ' <span style="color:var(--text3);font-size:10px">MC</span>' : (holesLeft === 0 ? ' <span style="color:var(--text3);font-size:10px">Complete</span>' : '');
   let html = '<div class="h2h-vs-cell ' + side + '">';
   html += '<div class="h2h-vs-score ' + cls(g.score) + '">' + fmt(g.score) + '</div>';
   html += '<div class="h2h-vs-info">';
   html += '<div class="h2h-vs-name">' + g.name + '</div>';
-  html += '<div class="h2h-vs-meta">' + (rdTag ? '<span>' + rdTag.trim() + '</span>' : '') + '<span class="h2h-vs-detail">' + detail + '</span></div>';
+  html += '<div class="h2h-vs-meta">' + (rdTag || '') + holesTag + statusTag + '</div>';
   html += '</div>';
   html += '</div>';
   return html;
