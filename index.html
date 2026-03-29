@@ -3153,8 +3153,11 @@ to  {
 </div>
 <div class="seg-wrap" style="padding:10px 14px 6px">
 <div class="seg">
-<button class="seg-btn active" onclick="setOwnFilter('most',this)">Most Owned</button>
-<button class="seg-btn" onclick="setOwnFilter('least',this)">Unique Picks</button>
+<button class="seg-btn active" onclick="setOwnFilter('most',this)">Most</button>
+<button class="seg-btn" onclick="setOwnFilter('least',this)">Least</button>
+<button class="seg-btn" onclick="setOwnFilter('score',this)">Score</button>
+<button class="seg-btn" onclick="setOwnFilter('today',this)">Today</button>
+<button class="seg-btn" onclick="setOwnFilter('tot',this)">Tot</button>
 </div>
 </div>
 <input class="own-search" id="own-search" type="text" placeholder="Search players…" oninput="renderOwnership()">
@@ -3927,6 +3930,20 @@ function renderOwnership() {
   if (searchVal) data = data.filter(d => d.player.toLowerCase().includes(searchVal));
   const maxPct = OWNERSHIP_DATA[0].pct;
   if (ownFilter === 'least') data = [...data].sort((a, b) => a.pct - b.pct);
+  else if (ownFilter === 'score') data = [...data].sort((a, b) => {
+    const sa = gdMap[a.player]?.score ?? 999, sb = gdMap[b.player]?.score ?? 999;
+    return sa - sb;
+  });
+  else if (ownFilter === 'today') data = [...data].sort((a, b) => {
+    const ta = gdMap[a.player]?.todayDisplay || '—', tb = gdMap[b.player]?.todayDisplay || '—';
+    const va = ta === '—' ? 999 : (ta === 'E' ? 0 : parseInt(ta.replace('+', '')) || 0);
+    const vb = tb === '—' ? 999 : (tb === 'E' ? 0 : parseInt(tb.replace('+', '')) || 0);
+    return va - vb;
+  });
+  else if (ownFilter === 'tot') data = [...data].sort((a, b) => {
+    const ta = gdMap[a.player]?.tot || 9999, tb = gdMap[b.player]?.tot || 9999;
+    return ta - tb;
+  });
   const myPicks = currentUserTeams.length ? new Set(currentUserTeams.flatMap(t => t.picks)) : new Set();
   document.getElementById('ownership-list').innerHTML = data.map(d => {
     const gd = gdMap[d.player];
