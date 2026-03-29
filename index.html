@@ -4041,8 +4041,9 @@ function renderLeaderboard() {
     players.forEach(p => {
       if (p.score === 11 || p.score === 12) return;
       // Only show arrows for players actively on the course (thru is a number 1-18)
+      if (!p.thru || p.thru === 'F' || p.thru === '18' || p.thru === '—' || p.thru.includes(':')) return;
       const thruNum = parseInt(p.thru);
-      if (isNaN(thruNum) || thruNum < 1) return;
+      if (isNaN(thruNum) || thruNum < 1 || !/^\d+$/.test(p.thru)) return;
       const cP = parsePos(p.pos);
       if (!cP) return;
       const sP = ROUND_START_POSITIONS[p.name];
