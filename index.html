@@ -3431,7 +3431,8 @@ let ROUND_START_ROUND = 0;
 
 // ── Activity Tracker ──────────────────────────────────────
 const ACTIVITY_LOG = []; // {cat:'golf'|'entry', icon, text, time}
-const MAX_ACTIVITY = 100;
+const MAX_ACTIVITY = 50;
+const ACT_TTL = 10 * 60 * 1000; // 10 minutes
 let _actTab = 'golf';
 let _actOpen = false;
 let _actUnseenGolf = 0;
@@ -3488,7 +3489,13 @@ function timeAgo(ts) {
   return h + 'h ago';
 }
 
+function pruneActivity() {
+  const now = Date.now();
+  while (ACTIVITY_LOG.length && now - ACTIVITY_LOG[ACTIVITY_LOG.length - 1].time > ACT_TTL) ACTIVITY_LOG.pop();
+}
+
 function renderActivityList() {
+  pruneActivity();
   const el = document.getElementById('act-list');
   if (!el) return;
   const items = ACTIVITY_LOG.filter(a => a.cat === _actTab);
