@@ -74,6 +74,8 @@
 [data-theme="light"] .mini-pick:nth-child(odd) { background: #f0f5f0; }
 [data-theme="light"] .mini-pick:nth-child(even) { background: #ffffff; }
 [data-theme="light"] .mini-pick.is-top { border-left-color: #006747; }
+[data-theme="light"] .mini-pick-tot { color: #5a6b5a; }
+[data-theme="light"] .picks-hdr { color: #5a6b5a; border-bottom-color: #d4ddd6; }
 [data-theme="light"] .sc-nine { background: #ffffff; border-color: #d4ddd6; }
 [data-theme="light"] .sc-birdie .sc-num { background: #006747; color: #fff; }
 [data-theme="light"] .sc-eagle .sc-num { background: #d4a843; color: #1a2e1a; }
@@ -928,23 +930,29 @@ html, body  {
   border-left: 2px solid rgba(212,168,67,0.35);
 }
 
+.picks-hdr {
+  display:flex; align-items:center; padding:6px 12px 4px 32px;
+  font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+  color:var(--text3); border-bottom:1px solid var(--border);
+}
+.picks-hdr-name { flex:1; }
+.picks-hdr-col { width:44px; text-align:right; }
 .mini-pick-left  {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
   flex: 1;
   min-width: 0;
 }
-.mini-pick-top  {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.mini-pick-today {
+  width:44px; text-align:right; font-size:12px; font-weight:700; flex-shrink:0;
 }
-.mini-pick-bottom  {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-left: 20px;
+.mini-pick-today.neg { color:#52b788; }
+.mini-pick-today.pos { color:#ff7070; }
+.mini-pick-today.eve { color:var(--text2); }
+.mini-pick-tot {
+  width:44px; text-align:right; font-size:11px; font-weight:600; flex-shrink:0;
+  color:var(--text3);
 }
 
 .star  {
@@ -3196,7 +3204,7 @@ to  {
 <div class="tv-col-hdr" style="margin-top:10px">
 <div style="width:44px">Rank</div>
 <div style="flex:1">Entry</div>
-<button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()" style="margin-right:4px">Compare</button>
+<button class="cmp-toggle" id="cmp-toggle" onclick="toggleCompareMode()" style="margin-right:4px">⚔️ H2H</button>
 <div style="width:56px;text-align:right">Score</div>
 </div>
 <div id="standings-list">
@@ -3798,19 +3806,14 @@ const cmpSelCls = isCmpSelected ? ' cmp-selected' : '';
 const cmpBadge = isCmpSelected ? `<span class="cmp-badge">${cmpNum}</span>` : '';
 const teamHolesLeft = e.picks.reduce((sum, p) => sum + getHolesRemaining(p), 0);
 const rowClick = compareMode ? `cmpSelectTeam(${entryIdx})` : `togglePanel(this,${i})`;
-html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> ${e.scores.map((g, j) => { const isTop = j < 4;
+html += ` <div class="standing-row ${isMyTeam}${cmpCls}${cmpSelCls}" onclick="${rowClick}"> <div class="s-rank">${rank}</div> <div class="s-info"> <div class="s-team">${e.team}${cmpBadge}</div> <div class="s-name">${e.name}${tbTag}</div> </div> <div class="s-score ${scc}">${scf}</div> <div class="s-arrow" id="arr-${i}">${compareMode ? '' : '›'}</div> </div> <div class="picks-panel" id="panel-${i}"> <div class="picks-hdr"><div class="picks-hdr-name">Player</div><div class="picks-hdr-col">Score</div><div class="picks-hdr-col">Today</div><div class="picks-hdr-col">Tot</div></div>${e.scores.map((g, j) => { const isTop = j < 4;
 const gd = GOLFER_SCORES[g.name];
 const pos = gd ? (gd.thru === 'WD' || gd.score === 12 ? 'WD' : gd.pos) : '—';
-const rounds = gd ? [gd.r1,gd.r2,gd.r3,gd.r4].filter(r=>r!=null) : [];
-const rndsStr = rounds.length ? rounds.map((r,ri)=>`R${ri+1}:${r}`).join(' ') : '';
-const ownE = OWNERSHIP_DATA.find(o => o.player === g.name);
-const ownP = ownE ? Math.round(ownE.pct * 100) + '% Owned' : '';
-const thruVal = gd ? gd.thru : '';
-const holesLeft = getHolesRemaining(g.name);
-const stLastRound = (function(){ if(!gd) return null; const rs = [gd.r1,gd.r2,gd.r3,gd.r4]; for(let i=rs.length-1;i>=0;i--){ if(rs[i]&&rs[i]>50) return rs[i]; } return null; })();
-const stRoundDone = gd && (gd.thru === 'F' || gd.thru === '18');
-const thruDisplay = (gd && (gd.thru === 'WD' || gd.score === 12)) ? '' : (stRoundDone ? (stLastRound ? `Shot ${stLastRound}` : '') : (thruVal ? `Thru ${thruVal}` : ''));
-return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> <div class="mini-pick-top"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> </div> <div class="mini-pick-bottom"> ${rndsStr?`<span class="mini-pick-rounds">${rndsStr}</span>`:''} ${thruDisplay?`<span class="mini-pick-thru">${thruDisplay}</span>`:''} ${ownP?`<span class="mini-pick-own">${ownP}</span>`:''} </div> </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> </div>`; }).join('')}<div class="picks-panel-footer"><span>${teamHolesLeft} holes remaining</span><button class="h2h-quick-btn" onclick="event.stopPropagation();openH2HPicker(${entryIdx})">⚔️ H2H</button></div> </div>`; }); detectEntryActivity(); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); document.getElementById('my-teams-container').innerHTML = heroHtml; el.innerHTML = html;
+const todayStr = gd ? (gd.todayDisplay || '—') : '—';
+const todayVal = todayStr === 'E' ? 0 : todayStr === '—' ? null : parseInt(todayStr.replace('+','')) || 0;
+const todayCls = todayVal === null ? '' : todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve';
+const totDisp = gd && gd.tot ? gd.tot : '—';
+return `<div class="mini-pick ${isTop?'is-top':''}"> <div class="mini-pick-left"> ${isTop?'<span class="star">★</span>':'<span style="width:14px;display:inline-block"></span>'} <span class="mini-pick-name">${g.name}</span> <span class="mini-pick-pos">${pos}</span> </div> <span class="mini-pick-score ${cls(g.score)}">${fmt(g.score)}</span> <span class="mini-pick-today ${todayCls}">${todayStr}</span> <span class="mini-pick-tot">${totDisp}</span> </div>`; }).join('')}<div class="picks-panel-footer"><span>${teamHolesLeft} holes remaining</span><button class="h2h-quick-btn" onclick="event.stopPropagation();openH2HPicker(${entryIdx})">⚔️ H2H</button></div> </div>`; }); detectEntryActivity(); ranked.forEach((e, i) => { PREV_RANKS[e.team] = ranks[i]; }); document.getElementById('my-teams-container').innerHTML = heroHtml; el.innerHTML = html;
   const hasTies = ranks.some((r, i) => i > 0 && r === ranks[i-1]);
   document.getElementById('standings-footnote').style.display = hasTies ? 'block' : 'none';
   // Restore open panel after re-render
