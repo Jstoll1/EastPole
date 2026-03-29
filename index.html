@@ -3555,6 +3555,11 @@ function detectEntryActivity() {
 }
 // ── End Activity Tracker ──────────────────────────────────
 
+// One-time clear of stale round-start positions (v2 reset)
+if (!localStorage.getItem('eastpole_pos_v2')) {
+  localStorage.removeItem('eastpole_round_start');
+  localStorage.setItem('eastpole_pos_v2', '1');
+}
 // Load round-start positions from localStorage
 try {
   const saved = JSON.parse(localStorage.getItem('eastpole_round_start') || '{}');
@@ -4294,8 +4299,8 @@ const scheduled=state==='STATUS_SCHEDULED';
 const dispVal=(c.status?.displayValue||'').toUpperCase();
 const stateDesc=(c.status?.type?.description||'').toUpperCase();
 const posName=(c.status?.position?.displayName||'').toUpperCase();
-// Log first 3 players' full structure to find ESPN movement data
-if(!window._espnStructureLogged) { window._espnStructureLogged = true; comps.slice(0,3).forEach(cc => { console.log('🔍 ESPN [' + cc.athlete?.displayName + '] keys:', Object.keys(cc)); console.log('🔍 status keys:', Object.keys(cc.status||{})); console.log('🔍 status.position:', JSON.stringify(cc.status?.position)); console.log('🔍 movement?:', cc.movement, cc.positionChange, cc.status?.movement, cc.status?.positionChange); console.log('🔍 sortOrder?:', cc.sortOrder, cc.status?.sortOrder, cc.seed, cc.rank); console.log('🔍 full competitor (2000ch):', JSON.stringify(cc).substring(0, 2000)); }); }
+// Log first player's structure once for debugging
+if(!window._espnStructureLogged) { window._espnStructureLogged = true; const cc = comps[0]; if(cc) console.log('🔍 ESPN keys:', Object.keys(cc), 'status.position:', JSON.stringify(cc.status?.position)); }
 const wd=state.includes('WD')||state.includes('WITHDRAW')||dispVal==='WD'||stateDesc.includes('WITHDRAW')||posName==='WD'||false;
 const mc=!wd&&(state.includes('CUT')||false);
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
