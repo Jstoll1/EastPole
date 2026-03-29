@@ -3714,9 +3714,10 @@ function renderLeaderboard() {
     if (p.score === 11 || p.score === 12) return 999; // MC/WD to bottom
     if (p.thru === '—') return 999; // pre-tournament
     if (p.thru && p.thru.includes(':')) return 999; // tee time, not started
-    if (p.thru === 'F') return 999; // finished, between rounds
-    var val = golferTodayScore(p);
-    return val !== null ? val : 999;
+    var td = p.todayDisplay || '—';
+    if (td === '—') return 998;
+    if (td === 'E') return 0;
+    return parseInt(td.replace('+', '')) || 0;
   };
   var parseThruVal = function(p) {
     if (p.thru === '—') return -1;
