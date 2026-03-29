@@ -3945,21 +3945,26 @@ function golferTodayScore(gd) {
     const thruNum = parseInt(thru);
     if (isNaN(thruNum) || thruNum < 1) return null;
   }
-  // Count completed round scores (value > 50 = full round strokes like 65, 70)
+  // Count completed round scores (value > 50 = full 18-hole strokes like 65, 70)
   const rounds = [gd.r1, gd.r2, gd.r3, gd.r4];
   const completedRounds = [];
   for (let i = 0; i < rounds.length; i++) {
     if (rounds[i] != null && rounds[i] > 50) completedRounds.push(rounds[i]);
     else break;
   }
+  let result;
   if (finished && completedRounds.length > 0) {
     // Player finished today — exclude today's round (last completed) from prior total
     const priorRel = completedRounds.slice(0, -1).reduce((s, r) => s + (r - COURSE_PAR), 0);
-    return gd.score - priorRel;
+    result = gd.score - priorRel;
+  } else {
+    // Mid-round: all completed rounds are prior rounds
+    const completedRel = completedRounds.reduce((s, r) => s + (r - COURSE_PAR), 0);
+    result = gd.score - completedRel;
   }
-  // Mid-round: all completed rounds are prior rounds
-  const completedRel = completedRounds.reduce((s, r) => s + (r - COURSE_PAR), 0);
-  return gd.score - completedRel;
+  // Sanity check: a single round score should be between -12 and +20
+  if (result < -12 || result > 15) return null;
+  return result;
 }
 
 function renderLeaderboard() {
