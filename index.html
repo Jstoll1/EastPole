@@ -3428,7 +3428,7 @@ let PREV_POSITIONS = {};
 let PREV_RANKS = {};
 let ROUND_START_POSITIONS = {};
 let ROUND_START_ROUND = 0;
-let _roundStartLive = false; // true once positions saved from live play (not tee times)
+// _roundStartLive removed — positions only saved on round transitions
 
 // ── Activity Tracker ──────────────────────────────────────
 const ACTIVITY_LOG = []; // {cat:'golf'|'entry', icon, text, time}
@@ -4350,11 +4350,8 @@ if (isPreTournament) {
     activePlayers.forEach(g => { const cnt = [g.r1,g.r2,g.r3,g.r4].filter(r=>r!=null).length; if(cnt>maxComp) maxComp=cnt; });
     const nextRound = maxComp + 1;
     setApiStatus('live', 'Rd ' + nextRound + ' Tee Times');
-    if (ROUND_START_ROUND < nextRound) {
-      saveRoundStartPositions(nextRound);
-      _roundStartLive = false;
-      console.log('📌 Saved tee-time positions for Rd', nextRound);
-    }
+    // Don't save positions during tee-time phase — ESPN reshuffles positions
+    console.log('⏳ Tee times for Rd', nextRound, '— skipping position save');
   } else if (allDone) {
     const completedRound = [activePlayers[0]?.r4 ? 4 : 0, activePlayers[0]?.r3 ? 3 : 0, activePlayers[0]?.r2 ? 2 : 0, activePlayers[0]?.r1 ? 1 : 0].find(r => r > 0) || 1;
     setApiStatus('between', 'End of Rd ' + completedRound);
@@ -4371,11 +4368,10 @@ if (isPreTournament) {
       if (cnt > maxCompleted) maxCompleted = cnt;
     });
     const currentRound = anyMidRound ? (maxCompleted + 1) || 1 : maxCompleted || (ROUND_START_ROUND || 1);
-    // Save start positions at the beginning of a new round, or re-save when live play starts
-    if (ROUND_START_ROUND < currentRound || (anyMidRound && !_roundStartLive)) {
+    // Save start positions only when a new round is first detected
+    if (ROUND_START_ROUND < currentRound) {
       saveRoundStartPositions(currentRound);
-      _roundStartLive = true;
-      console.log('📌 Saved live round-start positions for Rd', currentRound);
+      console.log('📌 Saved round-start positions for Rd', currentRound);
     }
     setApiStatus('live', 'Live');
   }
