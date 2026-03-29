@@ -3939,16 +3939,26 @@ function getActiveTeamPicks() {
 function golferTodayScore(gd) {
   if (!gd || gd.score > 10) return null;
   const thru = gd.thru;
-  if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru === '18' || thru.includes(':')) return null;
-  const thruNum = parseInt(thru);
-  if (isNaN(thruNum) || thruNum < 1) return null;
-  const rounds = [gd.r1, gd.r2, gd.r3, gd.r4];
-  let completedRel = 0;
-  for (let i = 0; i < rounds.length; i++) {
-    const r = rounds[i];
-    if (r == null || r <= 50) break;
-    completedRel += r - COURSE_PAR;
+  if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru.includes(':')) return null;
+  const finished = thru === 'F' || thru === '18';
+  if (!finished) {
+    const thruNum = parseInt(thru);
+    if (isNaN(thruNum) || thruNum < 1) return null;
   }
+  // Count completed round scores (value > 50 = full round strokes like 65, 70)
+  const rounds = [gd.r1, gd.r2, gd.r3, gd.r4];
+  const completedRounds = [];
+  for (let i = 0; i < rounds.length; i++) {
+    if (rounds[i] != null && rounds[i] > 50) completedRounds.push(rounds[i]);
+    else break;
+  }
+  if (finished && completedRounds.length > 0) {
+    // Player finished today — exclude today's round (last completed) from prior total
+    const priorRel = completedRounds.slice(0, -1).reduce((s, r) => s + (r - COURSE_PAR), 0);
+    return gd.score - priorRel;
+  }
+  // Mid-round: all completed rounds are prior rounds
+  const completedRel = completedRounds.reduce((s, r) => s + (r - COURSE_PAR), 0);
   return gd.score - completedRel;
 }
 
@@ -5024,18 +5034,11 @@ function renderH2HInline() {
   if (pctLeft > 12) html += '<span class="h2h-bar-label left">WIN</span>';
   if (pctRight > 12) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
-  // Score summary: total + current round (all golfers who played today)
+  // Score summary: total + current round
   function teamRoundScore(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
-      const gd = GOLFER_SCORES[g.name];
-      if (!gd) return;
-      let today = golferTodayScore(gd);
-      // Include finished golfers using todayDisplay
-      if (today === null && gd.todayDisplay && gd.todayDisplay !== '—') {
-        const td = gd.todayDisplay;
-        today = td === 'E' ? 0 : parseInt(td.replace('+', '')) || null;
-      }
+      const today = golferTodayScore(GOLFER_SCORES[g.name]);
       if (today === null) return;
       sum += today; count++;
     });
@@ -5058,17 +5061,11 @@ function renderH2HInline() {
   if (rdB.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdB.sum < 0 ? '#52b788' : rdB.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdB.sum) + '</div>';
   html += '</div>';
   html += '</div>';
-  // Momentum indicator — compare today's round performance (all golfers who played today)
+  // Momentum indicator — compare today's round performance
   function todayRelPar(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
-      const gd = GOLFER_SCORES[g.name];
-      if (!gd) return;
-      let today = golferTodayScore(gd);
-      if (today === null && gd.todayDisplay && gd.todayDisplay !== '—') {
-        const td = gd.todayDisplay;
-        today = td === 'E' ? 0 : parseInt(td.replace('+', '')) || null;
-      }
+      const today = golferTodayScore(GOLFER_SCORES[g.name]);
       if (today === null) return;
       sum += today; count++;
     });
@@ -5125,12 +5122,7 @@ function buildH2HCell(g, side, isTop) {
   const holesLeft = getHolesRemaining(g.name);
   // Calculate current round score relative to par
   let rdTag = '';
-  let todayScore = golferTodayScore(gd);
-  // For finished golfers, use todayDisplay from ESPN
-  if (todayScore === null && gd && gd.todayDisplay && gd.todayDisplay !== '—') {
-    const td = gd.todayDisplay;
-    todayScore = td === 'E' ? 0 : parseInt(td.replace('+', '')) || null;
-  }
+  const todayScore = golferTodayScore(gd);
   if (todayScore !== null) {
     const todayFmt = todayScore > 0 ? '+' + todayScore : todayScore === 0 ? 'E' : '' + todayScore;
     const todayColor = todayScore < 0 ? '#52b788' : todayScore > 0 ? '#ff7070' : 'var(--text2)';
