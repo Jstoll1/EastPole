@@ -3428,7 +3428,7 @@ let PREV_POSITIONS = {};
 let PREV_RANKS = {};
 let ROUND_START_POSITIONS = {};
 let ROUND_START_ROUND = 0;
-// _roundStartLive removed — positions only saved on round transitions
+let SESSION_START_POSITIONS = {}; // first-seen positions this session (never overwritten)
 
 // ── Activity Tracker ──────────────────────────────────────
 const ACTIVITY_LOG = []; // {cat:'golf'|'entry', icon, text, time}
@@ -3577,8 +3577,7 @@ function saveRoundStartPositions(round) {
 }
 
 function getTopMovers(arrowMap) {
-  // Returns Map of name -> tier (3=biggest, 2=second, 1=third)
-  // Separate tiers for up (fire) and down (ice)
+  // Returns Map of name -> { sign: 'up'|'down' } for top 3 risers and top 3 fallers
   const ups = [], dns = [];
   arrowMap.forEach((delta, name) => {
     if (delta > 0) ups.push({ name, delta });
@@ -3587,18 +3586,8 @@ function getTopMovers(arrowMap) {
   ups.sort((a, b) => b.delta - a.delta);
   dns.sort((a, b) => b.delta - a.delta);
   const result = new Map();
-  function assignTiers(list, sign) {
-    if (!list.length) return;
-    let tier = 3, prevDelta = null;
-    list.forEach(item => {
-      if (prevDelta !== null && item.delta < prevDelta) tier--;
-      if (tier < 1) return;
-      result.set(item.name, { tier, sign });
-      prevDelta = item.delta;
-    });
-  }
-  assignTiers(ups, 'up');
-  assignTiers(dns, 'down');
+  ups.slice(0, 3).forEach(item => result.set(item.name, { sign: 'up' }));
+  dns.slice(0, 3).forEach(item => result.set(item.name, { sign: 'down' }));
   return result;
 }
 let lastFetchTime = 0;
@@ -4052,10 +4041,9 @@ function renderLeaderboard() {
       if (isNaN(thruNum) || thruNum < 1 || !/^\d+$/.test(p.thru)) return;
       const cP = parsePos(p.pos);
       if (!cP) return;
-      const sP = ROUND_START_POSITIONS[p.name];
-      if (sP && sP !== cP) { allDeltas.set(p.name, sP - cP); return; }
-      const pP = PREV_POSITIONS[p.name];
-      if (pP && pP !== cP) allDeltas.set(p.name, pP - cP);
+      // Best baseline: round-start (from end of prev round) > session-start (first load) > prev fetch
+      const sP = ROUND_START_POSITIONS[p.name] || SESSION_START_POSITIONS[p.name] || PREV_POSITIONS[p.name];
+      if (sP && sP !== cP) allDeltas.set(p.name, sP - cP);
     });
     const sorted = [...allDeltas.entries()].map(([name, delta]) => ({ name, delta }));
     const ups = sorted.filter(d => d.delta > 0).sort((a, b) => b.delta - a.delta);
@@ -4091,12 +4079,9 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : (roundDone && la
     const totDisp = p.tot || '--';
     const prevP = PREV_POSITIONS[p.name];
     const currP = parsePos(p.pos);
-    const startP = ROUND_START_POSITIONS[p.name];
-    const refP = startP || prevP;
-    const roundDelta = (refP && currP) ? refP - currP : 0;
-    // Persistent arrows from round start, flash on fresh change
-    let moveHtml = '';
     const arrowDelta = arrowPlayers.has(p.name) ? arrowPlayers.get(p.name) : 0;
+    // Position arrow for all active players with movement
+    let moveHtml = '';
     if (!isPreT && currP && arrowDelta !== 0) {
       const justChanged = prevP && currP && currP !== prevP;
       const flashCl = justChanged ? ' pos-move-flash' : '';
@@ -4116,7 +4101,7 @@ const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : (roundDone && la
       + '<div class="tv-pos">' + (mc?(p.thru==='WD'||p.score===12?'WD':'MC'):p.pos) + moveHtml + '</div>'
       + '<div class="tv-pill-slot">' + pills + '</div>'
       + '<div class="tv-player"><span class="tv-name ' + (isMyPick?'is-my-pick':'') + '">' + p.name + '</span> <span class="tv-country">' + flag + (cc?' '+cc:'') + '</span>'
-      + (isMover ? (moverInfo.sign === 'up' ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + Math.abs(roundDelta) + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + Math.abs(roundDelta) + '</span>') : '')
+      + (isMover ? (moverInfo.sign === 'up' ? '<span class="top-mover"><span class="mover-arrow">\uD83D\uDD25</span>' + Math.abs(arrowDelta) + '</span>' : '<span class="top-mover down"><span class="mover-arrow">\uD83E\uDDCA</span>' + Math.abs(arrowDelta) + '</span>') : '')
       + (isPrevWinner?'<span class="prev-winner-badge">Def. Champion</span>':'')
       + (inPool&&!isMyPick?'<span class="tv-pool-dot"></span>':'')
       + '</div>'
@@ -4289,7 +4274,7 @@ async function fetchESPN() {
   const tournBanner = document.getElementById('lb-tournament-name');
   if (tournBanner) tournBanner.textContent = shortName;
   Object.entries(GOLFER_SCORES).forEach(([n,d]) => { const p = parsePos(d.pos);
-  if (p) PREV_POSITIONS[n] = p;
+  if (p) { PREV_POSITIONS[n] = p; if (!SESSION_START_POSITIONS[n]) SESSION_START_POSITIONS[n] = p; }
   if (d.score !== 11 && d.score !== 12) PREV_SCORES[n] = d.score;
 });
 const freshScores = {}; const freshAthleteIds = {}; comps.forEach(c=>{ const name=c.athlete?.displayName; if(!name) return;
@@ -4299,8 +4284,6 @@ const scheduled=state==='STATUS_SCHEDULED';
 const dispVal=(c.status?.displayValue||'').toUpperCase();
 const stateDesc=(c.status?.type?.description||'').toUpperCase();
 const posName=(c.status?.position?.displayName||'').toUpperCase();
-// Log first player's structure once for debugging
-if(!window._espnStructureLogged) { window._espnStructureLogged = true; const cc = comps[0]; if(cc) console.log('🔍 ESPN keys:', Object.keys(cc), 'status.position:', JSON.stringify(cc.status?.position)); }
 const wd=state.includes('WD')||state.includes('WITHDRAW')||dispVal==='WD'||stateDesc.includes('WITHDRAW')||posName==='WD'||false;
 const mc=!wd&&(state.includes('CUT')||false);
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
@@ -4318,9 +4301,7 @@ const tot=lines.reduce((s,l)=>(l.value&&l.value>50?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
 const todayRound=scheduled?lastCompletedRound:lines[activeRndIdx>=0?activeRndIdx:0];
 const todayDisplay=todayRound?.displayValue||(todayRound?.value>50?(function(){const tp=todayRound.value-COURSE_PAR;return tp===0?'E':(tp>0?'+'+tp:String(tp))})():'—');
-// Try to capture ESPN movement data from various possible field locations
-const espnMovement = c.movement ?? c.positionChange ?? c.status?.movement ?? c.status?.positionChange ?? c.status?.position?.movement ?? c.status?.position?.change ?? null;
-freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3), espnMovement: espnMovement }; });
+freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; });
 // Detect score changes for animations
 const newChanges = {};
 Object.entries(freshScores).forEach(([n,d]) => {
