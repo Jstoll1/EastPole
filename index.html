@@ -4090,11 +4090,10 @@ function renderLeaderboard() {
       if (i > 0 && preRoundData[i].preScore > preRoundData[i-1].preScore) rank = i + 1;
       preRoundData[i].startPos = rank;
     }
-    // Deltas only for actively playing golfers (thru 1-17)
+    // Deltas for anyone who has played today (active or finished, not tee times)
     preRoundData.forEach(d => {
       if (!d.currentPos || !d.thru) return;
-      if (d.thru === 'F' || d.thru === '18' || d.thru === '—' || d.thru.includes(':')) return;
-      if (!/^\d+$/.test(d.thru) || parseInt(d.thru) < 1) return;
+      if (d.thru === '—' || d.thru.includes(':')) return; // skip pre-tournament and tee times
       const delta = d.startPos - d.currentPos;
       if (delta !== 0) arrowPlayers.set(d.name, delta);
     });
