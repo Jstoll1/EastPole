@@ -5059,10 +5059,12 @@ function renderH2HInline() {
   }
   const rdA = teamRoundScore(cA.top4);
   const rdB = teamRoundScore(cB.top4);
+  const hRemA = cA.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
+  const hRemB = cB.picks.reduce((s, p) => s + getHolesRemaining(p), 0);
   const fmtRd = v => (v > 0 ? '+' + v : v === 0 ? 'E' : '' + v);
   html += '<div class="h2h-score-summary">';
   html += '<div style="text-align:left"><div class="h2h-score-big ' + cls(cA.total) + '">' + fmtTeam(cA.total) + '</div><div class="h2h-score-lbl">Total</div>';
-  if (rdA.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdA.sum < 0 ? '#52b788' : rdA.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdA.sum) + '</div>';
+  if (rdA.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdA.sum < 0 ? '#52b788' : rdA.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdA.sum) + ' <span style="color:#e57373;font-size:10px;font-weight:600">' + hRemA + 'h left</span></div>';
   html += '</div>';
   if (cA.total === cB.total) {
     html += '<div class="h2h-tied-badge">TIED</div>';
@@ -5071,7 +5073,7 @@ function renderH2HInline() {
     html += '<div style="text-align:center;color:var(--text3);font-size:10px;font-weight:700">' + gap + ' stroke' + (gap > 1 ? 's' : '') + '</div>';
   }
   html += '<div style="text-align:right"><div class="h2h-score-big ' + cls(cB.total) + '">' + fmtTeam(cB.total) + '</div><div class="h2h-score-lbl">Total</div>';
-  if (rdB.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdB.sum < 0 ? '#52b788' : rdB.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdB.sum) + '</div>';
+  if (rdB.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdB.sum < 0 ? '#52b788' : rdB.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdB.sum) + ' <span style="color:#e57373;font-size:10px;font-weight:600">' + hRemB + 'h left</span></div>';
   html += '</div>';
   html += '</div>';
   // Momentum indicator — use ESPN todayDisplay directly
