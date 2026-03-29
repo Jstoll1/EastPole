@@ -5039,11 +5039,16 @@ function renderH2HInline() {
   if (pctLeft > 12) html += '<span class="h2h-bar-label left">WIN</span>';
   if (pctRight > 12) html += '<span class="h2h-bar-label right">WIN</span>';
   html += '</div>';
-  // Score summary: total + current round
+  // Score summary: total + current round — use ESPN todayDisplay directly
+  function parseTodayFromESPN(gd) {
+    if (!gd || !gd.todayDisplay || gd.todayDisplay === '—') return null;
+    if (gd.todayDisplay === 'E') return 0;
+    return parseInt(gd.todayDisplay.replace('+', '')) || 0;
+  }
   function teamRoundScore(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
-      const today = golferTodayScore(GOLFER_SCORES[g.name]);
+      const today = parseTodayFromESPN(GOLFER_SCORES[g.name]);
       if (today === null) return;
       sum += today; count++;
     });
@@ -5066,11 +5071,11 @@ function renderH2HInline() {
   if (rdB.count > 0) html += '<div style="font-size:11px;font-weight:700;margin-top:3px;color:' + (rdB.sum < 0 ? '#52b788' : rdB.sum > 0 ? '#ff7070' : 'var(--text2)') + '">Today: ' + fmtRd(rdB.sum) + '</div>';
   html += '</div>';
   html += '</div>';
-  // Momentum indicator — compare today's round performance
+  // Momentum indicator — use ESPN todayDisplay directly
   function todayRelPar(top4) {
     let sum = 0, count = 0;
     top4.forEach(g => {
-      const today = golferTodayScore(GOLFER_SCORES[g.name]);
+      const today = parseTodayFromESPN(GOLFER_SCORES[g.name]);
       if (today === null) return;
       sum += today; count++;
     });
@@ -5125,13 +5130,13 @@ function buildH2HCell(g, side, isTop) {
   const isWD = thru === 'WD' || (gd && gd.score === 12);
   const mc = thru === 'MC';
   const holesLeft = getHolesRemaining(g.name);
-  // Calculate current round score relative to par
+  // Use ESPN's todayDisplay directly — same source as leaderboard
   let rdTag = '';
-  const todayScore = golferTodayScore(gd);
-  if (todayScore !== null) {
-    const todayFmt = todayScore > 0 ? '+' + todayScore : todayScore === 0 ? 'E' : '' + todayScore;
-    const todayColor = todayScore < 0 ? '#52b788' : todayScore > 0 ? '#ff7070' : 'var(--text2)';
-    rdTag = '<span style="color:' + todayColor + ';font-weight:700">(' + todayFmt + ')</span>';
+  const td = gd ? gd.todayDisplay : '—';
+  if (td && td !== '—') {
+    const todayVal = td === 'E' ? 0 : parseInt(td.replace('+', '')) || 0;
+    const todayColor = todayVal < 0 ? '#52b788' : todayVal > 0 ? '#ff7070' : 'var(--text2)';
+    rdTag = '<span style="color:' + todayColor + ';font-weight:700">(' + td + ')</span>';
   }
   const holesTag = holesLeft > 0 ? ' <span style="color:#e57373;font-size:10px;font-weight:600">' + holesLeft + 'h left</span>' : '';
   const statusTag = isWD ? ' <span style="color:var(--text3);font-size:10px">WD</span>' : mc ? ' <span style="color:var(--text3);font-size:10px">MC</span>' : (holesLeft === 0 ? ' <span style="color:var(--text3);font-size:10px">Complete</span>' : '');
