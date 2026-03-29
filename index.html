@@ -4064,23 +4064,26 @@ function renderLeaderboard() {
   const estCutShow = currentRound >= 1 && currentRound <= 2 && lbSort === 'score' && lbFilter === 'all' && !lbSearch;
   let estCutScore = null;
   if (estCutShow) { let cnt = 0; for (const pp of players) { if (pp.thru !== 'MC') { cnt++; if (cnt === 65) { estCutScore = pp.score; break; } } } }
-  // Position arrows: calculate start-of-round positions from completed round scores
-  // No localStorage needed — purely derived from current ESPN data
+  // Position arrows: calculate start-of-round position using preRoundScore = score - todayScore
   const arrowPlayers = new Map(); // name -> delta
   if (!isPreT) {
-    // Build pre-round score for all active (non-MC/WD) players
+    // Parse today value from todayDisplay for each player
+    function parseTodayRel(p) {
+      const td = p.todayDisplay;
+      if (!td || td === '—') return 0;
+      if (td === 'E') return 0;
+      return parseInt(td.replace('+', '')) || 0;
+    }
+    // Build pre-round score: what their score-to-par was before today's round
     const preRoundData = [];
     players.forEach(p => {
       if (p.score === 11 || p.score === 12) return;
-      const rounds = [p.r1, p.r2, p.r3, p.r4];
-      let completedRel = 0;
-      for (let i = 0; i < rounds.length; i++) {
-        if (rounds[i] == null || rounds[i] <= 50) break;
-        completedRel += rounds[i] - COURSE_PAR;
-      }
-      preRoundData.push({ name: p.name, preScore: completedRel, currentPos: parsePos(p.pos), thru: p.thru });
+      if (p.thru === '—') return; // pre-tournament
+      const todayRel = parseTodayRel(p);
+      const preScore = p.score - todayRel;
+      preRoundData.push({ name: p.name, preScore, currentPos: parsePos(p.pos), thru: p.thru });
     });
-    // Sort by pre-round score to get start-of-round ranking
+    // Sort by pre-round score to get start-of-round ranking (lower = better)
     preRoundData.sort((a, b) => a.preScore - b.preScore);
     let rank = 1;
     for (let i = 0; i < preRoundData.length; i++) {
