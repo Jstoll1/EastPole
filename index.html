@@ -4294,7 +4294,8 @@ const scheduled=state==='STATUS_SCHEDULED';
 const dispVal=(c.status?.displayValue||'').toUpperCase();
 const stateDesc=(c.status?.type?.description||'').toUpperCase();
 const posName=(c.status?.position?.displayName||'').toUpperCase();
-if(name==='Aaron Rai') { ErrorTracker.api('FOUND Aaron Rai', {state:state,dispVal:dispVal,stateDesc:stateDesc,posName:posName,thru:c.status?.thru,displayValue:c.status?.displayValue,fullStatus:JSON.stringify(c.status)}); console.log('🔍 ESPN competitor keys:', Object.keys(c)); console.log('🔍 ESPN competitor.status keys:', Object.keys(c.status||{})); console.log('🔍 ESPN competitor.status.position:', JSON.stringify(c.status?.position)); console.log('🔍 ESPN competitor full:', JSON.stringify(c, null, 2).substring(0, 3000)); }
+// Log first 3 players' full structure to find ESPN movement data
+if(!window._espnStructureLogged) { window._espnStructureLogged = true; comps.slice(0,3).forEach(cc => { console.log('🔍 ESPN [' + cc.athlete?.displayName + '] keys:', Object.keys(cc)); console.log('🔍 status keys:', Object.keys(cc.status||{})); console.log('🔍 status.position:', JSON.stringify(cc.status?.position)); console.log('🔍 movement?:', cc.movement, cc.positionChange, cc.status?.movement, cc.status?.positionChange); console.log('🔍 sortOrder?:', cc.sortOrder, cc.status?.sortOrder, cc.seed, cc.rank); console.log('🔍 full competitor (2000ch):', JSON.stringify(cc).substring(0, 2000)); }); }
 const wd=state.includes('WD')||state.includes('WITHDRAW')||dispVal==='WD'||stateDesc.includes('WITHDRAW')||posName==='WD'||false;
 const mc=!wd&&(state.includes('CUT')||false);
 const scoreToPar=c.statistics?.find(s=>s.name==='scoreToPar');
@@ -4312,7 +4313,9 @@ const tot=lines.reduce((s,l)=>(l.value&&l.value>50?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
 const todayRound=scheduled?lastCompletedRound:lines[activeRndIdx>=0?activeRndIdx:0];
 const todayDisplay=todayRound?.displayValue||(todayRound?.value>50?(function(){const tp=todayRound.value-COURSE_PAR;return tp===0?'E':(tp>0?'+'+tp:String(tp))})():'—');
-freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; });
+// Try to capture ESPN movement data from various possible field locations
+const espnMovement = c.movement ?? c.positionChange ?? c.status?.movement ?? c.status?.positionChange ?? c.status?.position?.movement ?? c.status?.position?.change ?? null;
+freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3), espnMovement: espnMovement }; });
 // Detect score changes for animations
 const newChanges = {};
 Object.entries(freshScores).forEach(([n,d]) => {
