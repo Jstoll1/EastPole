@@ -4073,8 +4073,8 @@ const startHole=c.status?.startHole||1;
 const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value&&l.value>50?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
-const todayDisplay=scheduled?(lastCompletedRound?lastCompletedRound.displayValue:'—'):(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||(lastCompletedRound?lastCompletedRound.displayValue:'—'));
-if(name==='Gary Woodland') console.log('🔍 TODAY DEBUG', name, {scheduled, state, thru, activeRndIdx, lines: JSON.stringify(lines.map(l=>({v:l.value,d:l.displayValue}))), lastCR: lastCompletedRound ? {v:lastCompletedRound.value, d:lastCompletedRound.displayValue} : null, todayDisplay});
+function calcRoundDisp(rd) { if(!rd||!rd.value||rd.value<=50) return '—'; if(rd.displayValue) return rd.displayValue; const tp=rd.value-COURSE_PAR; return tp===0?'E':(tp>0?'+'+tp:String(tp)); }
+const todayDisplay=scheduled?(lastCompletedRound?calcRoundDisp(lastCompletedRound):'—'):(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||(lastCompletedRound?calcRoundDisp(lastCompletedRound):'—'));
 freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; });
 // Detect score changes for animations
 const newChanges = {};
