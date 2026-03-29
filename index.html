@@ -3909,7 +3909,7 @@ function getActiveTeamPicks() {
 function golferTodayScore(gd) {
   if (!gd || gd.score > 10) return null;
   const thru = gd.thru;
-  if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru.includes(':')) return null;
+  if (!thru || thru === '—' || thru === 'MC' || thru === 'WD' || thru === 'F' || thru === '18' || thru.includes(':')) return null;
   const thruNum = parseInt(thru);
   if (isNaN(thruNum) || thruNum < 1) return null;
   const rounds = [gd.r1, gd.r2, gd.r3, gd.r4];
@@ -3917,9 +3917,7 @@ function golferTodayScore(gd) {
   for (let i = 0; i < rounds.length; i++) {
     const r = rounds[i];
     if (r == null || r <= 50) break;
-    const next = rounds[i + 1];
-    if (next != null && next > 50) { completedRel += r - COURSE_PAR; continue; }
-    break;
+    completedRel += r - COURSE_PAR;
   }
   return gd.score - completedRel;
 }
