@@ -3853,7 +3853,7 @@ function renderLeaderboard() {
     const lastRoundScore = (function(){ const rs = [p.r1,p.r2,p.r3,p.r4]; for(let i=rs.length-1;i>=0;i--){ if(rs[i]&&rs[i]>50) return rs[i]; } return null; })();
     const roundDone = p.thru === 'F' || p.thru === '18';
 const thruDisp = preT ? teeStr || '—' : (isTeeTime ? p.thru : (roundDone && lastRoundScore ? lastRoundScore : p.thru + (p.startHole === 10 && p.thru !== 'MC' && !roundDone && parseInt(p.thru) > 0 ? '*' : '')));
-    const todayDisp = preT ? '—' : (isTeeTime && anyStillPlaying ? '—' : (p.todayDisplay || '—'));
+    const todayDisp = preT ? '—' : (isTeeTime ? '—' : (p.todayDisplay || '—'));
     const todayVal = todayDisp === 'E' || todayDisp === '—' ? 0 : parseInt(todayDisp.replace('+','')) || 0;
     const todayCls = todayDisp === '—' ? '' : (todayVal < 0 ? 'neg' : todayVal > 0 ? 'pos' : 'eve');
     const r1Disp = p.r1 ? p.r1 : '--';
@@ -4073,7 +4073,8 @@ const startHole=c.status?.startHole||1;
 const rval = idx => { const v=lines[idx]?.value; return (v&&v>50)?v:null; };
 const tot=lines.reduce((s,l)=>(l.value&&l.value>50?s+l.value:s),0)||null;
 const activeRndIdx=lines.findIndex((l,i)=>l.value!=null&&!(l.value>50&&lines[i+1]?.value!=null));
-const todayDisplay=scheduled?'—':(lines[activeRndIdx>=0?activeRndIdx:0]?.displayValue||'—');
+const todayRound=scheduled?lastCompletedRound:lines[activeRndIdx>=0?activeRndIdx:0];
+const todayDisplay=todayRound?.displayValue||(todayRound?.value>50?(function(){const tp=todayRound.value-COURSE_PAR;return tp===0?'E':(tp>0?'+'+tp:String(tp))})():'—');
 freshScores[name]={ pos:c.status?.position?.displayName||'—', score:wd?12:mc?11:score, thru:thru, teeTime:teeTime, startHole:startHole, tot:tot, todayDisplay:todayDisplay, r1:rval(0), r2:rval(1), r3:rval(2), r4:rval(3) }; });
 // Detect score changes for animations
 const newChanges = {};
